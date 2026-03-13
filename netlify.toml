@@ -4,27 +4,8 @@
   command = ""
   functions = "netlify/functions"
 
-# ── HTML pages: never cache — so the service worker version bump always lands ──
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    X-Content-Type-Options = "nosniff"
-
-# ── Service workers: must revalidate every time ────────────────────────────────
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Service-Worker-Allowed = "/"
-
-[[headers]]
-  for = "/service-worker.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Service-Worker-Allowed = "/"
-
 # ── Static assets: cache aggressively (fingerprinted by SW version) ────────────
+# MUST come first — specific rules below will override for SW files
 [[headers]]
   for = "/*.js"
   [headers.values]
@@ -40,5 +21,23 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# ── HTML pages: never cache — so the service worker version bump always lands ──
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    X-Content-Type-Options = "nosniff"
 
+# ── Service workers: must revalidate every time ────────────────────────────────
+# These come AFTER /*.js so they correctly override it for SW files
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    Service-Worker-Allowed = "/"
 
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    Service-Worker-Allowed = "/"
