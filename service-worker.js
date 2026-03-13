@@ -7,7 +7,7 @@
    • All relative paths updated to explicitly use ./ for consistent offline/online rendering
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'rrz-unified-v2.09-pano-fixes';
+const CACHE_VERSION = 'rrz-unified-v2.10-case-fix';
 
 // ── Cross-origin CDN / font hosts that we are allowed to cache ─────────────
 const CROSS_ORIGIN_HOSTS = new Set([
@@ -74,9 +74,7 @@ const CORE = [
   'referance image7.png',
   'referance image8.png',
   'referance image9.png',
-  'Surgical_Guide.html',
   'SurgicalGuide.html',
-  'surgical_guide.html',
   'Surgical_Guide.png',
   'payment.html',
   'ceph.html',
@@ -116,7 +114,6 @@ const CORE = [
   'cbct/cbct.html',
   'cbct/cbct_mpr.html',
   'cbct/cbct_mpr.png',
-  'cbct/Surgical_Guide.html',
   'cbct/SurgicalGuide.html',
   'cbct/Surgical_Guide.png',
   'cbct/agreement.html',
