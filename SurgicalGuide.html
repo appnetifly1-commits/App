@@ -11,38 +11,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<!-- FIX 1: onerror swap instead of document.write (blocked on HTTP/2 / Netlify) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/daikon/1.2.42/daikon.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/daikon@1.2.42/release/current/daikon-min.js'"></script>
-<!-- FIX 2: three.min.js with unpkg fallback -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js'"></script>
-<!-- FIX 3: Load Three.js addons SEQUENTIALLY after THREE is confirmed defined.
-     On Netlify/HTTP2 all scripts race in parallel — the addon scripts (STLLoader etc)
-     used to execute and crash with "THREE is not defined" before three.min.js finished.
-     This loader waits for THREE then chains each addon in order. -->
-<script>
-window.__threeAddonsReady = false;
-(function() {
-  var addons = [
-    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js',
-    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
-    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js',
-    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js'
-  ];
-  function loadNext(i) {
-    if (i >= addons.length) { window.__threeAddonsReady = true; return; }
-    var s = document.createElement('script');
-    s.src = addons[i];
-    s.onload = function() { loadNext(i + 1); };
-    s.onerror = function() { loadNext(i + 1); }; // skip broken, keep going
-    document.head.appendChild(s);
-  }
-  function waitForTHREE() {
-    if (typeof THREE !== 'undefined') { loadNext(0); }
-    else { setTimeout(waitForTHREE, 30); }
-  }
-  waitForTHREE();
-})();
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/daikon/1.2.42/daikon.min.js"></script>
+<script>if(typeof daikon==='undefined')document.write('<script src="https://unpkg.com/daikon@1.2.42/release/current/daikon-min.js"><\/script>');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
 <style>
         body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: white; overflow: hidden; }
         .canvas-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border: 1px solid #334155; }
@@ -47097,16 +47072,7 @@ function setOffsetOpacity(val){
 // ============================================================
 
 // Start App
-        // FIX: wait for THREE addons (STLLoader, OrbitControls etc) to finish
-        // sequential loading before calling app.init() — avoids race on Netlify/HTTP2
-        window.onload = () => {
-          function tryInit() {
-            if (!window.__threeAddonsReady) { setTimeout(tryInit, 50); return; }
-            try{ app.init(); }catch(e){ console.error(e); }
-            try{ if(window.__initCrownPlacement) window.__initCrownPlacement(); }catch(e){ console.error(e); }
-          }
-          tryInit();
-        };
+        window.onload = () => { try{ app.init(); }catch(e){ console.error(e); } try{ if(window.__initCrownPlacement) window.__initCrownPlacement(); }catch(e){ console.error(e); } };
     </script>
 
 <script>
