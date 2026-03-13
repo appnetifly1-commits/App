@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطط الاشتراك - Royal Ray Zone</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c5a059">
+<!-- في <head> كل صفحات HTML -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#c5a059">
+<meta name="msapplication-TileColor" content="#c5a059">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* شريط التنقل */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        
+        .logo-text {
+            font-size: 1.5em;
+            color: #c5a059;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px 20px;
+            border-radius: 12px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #c5a059;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* محتوى الصفحة */
+        .page-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .page-title {
+            color: #c5a059;
+            font-size: 2.8em;
+            margin-bottom: 15px;
+        }
+        
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 1.2em;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        /* حاوية الباقات */
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        /* بطاقة الباقة */
+        .plan-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 35px;
+            border: 2px solid transparent;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* غير هذا الجزء فقط: */
+.plan-card.popular {
+    border-color: #c5a059;
+    background: rgba(30, 41, 59, 0.95);
+    /* احذف transform: scale(1.05); */
+}
+
+.plan-card.popular:hover {
+    transform: translateY(-10px); /* احذف scale */
+}
+        
+        .plan-card.popular:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+        
+        
+        .plan-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .plan-name {
+            font-size: 2em;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .plan-price {
+            font-size: 3em;
+            color: #c5a059;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .plan-period {
+            color: #94a3b8;
+            font-size: 1em;
+        }
+        
+        /* مزايا الباقة */
+        .plan-features {
+            flex-grow: 1;
+            margin: 25px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: #c5a059;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            color: #e2e8f0;
+        }
+        
+        .feature-highlight {
+            color: #c5a059;
+            font-weight: bold;
+        }
+        
+        /* زر الاختيار */
+        .plan-select-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #c5a059, #b89040);
+            color: #0f172a;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .plan-select-btn:hover {
+            background: linear-gradient(135deg, #f0d699, #c5a059);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(197, 160, 89, 0.3);
+        }
+        
+        .plan-select-btn.secondary {
+            background: #334155;
+            color: white;
+        }
+        
+        .plan-select-btn.secondary:hover {
+            background: #475569;
+        }
+        
+        /* زر التفاصيل */
+        .details-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #c5a059;
+            border: 2px solid #c5a059;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .details-btn:hover {
+            background: rgba(197, 160, 89, 0.1);
+        }
+        
+        /* نافذة التفاصيل */
+        .details-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .details-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid #c5a059;
+            position: relative;
+            animation: modalFadeIn 0.4s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #334155;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            background: #475569;
+        }
+        
+        /* قسم FAQ */
+        .faq-section {
+            margin-top: 80px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+        }
+        
+        .faq-title {
+            color: #c5a059;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+        }
+        
+        .faq-question {
+            color: white;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-answer {
+            color: #94a3b8;
+            line-height: 1.6;
+            display: none;
+        }
+        
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        
+        /* تحسينات للجوال */
+        @media (max-width: 768px) {
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-card.popular {
+                transform: none;
+            }
+            
+            .plan-card.popular:hover {
+                transform: translateY(-10px);
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .page-title {
+                font-size: 2.2em;
+            }
+            
+            .plan-card {
+                padding: 25px;
+            }
+        }
+        
+        /* رسالة أسفل الصفحة */
+        .page-footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #64748b;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* تخصيصات إضافية */
+        .back-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .back-btn:hover {
+            background: #475569;
+        }
+        
+        /* رأسيات الصفحة */
+        .page-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+  <link rel="stylesheet" href="shared/tablet.css">
+</head>
+<body>
+    
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="images/logo.png" alt="Logo" class="logo-img" 
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50/c5a059/0f172a?text=RRZ'">
+            <div class="logo-text">Royal Ray Zone</div>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">م</div>
+            <div>
+                <div style="font-weight: bold;">محمد أحمد</div>
+                <div style="font-size: 0.9em; color: #94a3b8;">mohamed@example.com</div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- المحتوى الرئيسي -->
+    <div class="page-content">
+        
+        <!-- أزرار التحكم -->
+        <div class="page-actions">
+            <button class="back-btn" onclick="goBack()">
+                ← العودة للخلف
+            </button>
+            
+            <div class="action-btns">
+               
+                </button>
+                <button class="back-btn" onclick="logout()">
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+        
+        <header class="page-header">
+            <h1 class="page-title">اختر خطة الاشتراك المناسبة</h1>
+            <p class="page-subtitle">
+                ابدأ رحلتك مع الذكاء الاصطناعي في تحليل أشعة الأسنان. اختر الخطة التي تناسب احتياجاتك المهنية.
+            </p>
+        </header>
+        
+        <!-- حاوية الباقات -->
+        <div class="plans-container">
+            
+            <!-- الباقة المجانية -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h2 class="plan-name">Free Plan</h2>
+                    <div class="plan-price">$0</div>
+                    <div class="plan-period">شهرياً</div>
+                </div>
+                
+                <div class="plan-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <div class="feature-text">
+                            <span class="feature-highlight">4 تحليلات شهرية</span> لأشعة الأسنان
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <div class="feature-text">تحليل أساسي بالذكاء الاصطناعي</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <div class="feature-text">نتائج فورية</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <div class="feature-text">دعم عبر البريد الإلكتروني</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">✗</div>
+                        <div class="feature-text" style="color: #94a3b8;">تقارير متقدمة</div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">✗</div>
+                        <div class="feature-text" style="color: #94a3b8;">تحميل الدفعات</div>
+                    </div>
+                </div>
+                
+                <button class="plan-select-btn secondary" onclick="selectPlan('free')">
+                    البدء مجاناً
+                </button>
+                
+                <button class="details-btn" onclick="showDetails('free')">
+                    عرض التفاصيل الكاملة
+                </button>
+            </div>
+            
+           
+            <!-- الباقة المميزة -->
+             <!-- الباقة المميزة -->
+<div class="plan-card popular">
+    
+    <div class="plan-header">
+        <h2 class="plan-name">Royal Plan</h2>
+        <div class="plan-price">
+    400 <br> 
+    <span>SAR / EGP</span>
+</div>
+        <div class="plan-period">شهرياً</div>
+    </div>
+    
+    <div class="plan-features">
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">
+                <span class="feature-highlight">30 تحليل شهري</span> لأشعة الأسنان
+            </div>
+        </div>
+        
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">تحليل متقدم بالذكاء الاصطناعي</div>
+        </div>
+        
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">نتائج فورية + تقارير PDF</div>
+        </div>
+        
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">دعم فني 24/7</div>
+        </div>
+        
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">تحميل دفعات من الصور</div>
+        </div>
+        
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">إحصائيات وتقارير متقدمة</div>
+        </div>
+    </div>
+    
+    <button class="plan-select-btn" onclick="selectPlan('royal')">
+        اختر الخطة الملكية
+    </button>
+    
+    <button class="details-btn" onclick="showDetails('royal')">
+        عرض التفاصيل الكاملة
+    </button>
+</div>
+        
+        <!-- قسم الأسئلة الشائعة -->
+        <section class="faq-section">
+            <h2 class="faq-title">أسئلة شائعة</h2>
+            
+            <div class="faq-item" onclick="toggleFAQ(1)">
+                <div class="faq-question">
+                    هل يمكنني الترقية من الباقة المجانية لاحقاً؟
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    نعم، يمكنك الترقية في أي وقت. سيتم احتساب الفارق المتبقي من شهرك الحالي.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(2)">
+                <div class="faq-question">
+                    ما هو عدد الصور الذي يمكنني تحليله شهرياً؟
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    الباقة المجانية: 4 صور شهرياً. الباقة الملكية: 30 صورة شهرياً.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(3)">
+                <div class="faq-question">
+                    هل يمكنني إلغاء الاشتراك في أي وقت؟
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    نعم، يمكنك إلغاء اشتراكك في أي وقت بدون أي رسوم إضافية.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFAQ(4)">
+                <div class="faq-question">
+                    هل هناك تجربة مجانية للباقة الملكية؟
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    نعم، نقدم تجربة مجانية لمدة 7 أيام للباقة الملكية.
+                </div>
+            </div>
+        </section>
+        
+        <!-- رسالة أسفل الصفحة -->
+        <footer class="page-footer">
+            جميع الحقوق محفوظة © 2024 Royal Ray Zone | تحليل أشعة الأسنان بالذكاء الاصطناعي
+        </footer>
+    </div>
+    
+    <!-- نافذة تفاصيل الباقة المجانية -->
+    <div id="freeDetailsModal" class="details-modal">
+        <div class="details-content">
+            <button class="close-modal" onclick="closeModal('freeDetailsModal')">×</button>
+            <h2 style="color: #c5a059; margin-bottom: 25px;">تفاصيل الباقة المجانية</h2>
+            
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: white; margin-bottom: 15px;">🎯 المميزات:</h3>
+                <ul style="color: #e2e8f0; line-height: 1.8; padding-right: 20px;">
+                    <li>4 تحليلات شهرية لأشعة الأسنان</li>
+                    <li>تحليل أساسي بالذكاء الاصطناعي</li>
+                    <li>نتائج فورية تظهر على الموقع</li>
+                    <li>دعم عبر البريد الإلكتروني خلال 24 ساعة</li>
+                    <li>تخزين النتائج لمدة 30 يوماً</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: white; margin-bottom: 15px;">⚠️ القيود:</h3>
+                <ul style="color: #94a3b8; line-height: 1.8; padding-right: 20px;">
+                    <li>لا يمكن تحميل تقارير PDF</li>
+                    <li>لا يوجد دعم فني هاتفي</li>
+                    <li>لا يمكن تحميل دفعات من الصور</li>
+                    <li>إحصائيات محدودة</li>
+                </ul>
+            </div>
+            
+            <p style="color: #94a3b8; font-style: italic; margin-top: 20px;">
+                هذه الباقة مناسبة للاستخدام الشخصي المحدود.
+            </p>
+        </div>
+    </div>
+    
+    <!-- نافذة تفاصيل الباقة الملكية -->
+    <div id="royalDetailsModal" class="details-modal">
+        <div class="details-content">
+            <button class="close-modal" onclick="closeModal('royalDetailsModal')">×</button>
+            <h2 style="color: #c5a059; margin-bottom: 25px;">تفاصيل الباقة الملكية</h2>
+            
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: white; margin-bottom: 15px;">👑 المميزات المميزة:</h3>
+                <ul style="color: #e2e8f0; line-height: 1.8; padding-right: 20px;">
+                    <li>30 تحليل شهري لأشعة الأسنان</li>
+                    <li>تحليل متقدم بالذكاء الاصطناعي</li>
+                    <li>نتائج فورية + تقارير PDF للتحميل</li>
+                    <li>دعم فني 24/7 عبر الهاتف والواتساب</li>
+                    <li>تحميل دفعات من الصور (حتى 10 صور معاً)</li>
+                    <li>إحصائيات وتقارير متقدمة</li>
+                    <li>تخزين النتائج لمدة سنة كاملة</li>
+                    <li>إشعارات SMS للمتابعة</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <h3 style="color: white; margin-bottom: 15px;">💰 القيمة:</h3>
+                <div style="background: rgba(197, 160, 89, 0.1); padding: 15px; border-radius: 10px;">
+                    <p style="color: #e2e8f0; margin-bottom: 10px;">
+                        <strong>بتكلفة أقل من $1 لكل تحليل!</strong>
+                    </p>
+                    <p style="color: #94a3b8;">
+                        مقابل $29 شهرياً تحصل على 30 تحليل = $0.97 للتحليل الواحد
+                    </p>
+                </div>
+            </div>
+            
+            <p style="color: #94a3b8; font-style: italic; margin-top: 20px;">
+                هذه الباقة مناسبة للأطباء والعيادات المهنية.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // اختيار خطة
+        function selectPlan(planType) {
+            if (planType === 'free') {
+                // الانتقال المباشر لصفحة الاتفاقية بدون تأكيد
+                window.location.href = "agreement.html?plan=free";
+            } else if (planType === 'royal') {
+                // الانتقال المباشر لصفحة الدفع بدون تأكيد
+                window.location.href = "payment.html";
+            }
+            
+            // إضافة مؤشر تشغيل
+            const event = new CustomEvent('planSelected', { detail: { plan: planType } });
+            document.dispatchEvent(event);
+        }
+        
+        // عرض تفاصيل الخطة
+        function showDetails(planType) {
+            if (planType === 'free') {
+                document.getElementById('freeDetailsModal').style.display = 'flex';
+            } else if (planType === 'royal') {
+                document.getElementById('royalDetailsModal').style.display = 'flex';
+            }
+        }
+        
+        // إغلاق نافذة التفاصيل
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // إغلاق النافذة بالنقر خارجها
+        window.onclick = function(event) {
+            if (event.target.classList.contains('details-modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        // تبديل الأسئلة الشائعة
+        function toggleFAQ(index) {
+            const faqItem = document.querySelectorAll('.faq-item')[index - 1];
+            faqItem.classList.toggle('active');
+            
+            // تغيير علامة + إلى -
+            const span = faqItem.querySelector('.faq-question span');
+            span.textContent = faqItem.classList.contains('active') ? '−' : '+';
+        }
+        
+        // العودة للخلف
+        function goBack() {
+            if (confirm('هل تريد العودة لصفحة التسجيل؟')) {
+                window.location.href = "index.html";
+            }
+        }
+        
+       
+        
+        // تسجيل الخروج
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                // مسح بيانات الجلسة
+                localStorage.clear();
+                
+                // الانتقال للصفحة الرئيسية
+                window.location.href = "index.html";
+            }
+        }
+        
+        // إضافة مؤثرات عند التمرير
+        window.addEventListener('scroll', function() {
+            const cards = document.querySelectorAll('.plan-card');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.8) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // تهيئة أولية للبطاقات
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.plan-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200 + 300);
+            });
+        });
+  // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+// ========== PWA Service Worker Registration ==========
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(function(registration) {
+                console.log('✅ Service Worker مسجل بنجاح:', registration.scope);
+                
+                // تحقق من التحديثات
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 تم اكتشاف تحديث جديد!');
+                });
+            })
+            .catch(function(error) {
+                console.log('❌ فشل تسجيل Service Worker:', error);
+            });
+    });
+}
+
+// ========== PWA Install Prompt ==========
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // منع المتصفح من عرض التثبيت التلقائي
+    e.preventDefault();
+    // حفظ الحدث لاستخدامه لاحقاً
+    deferredPrompt = e;
+    
+    // إظهار زر التثبيت إذا كان موجوداً
+    if (installButton) {
+        installButton.style.display = 'block';
+        installButton.addEventListener('click', (e) => {
+            // عرض موجه التثبيت
+            deferredPrompt.prompt();
+            // الانتظار لرد المستخدم
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ وافق المستخدم على التثبيت');
+                } else {
+                    console.log('❌ رفض المستخدم التثبيت');
+                }
+                deferredPrompt = null;
+            });
+        });
+    }
+});
+    </script>
+  <script src="shared/tablet-input.js"></script>
+</body>
+</html>

@@ -1,0 +1,3660 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+    <title>CBCT Airway Analysis Pro - تحليل مجرى الهواء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dicom-parser/1.8.13/dicomParser.min.js"></script>
+
+    <!-- Daikon (DICOM parsing - same approach as cbct.html) -->
+    <script>if(typeof daikon==='undefined')document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/daikon/1.2.42/daikon.min.js"><\/script>');</script>
+    <script>if(typeof daikon==='undefined')document.write('<script src="https://unpkg.com/daikon@1.2.42/release/current/daikon-min.js"><\/script>');</script>
+
+    <!-- JSZip (ZIP unzipping) -->
+    <script src="jszip.min.js"></script>
+    <script>if(typeof JSZip==='undefined')document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>');</script>
+    <script>if(typeof JSZip==='undefined')document.write('<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"><\/script>');</script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Tajawal', sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; overflow: hidden; }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        .viewport {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #334155;
+        }
+        
+        .viewport canvas { display: block; width: 100%; height: 100%; }
+        
+        .slice-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            z-index: 10;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+        
+        .toolbar-btn {
+            transition: all 0.2s;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(51, 65, 85, 0.8);
+        }
+        .toolbar-btn:hover { 
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+        }
+        .toolbar-btn.active { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .slice-slider {
+            -webkit-appearance: none;
+            height: 6px;
+            background: #1e293b;
+            outline: none;
+            border-radius: 3px;
+            border: 1px solid #334155;
+        }
+        .mini-slider{ -webkit-appearance:none; height:4px; background:#1e293b; border:1px solid #334155; border-radius:999px; }
+        .mini-slider::-webkit-slider-thumb{ -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#2563eb); border:2px solid #0b1220; }
+
+        .contrast-tool-btn{
+            position:absolute;
+            top:8px;
+            left:8px;
+            z-index:25;
+            width:30px;
+            height:30px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:8px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(148,163,184,0.35);
+            color:#e2e8f0;
+            font-weight:800;
+            cursor: ew-resize;
+            user-select:none;
+            touch-action:none;
+        }
+        .contrast-tool-btn:hover{ border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.25) inset; }
+        .contrast-tool-btn.active{ background: linear-gradient(135deg, rgba(59,130,246,0.85), rgba(37,99,235,0.85)); border-color:#3b82f6; color:white; }
+        .contrast-hint{
+            position:absolute;
+            top:42px;
+            left:8px;
+            z-index:25;
+            padding:4px 8px;
+            font-size:11px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(148,163,184,0.25);
+            border-radius:8px;
+            color:#cbd5e1;
+            display:none;
+            pointer-events:none;
+            user-select:none;
+        }
+
+
+        .slice-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #1e293b;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        
+        #dicomFileInput { display: none; }
+        
+        .volume-stats {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+        }
+        
+        .color-legend {
+            background: linear-gradient(to right, #ef4444, #f59e0b, #10b981, #3b82f6);
+            height: 10px;
+            border-radius: 5px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        
+        .crosshair-line {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.8);
+            pointer-events: none;
+            box-shadow: 0 0 4px rgba(59, 130, 246, 0.8);
+        }
+        .crosshair-h { left: 0; right: 0; height: 1px; }
+        .crosshair-v { top: 0; bottom: 0; width: 1px; }
+
+        .progress-bar {
+            width: 300px;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            width: 0%;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.error { border-color: #ef4444; }
+        .notification.success { border-color: #10b981; }
+    
+        /* 3D orientation gizmo (Blender-like) */
+        .gizmo-overlay{
+            position:absolute;
+            bottom:12px;
+            right:12px;
+            width:96px;
+            height:96px;
+            z-index: 999;
+            pointer-events: auto;
+            border:1px solid rgba(148,163,184,0.25);
+            border-radius:10px;
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(6px);
+            overflow:hidden;
+        }
+        .gizmo-overlay canvas{ width:100%; height:100%; display:block; }
+
+    
+        .gizmo-overlay .gizmo-label{
+            position:absolute;
+            font-size:12px;
+            font-weight:800;
+            letter-spacing:0.5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+            pointer-events:auto;
+            cursor:pointer;
+            user-select:none;
+        }
+        .gizmo-overlay .gizmo-label.x{ right:8px; top:50%; transform:translateY(-50%); color:#ef4444; }
+        .gizmo-overlay .gizmo-label.y{ left:50%; top:8px; transform:translateX(-50%); color:#22c55e; }
+        .gizmo-overlay .gizmo-label.z{ left:8px; bottom:8px; color:#3b82f6; }
+        .gizmo-overlay .gizmo-label.xneg{ left:8px; top:50%; transform:translateY(-50%); color:#ef4444; }
+        .gizmo-overlay .gizmo-label.yneg{ left:50%; bottom:8px; transform:translateX(-50%); color:#22c55e; }
+        .gizmo-overlay .gizmo-label.zneg{ left:8px; top:8px; color:#3b82f6; }
+        .gizmo-overlay .gizmo-label{ padding:2px 4px; border-radius:6px; background: rgba(0,0,0,0.35); }
+
+
+        /* Start Screen (like cbct.html) */
+        #startScreen{
+            position:fixed; inset:0;
+            background:#0b1220;
+            z-index: 2500;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding: 20px;
+        }
+        #startScreen .start-box{
+            background:#151f32;
+            padding: 38px 34px;
+            border-radius: 14px;
+            border: 1px solid rgba(148,163,184,0.18);
+            box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+            width: min(92vw, 460px);
+            text-align:center;
+            display:flex;
+            flex-direction:column;
+            gap: 14px;
+        }
+        #startScreen .start-logo{
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg,#60a5fa,#22d3ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        #startScreen .start-sub{
+            color: rgba(226,232,240,0.78);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: -6px;
+        }
+        #startScreen .btn-upload-lg{
+            background: linear-gradient(90deg, rgba(37,99,235,0.95), rgba(14,165,233,0.9));
+            color: #fff;
+            border: 1px solid rgba(56,189,248,0.28);
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap: 10px;
+            transition: 0.18s ease;
+            box-shadow: 0 12px 30px rgba(14,165,233,0.22);
+        }
+        #startScreen .btn-upload-lg:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+        #startScreen .start-hint{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap: 8px;
+            color: rgba(148,163,184,0.9);
+            font-size: 12px;
+        }
+
+        /* Ensure start screen hides even with #startScreen display:flex */
+        #startScreen.hidden{ display:none !important; }
+
+        /* --- Mobile Landscape Viewer Mode (CBCT-like) --- */
+        body.viewer-mode{ overflow:hidden; }
+        body.viewer-mode main{ height: calc(var(--vh, 1vh) * 100 - 64px); } /* header = h-16 */
+
+        /* Tools drawer toggle (mobile portrait) */
+        .tools-toggle{
+            position: fixed;
+            left: 10px;
+            top: 74px;
+            z-index: 2200;
+            display: none;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(59,130,246,0.35);
+            background: rgba(15, 23, 42, 0.75);
+            color: #e2e8f0;
+            font-weight: 800;
+            letter-spacing: .5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 1024px) and (orientation: landscape){
+            header{ height:44px !important; }
+            body.viewer-mode main{ height: calc(var(--vh, 1vh) * 100 - 44px); }
+            main{ }
+            aside{ width: min(42vw, 320px) !important; }
+            main > div.flex-1.p-4.grid{ gap: 6px !important; padding: 6px !important; }
+            .viewport{ border-radius: 12px; }
+        }
+
+        @media (max-width: 1024px) and (orientation: portrait){
+            header{ height:44px !important; }
+            body.viewer-mode main{ height: calc(var(--vh, 1vh) * 100 - 44px); }
+            .tools-toggle{ display:block; }
+            /* Make tools panel a drawer */
+            main{ position:relative; }
+            aside{
+                position: fixed;
+                left: 0;
+                top: 44px;
+                bottom: 0;
+                width: min(84vw, 340px) !important;
+                z-index: 2100;
+                transform: translateX(-102%);
+                transition: transform 180ms ease;
+                box-shadow: 14px 0 40px rgba(0,0,0,0.65);
+                overflow-y:auto;
+            }
+            body.viewer-mode.tools-open aside{ transform: translateX(0); }
+            /* Viewports take full width */
+            main > div.flex-1.p-4.grid{
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto !important;
+                gap: 8px !important;
+                padding: 8px !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .viewport{ min-height: 220px; }
+        }
+
+        #rotateOverlay{
+            position: fixed;
+            inset: 0;
+            z-index: 2600;
+            display:none;
+            align-items:center;
+            justify-content:center;
+            background: rgba(0,0,0,0.85);
+            padding: 18px;
+        }
+        #rotateOverlay .box{
+            width:min(520px, 92vw);
+            background:#151f32;
+            border:1px solid rgba(59,130,246,0.35);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        }
+        #rotateOverlay .title{ font-weight: 900; font-size: 16px; margin-bottom: 10px; color: #60a5fa; }
+        #rotateOverlay .hint{ color: rgba(255,255,255,0.78); font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
+        #rotateOverlay .row{ display:flex; gap:10px; flex-wrap:wrap; }
+        #rotateOverlay .btn{
+            flex:1;
+            min-width: 170px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor:pointer;
+            font-weight: 900;
+            border:1px solid rgba(59,130,246,0.35);
+            background: rgba(59,130,246,0.18);
+            color:#e2e8f0;
+        }
+        #rotateOverlay .btn.secondary{
+            border:1px solid rgba(148,163,184,0.25);
+            background: rgba(148,163,184,0.10);
+        }
+
+
+        /* --- Report (copied from cbct.html) --- */
+        .btn-show-report{
+            margin-top: 12px;
+            width: 100%;
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.45);
+            color: #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .btn-show-report:hover{ background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+
+        #reportModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:3000; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        .repo-box { width: 90%; max-width: 600px; height: 85vh; background: rgba(15, 23, 42, 0.96); border:1px solid rgba(59,130,246,0.5); border-radius:12px; display:flex; flex-direction:column; padding:18px; box-shadow:0 0 40px rgba(0,0,0,0.8); }
+        .repo-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(148,163,184,0.18); padding-bottom:10px; }
+        .repo-title { font-size:18px; font-weight:900; color: #93c5fd; }
+        .repo-close { background:transparent; border:none; color:#ef4444; font-size:20px; cursor:pointer; }
+        .repo-body { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+        .repo-item { display:flex; gap:10px; background: rgba(2,6,23,0.75); padding:10px; border-radius:10px; border:1px solid rgba(148,163,184,0.18); }
+        .repo-img { width:110px; height:110px; object-fit:contain; background:#000; border:1px solid rgba(148,163,184,0.18); border-radius:8px; }
+        .repo-info { display:flex; flex-direction:column; justify-content:center; gap:6px; font-size:12px; color: rgba(226,232,240,0.85); }
+        .repo-foot { padding-top:12px; border-top:1px solid rgba(148,163,184,0.18); display:flex; justify-content:flex-end; gap:10px; }
+        .btn-pdf { background: rgba(16,185,129,0.9); color: #06131f; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .btn-pdf:hover { opacity: 0.95; box-shadow: 0 0 15px rgba(16,185,129,0.25); }
+
+/* === Mobile landscape fixes (Airway) === */
+@media (max-width: 980px) and (orientation: landscape) {
+    /* Keep the app in a stable viewport; allow scrolling ONLY inside the view area */
+    body { overflow: hidden; }
+
+    /* Smaller top toolbar to prevent overlap */
+    header.glass-panel { height: 48px !important; padding-left: 8px !important; padding-right: 8px !important; background: rgba(15,23,42,0.94) !important; }
+    header.glass-panel h1 { font-size: 13px !important; line-height: 1.1 !important; }
+    header.glass-panel p { font-size: 10px !important; line-height: 1.1 !important; }
+    header.glass-panel .toolbar-btn { padding: 5px 8px !important; font-size: 11px !important; border-radius: 12px !important; }
+    header.glass-panel .toolbar-btn svg { width: 15px !important; height: 15px !important; }
+
+    /* Make main take exactly the remaining space under the header (PWA-safe) */
+    body.viewer-mode main{ height: calc(var(--vh, 1vh) * 100 - 48px); }
+
+    main { position: relative; overflow: hidden; }
+
+    /* Sidebar becomes an overlay drawer on mobile */
+    main .tools-sidebar {
+        position: absolute !important;
+        top: 0 !important; right: 0 !important; bottom: 0 !important;
+        width: min(82vw, 340px) !important;
+        transform: translateX(100%);
+        transition: transform 0.22s ease;
+        z-index: 80;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px !important;
+    }
+    body.tools-open main .tools-sidebar { transform: translateX(0); }
+
+    /* Viewports: stack vertically with bigger height and allow vertical scroll */
+    main .viewports-grid {
+        padding: 6px !important;
+        gap: 10px !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: none !important;
+        grid-auto-rows: minmax(240px, 58vh) !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .viewport { border-radius: 14px; }
+    .slice-label { top: 6px; left: 6px; font-size: 10px; padding: 3px 8px; }
+    .viewport canvas { touch-action: none; }
+
+    /* Make panel overlay controls smaller on mobile */
+    .viewport .absolute.top-2.right-2 { top: 6px !important; right: 6px !important; transform: scale(0.88); transform-origin: top right; }
+    .viewport .absolute.bottom-2.left-2 { bottom: 6px !important; left: 6px !important; transform: scale(0.88); transform-origin: bottom left; }
+}
+
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="shared/tablet.css">
+</head>
+<body class="h-screen flex flex-col">
+
+<script>
+(function(){
+  function setVH(){ document.documentElement.style.setProperty('--vh', (window.innerHeight*0.01) + 'px'); }
+  setVH();
+  window.addEventListener('resize', setVH, {passive:true});
+  window.addEventListener('orientationchange', function(){ setTimeout(setVH, 180); }, {passive:true});
+})();
+</script>
+
+    <!-- Start Screen (ZIP Upload) -->
+    <div id="startScreen" class="">
+        <div class="start-box">
+            <div class="start-logo">AirwayVision</div>
+            <div class="start-sub">رفع ملف ZIP الخاص بشرائح DICOM لبدء التحليل</div>
+
+            <input type="file" id="dicomFileInput" accept=".zip" />
+
+            <button class="btn-upload-lg" onclick="(function(){const i=document.getElementById('dicomFileInput'); if(i){ i.value=''; i.click(); }})()">
+                <svg style="width:20px;height:20px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                رفع ملف ZIP
+            </button>
+
+<div style="margin-top:12px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <button type="button" class="px-4 py-2 rounded-lg font-bold bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-600" onclick="goDashboard()">🏠 Dashboard</button>
+</div>
+
+
+            <div class="start-hint">
+                <span>✅</span>
+                <span>بعد الرفع يبدأ الـ Workflow تلقائياً.</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <p id="notificationText" class="text-sm font-medium"></p>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-panel h-16 flex items-center justify-between px-6 shrink-0 z-50 border-b border-slate-700">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">AirwayVision Pro</h1>
+                <p class="text-xs text-slate-400">نظام تحليل مجرى الهواء ثلاثي الأبعاد</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button id="segmentBtn" class="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
+                Segmentation Auto
+            </button>
+            <button id="backBtn" class="hidden bg-slate-700/80 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 border border-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </button>
+            <button id="showReportTopBtn" class="bg-blue-600/80 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 border border-blue-400/30" onclick="showReport()">
+                🧾 Show Report
+            </button>
+
+            
+<button id="newCaseBtn" class="bg-amber-600/80 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20 border border-amber-400/30" onclick="newCase()">
+    🆕 New Case
+</button>
+
+<button id="dashboardBtn" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 border border-slate-600" onclick="goDashboard()">
+    🏠 Dashboard
+</button>
+
+<button id="resetViewBtn" class="order-first bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 border border-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5 9a8 8 0 0113.657-2.343M19 15a8 8 0 01-13.657 2.343"/></svg>
+                Reset
+            </button>
+
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden bg-slate-900">
+        
+        <!-- Left Panel - Controls -->
+        <aside class="w-80 glass-panel border-l border-slate-700 p-4 flex flex-col gap-4 overflow-y-auto">
+            
+            <!-- Tools -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-blue-500 rounded-full"></span>
+                    أدوات الرسم
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="toolPolygon" class="toolbar-btn active p-3 rounded-lg text-sm font-medium flex flex-col items-center gap-2 text-slate-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Polygon ROI
+                    </button>
+                    <button id="toolNavigate" class="toolbar-btn p-3 rounded-lg text-sm font-medium flex flex-col items-center gap-2 text-slate-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                        Navigate
+                    </button>
+                </div>
+
+                <div class="flex gap-2 mt-2" hidden">
+                    <button id="undoPointBtn" class="w-full bg-slate-700/80 hover:bg-slate-600 text-slate-200 py-2 rounded-lg text-sm font-medium transition-all border border-slate-600">
+                        Undo (نقطة/ROI)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Volume Calculation -->
+            <div class="volume-stats p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-600 pb-2">
+                    <span class="text-sm text-slate-300 font-medium">Volume Tool</span>
+                    <span id="sliceCount" class="text-xs bg-blue-600/80 px-2 py-1 rounded-full text-white">0 ROIs</span>
+                </div>
+                <button id="calcVolumeBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 rounded-lg font-bold transition-all shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed border border-purple-400/30" disabled>
+                    حساب الحجم 3D
+                </button>
+                <button id="clearPolygonsBtn" class="w-full bg-slate-700/80 hover:bg-slate-600 text-slate-300 py-2 rounded-lg text-sm transition-all border border-slate-600">
+                    مسح جميع المناطق
+                </button>
+
+                <button id="showReportBtn" class="w-full bg-blue-600/80 hover:bg-blue-500 text-white py-2 rounded-lg text-sm font-bold transition-all border border-blue-400/30 flex items-center justify-center gap-2" onclick="showReport()">
+                    🧾 Show Report
+                    <span id="snapCount" class="text-[11px] bg-black/30 px-2 py-0.5 rounded-full border border-white/10">0</span>
+                </button>
+
+            </div>
+
+            <!-- Statistics -->
+            <div id="statsPanel" class="space-y-3 opacity-50 pointer-events-none transition-opacity">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-emerald-500 rounded-full"></span>
+                    الإحصائيات
+                </h3>
+                
+                <div class="bg-slate-800/50 p-3 rounded-lg space-y-3 border border-slate-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400">الحجم الكلي</span>
+                        <span id="totalVolume" class="text-lg font-bold text-emerald-400">0.00 cm³</span>
+                    </div>
+                    <div class="h-px bg-slate-700"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400">المساحة العرضية القصوى</span>
+                        <span id="crossSectionArea" class="text-md font-semibold text-blue-400">0 mm²</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400">أضيق نقطة (Constriction)</span>
+                        <span id="narrowestPoint" class="text-md font-semibold text-red-400">0 mm²</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-slate-300">خريطة الألوان</span>
+                        <span class="text-slate-400">mm²</span>
+                    </div>
+                    <div class="color-legend"></div>
+                    <div class="flex justify-between text-xs text-slate-500 font-mono">
+                        <span class="text-red-400">0</span>
+                        <span class="text-yellow-400">50</span>
+                        <span class="text-emerald-400">100</span>
+                        <span class="text-blue-400">150+</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segmentation Controls -->
+            <div id="segmentControls" class="space-y-3 opacity-50 pointer-events-none transition-opacity">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-emerald-500 rounded-full"></span>
+                    Segmentation
+                </h3>
+</div>
+                <div class="flex gap-2">
+                    <button id="applySegmentBtn" class="flex-1 bg-emerald-600/80 hover:bg-emerald-500 text-white py-2 rounded-lg text-sm font-medium transition-all border border-emerald-500/50 hidden">تطبيق</button>
+                    <button id="resetSegmentBtn" class="flex-1 bg-slate-700/80 hover:bg-slate-600 text-slate-300 py-2 rounded-lg text-sm transition-all border border-slate-600 hidden">إعادة</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Viewports Grid -->
+        <div class="flex-1 p-4 grid grid-cols-2 grid-rows-2 gap-4">
+            
+            <!-- Axial View -->
+            <div class="viewport" id="axialContainer">
+                <div class="slice-label text-cyan-400 border-cyan-500/50">AXIAL</div>
+                <button id="axialContrastTool" class="contrast-tool-btn" title="Contrast Tool">◐</button>
+                <div id="axialContrastHint" class="contrast-hint">Contrast</div>
+                <canvas id="axialCanvas"></canvas>
+                <div class="crosshair-line crosshair-h" id="axialCrosshairH" style="display:none;"></div>
+                <div class="crosshair-line crosshair-v" id="axialCrosshairV" style="display:none;"></div>
+                <div class="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 p-1 rounded-lg border border-slate-700">
+                    <button id="axialMoveBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-semibold text-slate-200" title="Movement">Move</button>
+                    <button id="axialZoomOutBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom Out">−</button>
+                    <button id="axialZoomInBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom In">+</button>
+                    <button id="axialSnapBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Snapshot" onclick="takeSnapshot('axial')">
+                        📸
+                    </button>
+<div class="flex items-center gap-1 px-1">
+                        <span class="text-[10px] text-slate-300">F</span>
+                        <input id="axialFilter" type="range" min="0" max="2" step="0.05" value="0.3" class="mini-slider w-16" title="Filter (Denoise/Blur)">
+                    </div>
+</div>
+                <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                    <div class="flex items-center gap-3">
+                        <input type="range" class="flex-1 slice-slider" id="axialSlider" min="0" max="100" value="50">
+                        <span class="text-xs font-mono text-cyan-400 w-16 text-left" id="axialSliceNum">50/100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sagittal View -->
+            <div class="viewport" id="sagittalContainer">
+                <div class="slice-label text-purple-400 border-purple-500/50">SAGITTAL</div>
+                <button id="sagittalContrastTool" class="contrast-tool-btn" title="Contrast Tool">◐</button>
+                <div id="sagittalContrastHint" class="contrast-hint">Contrast</div>
+                <canvas id="sagittalCanvas"></canvas>
+                <div class="crosshair-line crosshair-h" id="sagittalCrosshairH" style="display:none;"></div>
+                <div class="crosshair-line crosshair-v" id="sagittalCrosshairV" style="display:none;"></div>
+                <div class="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 p-1 rounded-lg border border-slate-700">
+                    <button id="sagittalMoveBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-semibold text-slate-200" title="Movement">Move</button>
+                    <button id="sagittalZoomOutBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom Out">−</button>
+                    <button id="sagittalZoomInBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom In">+</button>
+                    <button id="sagittalSnapBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Snapshot" onclick="takeSnapshot('sagittal')">
+                        📸
+                    </button>
+<div class="flex items-center gap-1 px-1">
+                        <span class="text-[10px] text-slate-300">F</span>
+                        <input id="sagittalFilter" type="range" min="0" max="2" step="0.05" value="0.3" class="mini-slider w-16" title="Filter (Denoise/Blur)">
+                    </div>
+</div>
+                <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                    <div class="flex items-center gap-3">
+                        <input type="range" class="flex-1 slice-slider" id="sagittalSlider" min="0" max="100" value="50">
+                        <span class="text-xs font-mono text-purple-400 w-16 text-left" id="sagittalSliceNum">50/100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coronal View -->
+            <div class="viewport" id="coronalContainer">
+                <div class="slice-label text-emerald-400 border-emerald-500/50">CORONAL</div>
+                <button id="coronalContrastTool" class="contrast-tool-btn" title="Contrast Tool">◐</button>
+                <div id="coronalContrastHint" class="contrast-hint">Contrast</div>
+                <canvas id="coronalCanvas"></canvas>
+                <div class="crosshair-line crosshair-h" id="coronalCrosshairH" style="display:none;"></div>
+                <div class="crosshair-line crosshair-v" id="coronalCrosshairV" style="display:none;"></div>
+                <div class="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 p-1 rounded-lg border border-slate-700">
+                    <button id="coronalMoveBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-semibold text-slate-200" title="Movement">Move</button>
+                    <button id="coronalZoomOutBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom Out">−</button>
+                    <button id="coronalZoomInBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Zoom In">+</button>
+                    <button id="coronalSnapBtn" class="toolbar-btn px-2 py-1 rounded-md text-xs font-bold text-slate-200" title="Snapshot" onclick="takeSnapshot('coronal')">
+                        📸
+                    </button>
+<div class="flex items-center gap-1 px-1">
+                        <span class="text-[10px] text-slate-300">F</span>
+                        <input id="coronalFilter" type="range" min="0" max="2" step="0.05" value="0.3" class="mini-slider w-16" title="Filter (Denoise/Blur)">
+                    </div>
+</div>
+                <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                    <div class="flex items-center gap-3">
+                        <input type="range" class="flex-1 slice-slider" id="coronalSlider" min="0" max="100" value="50">
+                        <span class="text-xs font-mono text-emerald-400 w-16 text-left" id="coronalSliceNum">50/100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D Volume View -->
+            <div class="viewport relative" id="volumeContainer">
+                <div class="absolute top-10 left-2 z-10 bg-black/50 p-3 rounded-lg border border-slate-700 w-44">
+                    <div class="text-xs text-slate-200 mb-2 font-semibold">Color map range</div>
+                    <div class="h-3 rounded overflow-hidden bg-gradient-to-r from-blue-500 via-emerald-400 to-red-500"></div>
+                    <div class="flex justify-between text-[10px] text-slate-300 mt-1 font-mono">
+                        <span>150</span><span>0</span>
+                    </div>
+                </div>
+                
+                <button id="volumeSnapBtn" class="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white px-3 py-2 rounded-lg text-xs font-bold border border-slate-700" onclick="takeSnapshot('volume')">
+                    📸 Snapshot
+                </button>
+                <div id="volume3DOverlay" class="absolute top-2 left-2 z-20 bg-black/60 text-white px-3 py-2 rounded-lg text-xs font-bold border border-slate-700">
+                    <span id="volume3DOverlayText">الحجم: 0.00 cm³</span>
+                </div>
+<div id="threeContainer" class="w-full h-full"></div>
+                <div id="gizmoOverlay" class="gizmo-overlay"></div>
+                <div class="absolute bottom-4 left-4 right-4 text-center pointer-events-none">
+                    <p class="text-xs text-slate-400 bg-black/50 py-1 px-3 rounded-full inline-block">اسحب للتدوير • تمرير للتكبير • انقر مرتين لإعادة التعيين</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4 shadow-lg shadow-blue-500/20"></div>
+        <p class="text-lg font-bold text-white mb-2">جاري تحميل البيانات...</p>
+        <p class="text-sm text-slate-400" id="loadingText">معالجة الملفات</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-2 font-mono" id="progressText">0%</p>
+    </div>
+
+    
+<!-- Report Modal -->
+<div id="reportModal">
+  <div class="repo-box">
+     <div class="repo-head">
+        <div class="repo-title">Generated Report</div>
+        <button class="repo-close" onclick="document.getElementById('reportModal').style.display='none'">✕</button>
+     </div>
+     <div class="repo-body" id="repoContent">
+        <div style="text-align:center; padding:20px; color:#666;">No snapshots taken yet.</div>
+     </div>
+     <div class="repo-foot">
+         <button class="btn-pdf" onclick="downloadPDF()">Download PDF</button>
+     </div>
+  </div>
+</div>
+
+<script>
+        // Enhanced Error Handling and Logging
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo);
+            showNotification('حدث خطأ: ' + msg, 'error');
+            return false;
+        };
+
+        function showNotification(text, type = 'success') {
+            const notif = document.getElementById('notification');
+            const textEl = document.getElementById('notificationText');
+            textEl.textContent = text;
+            notif.className = 'notification ' + type;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        // Global State with Error Recovery
+        const state = {
+            dicomData: null,
+            rawDicomData: null, // Keep original
+            slices: { axial: [], sagittal: [], coronal: [] },
+            originalSlices: { axial: [], sagittal: [], coronal: [] }, // For reset
+            currentSlice: { axial: 0, sagittal: 0, coronal: 0 },
+            dimensions: { width: 0, height: 0, depth: 0 },
+            spacing: { x: 1, y: 1, z: 1 },
+            tool: 'polygon',
+            view: {
+                axial: { zoom: 1, panX: 0, panY: 0, contrast: 0.85, brightness: -35, filter: 0.3, sharpness: 0.2, move: false },
+                sagittal: { zoom: 1, panX: 0, panY: 0, contrast: 0.85, brightness: -35, filter: 0.3, sharpness: 0.2, move: false },
+                coronal: { zoom: 1, panX: 0, panY: 0, contrast: 0.85, brightness: -35, filter: 0.3, sharpness: 0.2, move: false }
+            },
+            lastActivePlane: 'axial',
+            draggingPoint: null,
+            isPanning: { axial: false, sagittal: false, coronal: false },
+            panStart: { axial: null, sagittal: null, coronal: null },
+
+            polygons: { axial: {}, sagittal: {}, coronal: {} },
+            isDrawing: false,
+            currentPolygon: null,
+            volumeMesh: null,
+            segmentationActive: false,
+            stats: { totalVolume: 0, minArea: Infinity, maxArea: 0 },
+            colorMapMin: 0,
+            colorMapMax: 150,
+            fileCount: 0
+                    ,
+            reportList: [],
+            selectedReportType: 'Airway'
+};
+
+        // Three.js Setup
+        let scene, camera, renderer, controls, gridHelper3D;
+        let gizmoScene, gizmoCamera, gizmoRenderer, gizmoAxes;
+        let gizmoRaycaster; 
+        let gizmoPickables = [];
+        let segmentationGeometry = null;
+
+        function initThreeJS() {
+            try {
+                const container = document.getElementById('threeContainer');
+                if (!container) return;
+                
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x000000);
+
+                camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+                camera.position.set(0, 0, 300);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+                renderer.setSize(width, height);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.innerHTML = '';
+                container.appendChild(renderer.domElement);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 10;
+                controls.maxDistance = 1000;
+
+                const ambientLight = new THREE.AmbientLight(0x404040, 2);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(10, 10, 10);
+                scene.add(directionalLight);
+
+                gridHelper3D = new THREE.GridHelper(200, 20, 0x444444, 0x222222);
+                gridHelper3D.rotation.x = Math.PI / 2;
+
+                // Make grid subtle and correctly depth-tested (won't bleed through solid meshes)
+                try {
+                    const mats = Array.isArray(gridHelper3D.material) ? gridHelper3D.material : [gridHelper3D.material];
+                    mats.forEach(m => {
+                        m.transparent = true;
+                        m.opacity = 0.25;
+                        m.depthTest = true;
+                        m.depthWrite = false;
+                    });
+                } catch(e) {}
+
+                scene.add(gridHelper3D);
+                // Init Blender-like orientation gizmo (corner axes)
+                initGizmo();
+
+
+
+                animate();
+                return true;
+            } catch (e) {
+                console.error('Three.js initialization error:', e);
+                showNotification('خطأ في تهيئة العرض ثلاثي الأبعاد', 'error');
+                return false;
+            }
+        }
+
+
+        function initGizmo() {
+            try {
+                const holder = document.getElementById('gizmoOverlay');
+                if (!holder) return;
+
+                const size = Math.min(holder.clientWidth || 96, holder.clientHeight || 96) || 96;
+
+                gizmoScene = new THREE.Scene();
+                gizmoCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 10);
+                gizmoCamera.position.set(0, 0, 3);
+
+                gizmoRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: false });
+                gizmoRenderer.setSize(size, size);
+                gizmoRenderer.setPixelRatio(window.devicePixelRatio);
+                gizmoRenderer.setClearColor(0x000000, 0);
+
+                holder.innerHTML = '<div class="gizmo-label x" data-axis="X">X</div><div class="gizmo-label xneg" data-axis="-X">-X</div><div class="gizmo-label y" data-axis="Y">Y</div><div class="gizmo-label yneg" data-axis="-Y">-Y</div><div class="gizmo-label z" data-axis="Z">Z</div><div class="gizmo-label zneg" data-axis="-Z">-Z</div>';
+                holder.appendChild(gizmoRenderer.domElement);
+
+                // Click labels (+/- axes) to orient main camera
+                if (!holder.__axisLabelClickBound) {
+                    holder.querySelectorAll('[data-axis]').forEach(el => {
+                        el.addEventListener('pointerdown', (ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            const axis = el.getAttribute('data-axis');
+                            if (axis) orientMainCameraToAxis(axis);
+                        }, { passive: false });
+                    });
+                    holder.__axisLabelClickBound = true;
+                }
+
+
+                // Axes helper (X=red, Y=green, Z=blue)
+                gizmoAxes = new THREE.AxesHelper(1.6);
+                try {
+                    const gm = Array.isArray(gizmoAxes.material) ? gizmoAxes.material : [gizmoAxes.material];
+                    gm.forEach(m=>{ m.depthTest=false; m.depthWrite=false; m.transparent=true; m.opacity=1; });
+                } catch(e) {}
+
+                gizmoScene.add(gizmoAxes);
+                // Clickable axis arrows (like Blender view gizmo)
+                gizmoRaycaster = gizmoRaycaster || new THREE.Raycaster();
+                gizmoPickables = [];
+
+                const makeAxisArrow = (axisLabel, dirVec, colorHex) => {
+                    const group = new THREE.Group();
+                    group.userData.axisLabel = axisLabel;
+
+                    const shaftLen = 1.0;
+                    const shaftRad = 0.05;
+                    const headLen = 0.35;
+                    const headRad = 0.12;
+
+                    const shaftGeo = new THREE.CylinderGeometry(shaftRad, shaftRad, shaftLen, 16);
+                    const headGeo  = new THREE.ConeGeometry(headRad, headLen, 20);
+
+                    const mat = new THREE.MeshBasicMaterial({ color: colorHex, depthTest: false, depthWrite: false, transparent: false, opacity: 1, side: THREE.FrontSide });
+
+                    const shaft = new THREE.Mesh(shaftGeo, mat);
+                    const head  = new THREE.Mesh(headGeo, mat);
+
+                    // build along +Y then rotate to dir
+                    shaft.position.y = shaftLen * 0.5;
+                    head.position.y  = shaftLen + headLen * 0.5;
+
+                    group.add(shaft);
+                    group.add(head);
+
+                    const dir = dirVec.clone().normalize();
+                    group.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+
+                    // Slightly enlarge pick volume
+                    // Larger invisible hit target (easier clicks)
+                    const hitMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0.0, depthWrite:false, depthTest:false });
+                    const hitSphere = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), hitMat);
+                    hitSphere.position.copy(dirVec.clone().normalize().multiplyScalar(1.2));
+                    hitSphere.userData.axisLabel = axisLabel;
+                    group.add(hitSphere);
+
+                    group.traverse(obj => { obj.userData.axisLabel = axisLabel; });
+
+                    gizmoPickables.push(shaft, head, hitSphere);
+                    return group;
+                };
+
+                const arrows = new THREE.Group();
+                arrows.name = 'gizmoArrows';
+                arrows.add(makeAxisArrow('X', new THREE.Vector3(1,0,0), 0xef4444));
+                arrows.add(makeAxisArrow('-X', new THREE.Vector3(-1,0,0), 0xef4444));
+                arrows.add(makeAxisArrow('Y', new THREE.Vector3(0,1,0), 0x22c55e));
+                arrows.add(makeAxisArrow('-Y', new THREE.Vector3(0,-1,0), 0x22c55e));
+                arrows.add(makeAxisArrow('Z', new THREE.Vector3(0,0,1), 0x3b82f6));
+                arrows.add(makeAxisArrow('-Z', new THREE.Vector3(0,0,-1), 0x3b82f6));
+                gizmoScene.add(arrows);
+
+                // Click handler: orient main camera to axis
+                if (!gizmoRenderer.domElement.__axisClickBound) {
+                    gizmoRenderer.domElement.style.cursor = 'pointer';
+                    gizmoRenderer.domElement.addEventListener('pointerdown', (ev) => {
+                        try {
+                            const rect = gizmoRenderer.domElement.getBoundingClientRect();
+                            const x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+                            const y = -(((ev.clientY - rect.top) / rect.height) * 2 - 1);
+                            gizmoRaycaster.setFromCamera({ x, y }, gizmoCamera);
+
+                            const hits = gizmoRaycaster.intersectObjects(gizmoPickables, true);
+                            if (hits && hits.length) {
+                                const axisLabel = hits[0].object.userData.axisLabel;
+                                if (axisLabel) orientMainCameraToAxis(axisLabel);
+                            }
+                        } catch (e) {
+                            // silent
+                        }
+                    });
+                    gizmoRenderer.domElement.__axisClickBound = true;
+                }
+
+
+                const light = new THREE.DirectionalLight(0xffffff, 0.8);
+                light.position.set(2, 2, 3);
+                gizmoScene.add(light);
+                gizmoScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            } catch (e) {
+                console.warn('Gizmo init failed:', e);
+            }
+        }
+
+        
+        function orientMainCameraToAxis(axisLabel) {
+            if (!camera || !controls) return;
+            const target = (controls && controls.target) ? controls.target.clone() : new THREE.Vector3(0,0,0);
+            const dist = camera.position.distanceTo(target) || 300;
+
+            let axis = new THREE.Vector3(0, 0, 1);
+            const isNeg = (typeof axisLabel === 'string') && axisLabel.startsWith('-');
+            const base = isNeg ? axisLabel.slice(1) : axisLabel;
+            if (base === 'X') axis.set(1, 0, 0);
+            if (base === 'Y') axis.set(0, 1, 0);
+            if (base === 'Z') axis.set(0, 0, 1);
+            if (isNeg) axis.multiplyScalar(-1);
+
+            // Place camera on +axis direction looking at target
+            const newPos = target.clone().add(axis.clone().multiplyScalar(dist));
+            camera.position.copy(newPos);
+
+            // Choose an "up" vector that won't be parallel to view direction
+            let up = new THREE.Vector3(0, 1, 0);
+            if (Math.abs(axis.dot(up)) > 0.95) up.set(0, 0, 1);
+            camera.up.copy(up);
+
+            camera.lookAt(target);
+            controls.target.copy(target);
+            controls.update();
+        }
+
+        function renderGizmo() {
+            if (!gizmoRenderer || !gizmoScene || !gizmoCamera || !camera) return;
+            try {
+                // Match gizmo camera orientation to the main camera (Blender-like)
+                gizmoCamera.quaternion.copy(camera.quaternion);
+                gizmoRenderer.render(gizmoScene, gizmoCamera);
+            } catch (e) {
+                // silent
+            }
+        }
+
+        function resizeGizmo() {
+            const holder = document.getElementById('gizmoOverlay');
+            if (!holder || !gizmoRenderer) return;
+            const size = Math.min(holder.clientWidth || 96, holder.clientHeight || 96) || 96;
+            gizmoRenderer.setSize(size, size);
+        }
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update();
+            if (renderer && scene && camera) {
+                try {
+                    renderer.render(scene, camera);
+                    renderGizmo();
+                } catch (e) {
+                    console.error('Render error:', e);
+                }
+            }
+        }
+
+        function resizeThreeJS() {
+            if (!camera || !renderer) return;
+            const container = document.getElementById('threeContainer');
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            resizeGizmo();
+        }
+
+        window.addEventListener('resize', resizeThreeJS);
+
+        // Safe DICOM Processing
+        document.getElementById('dicomFileInput').addEventListener('change', handleDicomUpload);
+
+        async function handleDicomUpload(e) {
+            try {
+                const fileObj = (e.target.files && e.target.files[0]) ? e.target.files[0] : null;
+                if (!fileObj) return;
+
+                const lower = (fileObj.name || '').toLowerCase();
+                if (!lower.endsWith('.zip')) {
+                    showNotification('يرجى اختيار ملف ZIP يحتوي على شرائح DICOM', 'error');
+                    e.target.value = '';
+                    return;
+                }
+
+                if (typeof JSZip === 'undefined') {
+                    throw new Error('مكتبة JSZip غير متاحة (تأكد من تحميلها)');
+                }
+                if (typeof daikon === 'undefined' || !daikon.Series || !daikon.Series.parseImage) {
+                    throw new Error('مكتبة Daikon غير متاحة (DICOM parser)');
+                }
+
+                // UI
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                const __ss = document.getElementById('startScreen');
+                if (__ss) __ss.classList.add('hidden');
+                updateLoading(0, 'Unzipping ZIP...');
+
+                const zip = await JSZip.loadAsync(fileObj);
+
+                const slices = [];
+                const names = Object.keys(zip.files || {});
+                if (!names.length) throw new Error('الـ ZIP فارغ');
+
+                // count candidates for progress
+                let totalCandidates = 0;
+                for (const k of names) {
+                    const zf = zip.files[k];
+                    if (!zf || zf.dir) continue;
+                    if (k.includes('__MACOSX') || k.includes('MACOSX') || k.endsWith('.DS_Store')) continue;
+                    totalCandidates++;
+                }
+                if (!totalCandidates) throw new Error('لا توجد ملفات داخل الـ ZIP');
+
+                const getNumFromName = (s) => {
+                    const mm = (s || '').match(/\d+/);
+                    return mm ? parseInt(mm[0], 10) : 0;
+                };
+
+                let processed = 0;
+                for (const k of names) {
+                    const zf = zip.files[k];
+                    if (!zf || zf.dir) continue;
+                    if (k.includes('__MACOSX') || k.includes('MACOSX') || k.endsWith('.DS_Store')) continue;
+
+                    try {
+                        const buf = await zf.async('arraybuffer');
+
+                        // Daikon parse (more robust for many CBCT exports)
+                        let img = null;
+                        try {
+                            img = daikon.Series.parseImage(new DataView(buf));
+                        } catch (parseErr) {
+                            img = null;
+                        }
+                        if (!img || !img.hasPixelData || !img.hasPixelData()) {
+                            processed++;
+                            continue;
+                        }
+
+                        const pos = (img.getImagePosition && img.getImagePosition()) ? img.getImagePosition() : null;
+                        const zPos = (pos && pos.length >= 3 && isFinite(pos[2])) ? Number(pos[2]) : Number.NaN;
+
+                        let inst = Number.NaN;
+                        try {
+                            if (img.getInstanceNumber) {
+                                const v = img.getInstanceNumber();
+                                if (v !== null && v !== undefined && v !== '') inst = Number(v);
+                            }
+                        } catch {}
+                        if (!Number.isFinite(inst)) inst = getNumFromName(k);
+
+                        slices.push({ name: k, img, zPos, inst });
+
+                    } catch (readErr) {
+                        console.warn('Failed to read zip entry', k, readErr);
+                    }
+
+                    processed++;
+                    if (processed % 8 === 0) {
+                        const pct = Math.min(30, (processed / totalCandidates) * 30);
+                        updateLoading(pct, `فك ضغط الملف ${processed} من ${totalCandidates}`);
+                    }
+                }
+
+                if (!slices.length) {
+                    throw new Error('لم يتم العثور على ملفات DICOM صالحة داخل الـ ZIP (تحقق أن الـ ZIP يحتوي شرائح DICOM حقيقية)');
+                }
+
+                // Sort: Z position -> InstanceNumber -> filename numbers
+                slices.sort((a, b) => {
+                    const az = a.zPos, bz = b.zPos;
+                    if (Number.isFinite(az) && Number.isFinite(bz) && az !== bz) return az - bz;
+
+                    const ai = a.inst, bi = b.inst;
+                    if (Number.isFinite(ai) && Number.isFinite(bi) && ai !== bi) return ai - bi;
+
+                    return getNumFromName(a.name) - getNumFromName(b.name);
+                });
+
+                state.fileCount = slices.length;
+                updateLoading(30, `تم استخراج ${slices.length} شريحة DICOM...`);
+
+                await processDicomData(slices);
+
+                // allow re-upload of the same ZIP
+                e.target.value = '';
+
+            } catch (error) {
+                console.error('ZIP upload error:', error);
+                showNotification('خطأ في رفع ملف ZIP: ' + (error.message || error), 'error');
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                const __ss2 = document.getElementById('startScreen');
+                if (__ss2) __ss2.classList.remove('hidden');
+                try { e.target.value = ''; } catch {}
+            }
+        }
+
+        function updateLoading(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = Math.round(percent) + '%';
+            if (text) document.getElementById('loadingText').textContent = text;
+        }
+
+        function processDicomData(slices) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    try {
+                        updateLoading(30, 'تحليل البيانات الوصفية...');
+
+                        if (!slices || !slices.length || !slices[0].img) {
+                            throw new Error('لا توجد شرائح DICOM للمعالجة');
+                        }
+
+                        const ref = slices[0].img;
+
+                        const rows = (ref.getRows && ref.getRows()) ? ref.getRows() : (ref.getHeight ? ref.getHeight() : 512);
+                        const cols = (ref.getCols && ref.getCols()) ? ref.getCols() : (ref.getWidth ? ref.getWidth() : 512);
+
+                        // Rescale params (defaults)
+                        let rescaleSlope = 1, rescaleIntercept = 0;
+                        try { if (ref.getRescaleSlope) rescaleSlope = ref.getRescaleSlope() || 1; } catch {}
+                        try { if (ref.getRescaleIntercept) rescaleIntercept = ref.getRescaleIntercept() || 0; } catch {}
+
+                        // Spacing
+                        let sx = 0.5, sy = 0.5, sz = 1;
+                        try {
+                            if (ref.getPixelSpacing) {
+                                const sp = ref.getPixelSpacing(); // usually [row, col]
+                                if (sp && sp.length >= 2) {
+                                    sy = Number(sp[0]) || sy;
+                                    sx = Number(sp[1]) || sx;
+                                }
+                            }
+                        } catch {}
+                        try {
+                            if (ref.getSliceThickness) sz = Number(ref.getSliceThickness()) || sz;
+                        } catch {}
+                        // Robust Z spacing via ImagePositionPatient Z if possible
+                        try {
+                            if (slices.length > 1) {
+                                const p0 = slices[0].img.getImagePosition ? slices[0].img.getImagePosition() : null;
+                                const p1 = slices[1].img.getImagePosition ? slices[1].img.getImagePosition() : null;
+                                if (p0 && p1 && p0.length >= 3 && p1.length >= 3) {
+                                    const dz = Math.abs(Number(p1[2]) - Number(p0[2]));
+                                    if (isFinite(dz) && dz > 0) sz = dz;
+                                }
+                            }
+                        } catch {}
+
+                        updateLoading(40, 'استخراج بيانات البكسل...');
+
+                        // Detect multi-frame in single file (common in some exports)
+                        let depth = slices.length;
+                        let singleRaw = null;
+                        try {
+                            if (slices.length === 1) {
+                                const raw0 = slices[0].img.getInterpretedData ? slices[0].img.getInterpretedData(false, false) : null;
+                                if (raw0 && raw0.length && raw0.length > (rows * cols) && (raw0.length % (rows * cols) === 0)) {
+                                    const frames = raw0.length / (rows * cols);
+                                    if (frames > 1 && frames < 4096) { // sanity
+                                        depth = frames;
+                                        singleRaw = raw0;
+                                    }
+                                }
+                            }
+                        } catch {}
+
+                        state.spacing = { x: sx, y: sy, z: sz };
+                        state.dimensions = { width: cols, height: rows, depth };
+
+                        const totalPixels = cols * rows * depth;
+                        const volumeData = new Float32Array(totalPixels);
+
+                        let successCount = 0;
+
+                        if (singleRaw) {
+                            // Multi-frame: split raw into slices
+                            for (let i = 0; i < depth; i++) {
+                                const sliceOffset = i * rows * cols;
+                                const base = i * rows * cols;
+                                for (let j = 0; j < rows * cols; j++) {
+                                    volumeData[sliceOffset + j] = singleRaw[base + j] * rescaleSlope + rescaleIntercept;
+                                }
+                                successCount++;
+                                if (i % 10 === 0) {
+                                    updateLoading(40 + (i / depth) * 40, `معالجة الإطار ${i + 1} من ${depth}`);
+                                }
+                            }
+                        } else {
+                            for (let i = 0; i < slices.length; i++) {
+                                try {
+                                    const img = slices[i].img;
+                                    if (!img || !img.hasPixelData || !img.hasPixelData()) continue;
+
+                                    const raw = img.getInterpretedData ? img.getInterpretedData(false, false) : null;
+                                    if (!raw || raw.length < (rows * cols)) continue;
+
+                                    const sliceOffset = i * rows * cols;
+
+                                    for (let j = 0; j < rows * cols; j++) {
+                                        volumeData[sliceOffset + j] = raw[j] * rescaleSlope + rescaleIntercept;
+                                    }
+
+                                    successCount++;
+
+                                    if (i % 10 === 0) {
+                                        updateLoading(40 + (i / slices.length) * 40, `معالجة الشريحة ${i + 1} من ${slices.length}`);
+                                    }
+                                } catch (err) {
+                                    console.error(`Error parsing slice ${i}:`, err);
+                                    const sliceOffset = i * rows * cols;
+                                    volumeData.fill(0, sliceOffset, sliceOffset + rows * cols);
+                                }
+                            }
+                        }
+
+                        if (successCount === 0) throw new Error('فشل في قراءة بيانات أي شريحة');
+
+                        updateLoading(80, 'إنشاء المستويات...');
+
+                        state.rawDicomData = volumeData.slice();
+                        state.dicomData = volumeData;
+
+                        state.slices.axial = generateAxialSlices(volumeData, rows, cols, depth);
+                        state.slices.sagittal = generateSagittalSlices(volumeData, rows, cols, depth);
+                        state.slices.coronal = generateCoronalSlices(volumeData, rows, cols, depth);
+
+                        state.originalSlices = {
+                            axial: state.slices.axial.map(s => s.slice()),
+                            sagittal: state.slices.sagittal.map(s => s.slice()),
+                            coronal: state.slices.coronal.map(s => s.slice())
+                        };
+
+                        updateLoading(90, 'إعداد واجهة العرض...');
+
+                        setupViewports(rows, cols, depth);
+
+                        updateLoading(100, 'اكتمل التحميل');
+                        setTimeout(() => {
+                            document.getElementById('loadingOverlay').classList.add('hidden');
+                            const _ss = document.getElementById('startScreen');
+                            if (_ss) _ss.classList.add('hidden');
+                            showNotification(`تم تحميل ${successCount} شريحة بنجاح`);
+                            try{ enterViewerMode(); }catch(e){}
+
+                            document.getElementById('calcVolumeBtn').disabled = false;
+                            document.getElementById('segmentBtn').disabled = false;
+                            document.getElementById('statsPanel').classList.remove('opacity-50', 'pointer-events-none');
+                        }, 500);
+
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                }, 100);
+            });
+        }
+
+        function generateAxialSlices(data, rows, cols, depth) {
+            const slices = [];
+            for (let z = 0; z < depth; z++) {
+                const slice = new Float32Array(rows * cols);
+                const offset = z * rows * cols;
+                slice.set(data.subarray(offset, offset + rows * cols));
+                slices.push(slice);
+            }
+            return slices;
+        }
+
+        function generateSagittalSlices(data, rows, cols, depth) {
+            // Sagittal: X fixed, image axes = (Y horizontal, Z vertical).
+            // Row-major layout for image: index = (row * width + col) = (r * rows + y)
+            const slices = [];
+            for (let x = 0; x < cols; x++) {
+                const slice = new Float32Array(rows * depth);
+                for (let z = 0; z < depth; z++) {
+                    const r = (depth - 1 - z); // flip Z to match axial orientation (like cbct.html)
+                    const base = z * rows * cols + x;
+                    const outOff = r * rows;
+                    for (let y = 0; y < rows; y++) {
+                        slice[outOff + y] = data[base + y * cols];
+                    }
+                }
+                slices.push(slice);
+            }
+            return slices;
+        }
+
+        function generateCoronalSlices(data, rows, cols, depth) {
+            // Coronal: Y fixed, image axes = (X horizontal, Z vertical).
+            // Row-major layout: index = (r * cols + x), with Z flipped to match axial orientation.
+            const slices = [];
+            for (let y = 0; y < rows; y++) {
+                const slice = new Float32Array(cols * depth);
+                for (let z = 0; z < depth; z++) {
+                    const r = (depth - 1 - z); // flip Z like cbct.html
+                    const inOff = z * rows * cols + y * cols;
+                    const outOff = r * cols;
+                    for (let x = 0; x < cols; x++) {
+                        slice[outOff + x] = data[inOff + x];
+                    }
+                }
+                slices.push(slice);
+            }
+            return slices;
+        }
+
+        function setupViewports(rows, cols, depth) {
+            ['axial', 'sagittal', 'coronal'].forEach(plane => {
+                const canvas = document.getElementById(`${plane}Canvas`);
+                const container = document.getElementById(`${plane}Container`);
+                
+                if (!canvas || !container) return;
+
+                // Set canvas size
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight - 60;
+                
+                const slider = document.getElementById(`${plane}Slider`);
+                const maxSlice = state.slices[plane].length - 1;
+                slider.max = maxSlice;
+                slider.value = Math.floor(maxSlice / 2);
+                state.currentSlice[plane] = parseInt(slider.value);
+                
+                document.getElementById(`${plane}SliceNum`).textContent = `${slider.value}/${maxSlice}`;
+                
+                slider.oninput = function() {
+                    state.currentSlice[plane] = parseInt(this.value);
+                    document.getElementById(`${plane}SliceNum`).textContent = `${this.value}/${maxSlice}`;
+                    renderSlice(plane);
+                };
+
+                setupCanvasInteractions(canvas, plane);
+            });
+
+            renderSlice('axial');
+            renderSlice('sagittal');
+            renderSlice('coronal');
+            
+            if (!scene) initThreeJS();
+
+            // Mobile UI controls
+            const _btnLand = document.getElementById('btnEnterLandscape');
+            if (_btnLand) _btnLand.onclick = async () => { await tryLandscapeLock(); refreshMobileLayoutState(); setRotateOverlayVisible(false); };
+            const _btnNoLock = document.getElementById('btnContinueNoLock');
+            if (_btnNoLock) _btnNoLock.onclick = () => { setRotateOverlayVisible(false); };
+            const _btnTools = document.getElementById('btnToolsToggle');
+            if (_btnTools) _btnTools.onclick = () => { toggleToolsDrawer(); };
+
+        }
+
+        
+        
+        /* === Mobile/PWA helpers (aligned with cbct.html behavior) === */
+        const $ = (id) => document.getElementById(id);
+
+        function isPortrait(){
+            try { return window.matchMedia && window.matchMedia("(orientation: portrait)").matches; } catch(e){}
+            return window.innerHeight > window.innerWidth;
+        }
+
+        async function tryLandscapeLock(){
+            // Fullscreen first (best effort)
+            try{
+                const root = document.documentElement;
+                if(root.requestFullscreen && !document.fullscreenElement){
+                    await root.requestFullscreen({ navigationUI: 'hide' }).catch(()=>{});
+                }
+            }catch(e){}
+            // Then lock orientation (best effort)
+            try{
+                if(screen.orientation && screen.orientation.lock){
+                    await screen.orientation.lock('landscape').catch(()=>{});
+                }
+            }catch(e){}
+        }
+
+        function setRotateOverlayVisible(v){
+            const o = $('rotateOverlay');
+            if(!o) return;
+            o.style.display = v ? 'flex' : 'none';
+        }
+
+        function refreshMobileLayoutState(){
+            if(!document.body.classList.contains('viewer-mode')) return;
+            // If user is in portrait while viewer-mode, show rotate overlay like cbct.html
+            setRotateOverlayVisible(isPortrait());
+        }
+
+        async function enterViewerMode(){
+            document.body.classList.add('viewer-mode');
+            await tryLandscapeLock();
+            refreshMobileLayoutState();
+        }
+
+        function toggleToolsDrawer(){
+            // Drawer behavior (Airway uses tools-open + left aside)
+            document.body.classList.toggle('tools-open');
+        }
+
+        window.addEventListener('resize', refreshMobileLayoutState, {passive:true});
+        window.addEventListener('orientationchange', () => { setTimeout(refreshMobileLayoutState, 160); }, {passive:true});
+
+        // Service Worker (same resilient strategy used in cbct.html)
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            (() => {
+              const candidates = ['/service-worker.js', './service-worker.js', './sw.js', '/sw.js'];
+              (async () => {
+                for (const url of candidates) {
+                  try { await navigator.serviceWorker.register(url); return; } catch (e) {}
+                }
+              })();
+            })();
+          });
+        }
+        /* === End Mobile/PWA helpers === */
+
+// HSL -> RGB helper (for 2D colormap overlay)
+        function hslToRgb(h, s, l) {
+            // h,s,l in [0..1]
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        
+        function getPlaneDims(plane) {
+            const w = (plane === 'axial') ? state.dimensions.width : (plane === 'sagittal' ? state.dimensions.height : state.dimensions.width);
+            const h = (plane === 'axial') ? state.dimensions.height : (plane === 'sagittal' ? state.dimensions.depth : state.dimensions.depth);
+            return { w, h };
+        }
+
+        function getViewTransform(canvas, plane, dataW, dataH) {
+            const v = state.view?.[plane] || { zoom: 1, panX: 0, panY: 0 };
+            const zoom = Math.max(0.5, Math.min(5, v.zoom || 1));
+            const drawW = canvas.width * zoom;
+            const drawH = canvas.height * zoom;
+            const drawX = (canvas.width - drawW) / 2 + (v.panX || 0);
+            const drawY = (canvas.height - drawH) / 2 + (v.panY || 0);
+            const scaleX = drawW / dataW;
+            const scaleY = drawH / dataH;
+            return { zoom, drawW, drawH, drawX, drawY, scaleX, scaleY };
+        }
+
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+        // Fast box blur for grayscale buffers (for denoise + unsharp mask)
+        function boxBlurGray(src, w, h, radius) {
+            radius = Math.max(0, radius|0);
+            if (!radius) return src;
+            const size = w * h;
+            const tmp = new Uint16Array(size);
+            const dst = new Uint8ClampedArray(size);
+
+            // Horizontal pass (running sum)
+            for (let y = 0; y < h; y++) {
+                let sum = 0;
+                const row = y * w;
+
+                // init window
+                for (let x = -radius; x <= radius; x++) {
+                    const xx = Math.max(0, Math.min(w - 1, x));
+                    sum += src[row + xx];
+                }
+                for (let x = 0; x < w; x++) {
+                    tmp[row + x] = sum;
+
+                    const xOut = x - radius;
+                    const xIn = x + radius + 1;
+                    if (xOut >= 0) sum -= src[row + xOut];
+                    else sum -= src[row + 0];
+                    if (xIn < w) sum += src[row + xIn];
+                    else sum += src[row + (w - 1)];
+                }
+            }
+
+            // Vertical pass (running sum)
+            const win = (radius * 2 + 1);
+            const norm = win * win;
+            for (let x = 0; x < w; x++) {
+                let sum = 0;
+
+                for (let y = -radius; y <= radius; y++) {
+                    const yy = Math.max(0, Math.min(h - 1, y));
+                    sum += tmp[yy * w + x];
+                }
+
+                for (let y = 0; y < h; y++) {
+                    const idx = y * w + x;
+                    dst[idx] = (sum / norm) | 0;
+
+                    const yOut = y - radius;
+                    const yIn = y + radius + 1;
+                    if (yOut >= 0) sum -= tmp[yOut * w + x];
+                    else sum -= tmp[0 * w + x];
+                    if (yIn < h) sum += tmp[yIn * w + x];
+                    else sum += tmp[(h - 1) * w + x];
+                }
+            }
+            return dst;
+        }
+
+        function maskHitWithZNeighborhood(mask, idx3, wh, z, depth, radius) {
+            if (!mask || idx3 < 0) return 0;
+            if (mask[idx3]) return 1;
+            if (!radius) return 0;
+            // Check +/- 1 and +/- 2 slices (helps remove "striping" in sagittal/coronal)
+            for (let r = 1; r <= radius; r++) {
+                const upZ = z + r;
+                const dnZ = z - r;
+                if (dnZ >= 0 && mask[idx3 - r * wh]) return 1;
+                if (upZ < depth && mask[idx3 + r * wh]) return 1;
+            }
+            return 0;
+        }
+
+function renderSlice(plane) {
+            try {
+                const canvas = document.getElementById(`${plane}Canvas`);
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                const sliceData = state.slices[plane][state.currentSlice[plane]];
+                
+                if (!sliceData) return;
+
+                const width = plane === 'axial' ? state.dimensions.width :
+                             (plane === 'sagittal' ? state.dimensions.height : state.dimensions.width);
+                const height = plane === 'axial' ? state.dimensions.height :
+                              (plane === 'sagittal' ? state.dimensions.depth : state.dimensions.depth);
+                
+                // Create temporary canvas for scaling
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                const tempImageData = tempCtx.createImageData(width, height);
+
+                // Windowing for airway (lung window)
+                const windowCenter = -400;
+                const windowWidth = 1500;
+
+                const contrast = state.view?.[plane]?.contrast ?? 1;
+
+                const brightness = state.view?.[plane]?.brightness ?? 0;
+
+                const overlay = state.segmentationActive && state.airwayMask;
+                const dimsW = state.dimensions.width;
+                const dimsH = state.dimensions.height;
+                const dimsD = state.dimensions.depth;
+                const fixedSlice = state.currentSlice[plane];
+
+                const filterVal = state.view?.[plane]?.filter ?? 0;
+                const sharpVal = state.view?.[plane]?.sharpness ?? 0;
+
+                // Build grayscale buffer first (window/level + contrast/brightness)
+                const size = sliceData.length;
+                const gray0 = new Uint8ClampedArray(size);
+
+                for (let i = 0; i < size; i++) {
+                    let value = sliceData[i];
+                    let pixelValue = ((value - (windowCenter - windowWidth / 2)) / windowWidth) * 255;
+                    pixelValue = Math.max(0, Math.min(255, pixelValue));
+                    pixelValue = clamp(((pixelValue - 128) * contrast) + 128, 0, 255);
+                    pixelValue = clamp(pixelValue + brightness, 0, 255);
+                    gray0[i] = pixelValue | 0;
+                }
+
+                // Filter (denoise/soften) + Sharpness (unsharp mask)
+                let base = gray0;
+                if (filterVal > 0.001) {
+                    const radius = clamp(Math.round(filterVal * 2), 1, 4);
+                    base = boxBlurGray(gray0, width, height, radius);
+                }
+                if (sharpVal > 0.001) {
+                    const blur2 = boxBlurGray(base, width, height, 1);
+                    const out = new Uint8ClampedArray(size);
+                    for (let i = 0; i < size; i++) {
+                        const v = base[i] + sharpVal * (base[i] - blur2[i]);
+                        out[i] = clamp(v, 0, 255) | 0;
+                    }
+                    base = out;
+                }
+
+                const wh = (dimsW && dimsH) ? (dimsW * dimsH) : 0;
+                const zRadius = (plane === 'axial') ? 0 : 2; // smooth across Z for sagittal/coronal (removes striping)
+
+                for (let i = 0; i < size; i++) {
+                    const pixelValue = base[i];
+                    let r = pixelValue, g = pixelValue, b = pixelValue;
+
+                    if (overlay && dimsW && dimsH && dimsD) {
+                        let x = 0, y = 0, z = 0, idx3 = -1;
+
+                        if (plane === 'axial') {
+                            z = fixedSlice;
+                            x = i % dimsW;
+                            y = (i / dimsW) | 0;
+                            idx3 = z * dimsH * dimsW + y * dimsW + x;
+                        } else if (plane === 'sagittal') {
+                            y = i % dimsH;
+                            const zFlip = (i / dimsH) | 0;
+                            z = (dimsD - 1) - zFlip;
+                            x = fixedSlice;
+                            idx3 = z * dimsH * dimsW + y * dimsW + x;
+                        } else if (plane === 'coronal') {
+                            x = i % dimsW;
+                            const zFlip = (i / dimsW) | 0;
+                            z = (dimsD - 1) - zFlip;
+                            y = fixedSlice;
+                            idx3 = z * dimsH * dimsW + y * dimsW + x;
+                        }
+
+                        const hit = maskHitWithZNeighborhood(state.airwayMask, idx3, wh, z, dimsD, zRadius);
+                        if (hit) {
+                            const ratio = (dimsD > 1) ? (z / (dimsD - 1)) : 0;
+                            const hue = (ratio * 0.6); // red -> blue (blue = higher)
+                            const rgb = hslToRgb(hue, 0.8, 0.5);
+                            r = rgb[0]; g = rgb[1]; b = rgb[2];
+                        } else {
+                            r *= 0.25; g *= 0.25; b *= 0.25;
+                        }
+                    }
+
+                    const idx = i * 4;
+                    tempImageData.data[idx] = r;
+                    tempImageData.data[idx + 1] = g;
+                    tempImageData.data[idx + 2] = b;
+                    tempImageData.data[idx + 3] = 255;
+                }
+
+                tempCtx.putImageData(tempImageData, 0, 0);
+                
+                // Clear and scale
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const t = getViewTransform(canvas, plane, width, height);
+                ctx.drawImage(tempCanvas, 0, 0, width, height, t.drawX, t.drawY, t.drawW, t.drawH);
+
+                // Draw polygons (same transform)
+                drawPolygons(ctx, plane, t.scaleX, t.scaleY, t.drawX, t.drawY);
+                
+            } catch (e) {
+                console.error(`Error rendering ${plane}:`, e);
+            }
+        }
+
+        function drawPolygons(ctx, plane, scaleX, scaleY, offsetX = 0, offsetY = 0) {
+            try {
+                const slicePolygons = state.polygons[plane][state.currentSlice[plane]] || [];
+                
+                slicePolygons.forEach((poly, idx) => {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 2;
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
+                    
+                    poly.points.forEach((point, i) => {
+                        const x = offsetX + point.x * scaleX;
+                        const y = offsetY + point.y * scaleY;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+                    
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Control points
+                    poly.points.forEach(point => {
+                        ctx.beginPath();
+                        ctx.arc(offsetX + point.x * scaleX, offsetY + point.y * scaleY, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.fill();
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+                });
+
+                // Current drawing
+                if (state.isDrawing && state.currentPolygon && state.currentPolygon.plane === plane) {
+                    const points = state.currentPolygon.points;
+                    if (points.length > 0) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#10b981';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        
+                        points.forEach((point, i) => {
+                            const x = offsetX + point.x * scaleX;
+                            const y = offsetY + point.y * scaleY;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        });
+                        
+                        if (state.currentPolygon.lastMouse) {
+                            ctx.lineTo(offsetX + state.currentPolygon.lastMouse.x * scaleX, offsetY + state.currentPolygon.lastMouse.y * scaleY);
+                        }
+                        
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // Draw points
+                        points.forEach(point => {
+                            ctx.beginPath();
+                            ctx.arc(offsetX + point.x * scaleX, offsetY + point.y * scaleY, 3, 0, Math.PI * 2);
+                            ctx.fillStyle = '#10b981';
+                            ctx.fill();
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Error drawing polygons:', e);
+            }
+        }
+
+        
+        function setupCanvasInteractions(canvas, plane) {
+
+            const getDataCoord = (evt) => {
+                const rect = canvas.getBoundingClientRect();
+                const cx = (evt.clientX - rect.left) * (canvas.width / rect.width);
+                const cy = (evt.clientY - rect.top) * (canvas.height / rect.height);
+                const dims = getPlaneDims(plane);
+                const t = getViewTransform(canvas, plane, dims.w, dims.h);
+
+                const nx = (cx - t.drawX) / t.drawW;
+                const ny = (cy - t.drawY) / t.drawH;
+
+                const x = clamp(Math.floor(nx * dims.w), 0, dims.w - 1);
+                const y = clamp(Math.floor(ny * dims.h), 0, dims.h - 1);
+
+                return { rect, cx, cy, x, y, dims, t };
+            };
+
+            const findNearbyPoint = (cx, cy) => {
+                const dims = getPlaneDims(plane);
+                const t = getViewTransform(canvas, plane, dims.w, dims.h);
+                const polys = state.polygons[plane][state.currentSlice[plane]] || [];
+                let best = null;
+                let bestD = 1e9;
+
+                polys.forEach((poly, pi) => {
+                    poly.points.forEach((pt, pti) => {
+                        const sx = t.drawX + pt.x * t.scaleX;
+                        const sy = t.drawY + pt.y * t.scaleY;
+                        const d = Math.hypot(sx - cx, sy - cy);
+                        if (d < 10 && d < bestD) {
+                            best = { pi, pti };
+                            bestD = d;
+                        }
+                    });
+                });
+
+                return best;
+            };
+
+            const stopInteractions = () => {
+                state.isPanning[plane] = false;
+                state.panStart[plane] = null;
+                state.draggingPoint = null;
+                canvas.style.cursor = (state.view?.[plane]?.move || state.tool === 'navigate') ? 'grab' : 'default';
+            };
+
+            canvas.addEventListener('mousedown', (e) => {
+                state.lastActivePlane = plane;
+
+                // ignore right click here (we use contextmenu)
+                if (e.button === 2) return;
+
+                const info = getDataCoord(e);
+
+                // Pan (movement) mode
+                if (state.view?.[plane]?.move || state.tool === 'navigate') {
+                    state.isPanning[plane] = true;
+                    state.panStart[plane] = {
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        panX: state.view[plane].panX,
+                        panY: state.view[plane].panY,
+                        rectW: info.rect.width,
+                        rectH: info.rect.height
+                    };
+                    canvas.style.cursor = 'grabbing';
+                    return;
+                }
+
+                if (state.tool !== 'polygon') return;
+
+                // Drag a control point if close (edit)
+                const near = (!state.isDrawing) ? findNearbyPoint(info.cx, info.cy) : null;
+                if (near) {
+                    state.draggingPoint = {
+                        plane,
+                        slice: state.currentSlice[plane],
+                        polyIndex: near.pi,
+                        pointIndex: near.pti
+                    };
+                    canvas.style.cursor = 'grabbing';
+                    return;
+                }
+
+                // Add points / close polygon
+                if (!state.isDrawing) {
+                    state.isDrawing = true;
+                    state.currentPolygon = {
+                        plane: plane,
+                        slice: state.currentSlice[plane],
+                        points: [{ x: info.x, y: info.y }]
+                    };
+                } else {
+                    if (state.currentPolygon.plane === plane && state.currentPolygon.slice === state.currentSlice[plane]) {
+                        const firstPoint = state.currentPolygon.points[0];
+                        const dist = Math.hypot(info.x - firstPoint.x, info.y - firstPoint.y);
+
+                        if (dist < 15 && state.currentPolygon.points.length > 2) {
+                            // Close polygon
+                            if (!state.polygons[plane][state.currentSlice[plane]]) {
+                                state.polygons[plane][state.currentSlice[plane]] = [];
+                            }
+                            state.polygons[plane][state.currentSlice[plane]].push({
+                                points: [...state.currentPolygon.points],
+                                timestamp: Date.now()
+                            });
+
+                            state.isDrawing = false;
+                            state.currentPolygon = null;
+                            updateSliceCount();
+                            showNotification('تم إغلاق المضلع');
+                        } else {
+                            state.currentPolygon.points.push({ x: info.x, y: info.y });
+                        }
+                    }
+                }
+
+                renderSlice(plane);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                // panning
+                if (state.isPanning[plane] && state.panStart[plane]) {
+                    const rect = canvas.getBoundingClientRect();
+                    const dx = (e.clientX - state.panStart[plane].clientX) * (canvas.width / rect.width);
+                    const dy = (e.clientY - state.panStart[plane].clientY) * (canvas.height / rect.height);
+                    state.view[plane].panX = state.panStart[plane].panX + dx;
+                    state.view[plane].panY = state.panStart[plane].panY + dy;
+                    renderSlice(plane);
+                    return;
+                }
+
+                // dragging a vertex
+                if (state.draggingPoint && state.draggingPoint.plane === plane) {
+                    const info = getDataCoord(e);
+                    const { slice, polyIndex, pointIndex } = state.draggingPoint;
+                    const polys = state.polygons[plane][slice] || [];
+                    if (polys[polyIndex]) {
+                        polys[polyIndex].points[pointIndex] = { x: info.x, y: info.y };
+                        renderSlice(plane);
+                    }
+                    return;
+                }
+
+                // current drawing preview
+                if (state.isDrawing && state.currentPolygon && state.currentPolygon.plane === plane) {
+                    const info = getDataCoord(e);
+                    state.currentPolygon.lastMouse = { x: info.x, y: info.y };
+                    renderSlice(plane);
+                }
+            });
+
+            canvas.addEventListener('mouseup', stopInteractions);
+            canvas.addEventListener('mouseleave', stopInteractions);
+            window.addEventListener('mouseup', stopInteractions);
+
+            // Wheel zoom (optional) - keeps it smooth for mouse users
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const dir = (e.deltaY < 0) ? 1.1 : (1 / 1.1);
+                state.view[plane].zoom = clamp((state.view[plane].zoom || 1) * dir, 0.5, 5);
+                renderSlice(plane);
+            }, { passive: false });
+
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (state.isDrawing) {
+                    state.isDrawing = false;
+                    state.currentPolygon = null;
+                    renderSlice(plane);
+                    showNotification('تم إلغاء الرسم');
+                }
+            });
+
+            canvas.addEventListener('dblclick', (e) => {
+                if (state.isDrawing && state.currentPolygon && state.currentPolygon.points.length > 2) {
+                    const plane = state.currentPolygon.plane;
+                    if (!state.polygons[plane][state.currentSlice[plane]]) {
+                        state.polygons[plane][state.currentSlice[plane]] = [];
+                    }
+                    state.polygons[plane][state.currentSlice[plane]].push({
+                        points: [...state.currentPolygon.points],
+                        timestamp: Date.now()
+                    });
+
+                    state.isDrawing = false;
+                    state.currentPolygon = null;
+                    updateSliceCount();
+                    renderSlice(plane);
+                    showNotification('تم حفظ المضلع');
+                }
+            });
+        }
+
+
+        function updateSliceCount() {
+            let count = 0;
+            ['axial', 'sagittal', 'coronal'].forEach(plane => {
+                Object.values(state.polygons[plane]).forEach(polys => count += polys.length);
+            });
+            document.getElementById('sliceCount').textContent = `${count} ROIs`;
+        }
+
+        // Tool switching
+        document.getElementById('toolPolygon').addEventListener('click', function() {
+            state.tool = 'polygon';
+            this.classList.add('active');
+            document.getElementById('toolNavigate').classList.remove('active');
+            updateCrosshairs(false);
+        });
+
+        document.getElementById('toolNavigate').addEventListener('click', function() {
+            state.tool = 'navigate';
+            this.classList.add('active');
+            document.getElementById('toolPolygon').classList.remove('active');
+            updateCrosshairs(true);
+        });
+
+        function updateCrosshairs(show) {
+            ['axial', 'sagittal', 'coronal'].forEach(plane => {
+                const h = document.getElementById(`${plane}CrosshairH`);
+                const v = document.getElementById(`${plane}CrosshairV`);
+                if (h) h.style.display = show ? 'block' : 'none';
+                if (v) v.style.display = show ? 'block' : 'none';
+            });
+        }
+
+
+        
+        // Panel controls: movement / zoom + Filter + Contrast Tool (drag like CBCT)
+        ['axial','sagittal','coronal'].forEach(plane => {
+            const moveBtn = document.getElementById(`${plane}MoveBtn`);
+            const zin = document.getElementById(`${plane}ZoomInBtn`);
+            const zout = document.getElementById(`${plane}ZoomOutBtn`);
+            const filter = document.getElementById(`${plane}Filter`);
+            const contrastTool = document.getElementById(`${plane}ContrastTool`);
+            const contrastHint = document.getElementById(`${plane}ContrastHint`);
+            const canvas = document.getElementById(`${plane}Canvas`);
+
+            // Defaults: softer contrast on load (avoid "too white")
+            if (!state.view[plane]) state.view[plane] = {};
+            if (typeof state.view[plane].contrast !== 'number') state.view[plane].contrast = 0.85;
+            if (typeof state.view[plane].brightness !== 'number') state.view[plane].brightness = -35; // fixed (no UI slider)
+            if (typeof state.view[plane].sharpness !== 'number') state.view[plane].sharpness = 0.2;   // fixed (no UI slider)
+
+            if (moveBtn) {
+                moveBtn.addEventListener('click', () => {
+                    state.view[plane].move = !state.view[plane].move;
+                    moveBtn.classList.toggle('active', state.view[plane].move);
+                    if (canvas) canvas.style.cursor = state.view[plane].move ? 'grab' : (state.view[plane].contrastMode ? 'ew-resize' : 'default');
+                });
+            }
+
+            if (zin) zin.addEventListener('click', () => {
+                state.view[plane].zoom = clamp((state.view[plane].zoom || 1) * 1.15, 0.5, 5);
+                renderSlice(plane);
+            });
+
+            if (zout) zout.addEventListener('click', () => {
+                state.view[plane].zoom = clamp((state.view[plane].zoom || 1) / 1.15, 0.5, 5);
+                renderSlice(plane);
+            });
+
+            if (filter) filter.addEventListener('input', () => {
+                state.view[plane].filter = parseFloat(filter.value || '0');
+                renderSlice(plane);
+            });
+
+            // Contrast tool toggle (button)
+            if (contrastTool) {
+                contrastTool.addEventListener('click', () => {
+                    // Toggle contrast mode for THIS plane only
+                    state.view[plane].contrastMode = !state.view[plane].contrastMode;
+
+                    // Turn off other planes' contrast mode
+                    ['axial','sagittal','coronal'].forEach(p => {
+                        if (p !== plane) {
+                            if (!state.view[p]) state.view[p] = {};
+                            state.view[p].contrastMode = false;
+                            const btn = document.getElementById(`${p}ContrastTool`);
+                            const hint = document.getElementById(`${p}ContrastHint`);
+                            if (btn) btn.classList.remove('active');
+                            if (hint) hint.style.display = 'none';
+                            const cv = document.getElementById(`${p}Canvas`);
+                            const mb = document.getElementById(`${p}MoveBtn`);
+                            const isMove = mb ? mb.classList.contains('active') : false;
+                            if (cv) cv.style.cursor = isMove ? 'grab' : 'default';
+                        }
+                    });
+
+                    contrastTool.classList.toggle('active', state.view[plane].contrastMode);
+                    if (contrastHint) contrastHint.style.display = state.view[plane].contrastMode ? 'block' : 'none';
+                    if (canvas) {
+                        const isMove = moveBtn ? moveBtn.classList.contains('active') : false;
+                        canvas.style.cursor = state.view[plane].contrastMode ? 'ew-resize' : (isMove ? 'grab' : 'default');
+                    }
+                });
+            }
+
+            // Drag-to-contrast on the canvas (mouse / touch / pen)
+            if (canvas) {
+                let drag = null;
+
+                canvas.addEventListener('pointerdown', (e) => {
+                    if (!state.view[plane].contrastMode) return;
+                    e.preventDefault();
+                    canvas.setPointerCapture(e.pointerId);
+
+                    drag = {
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        startContrast: state.view[plane].contrast ?? 0.85
+                    };
+
+                    // quick hint text update
+                    if (contrastHint) {
+                        const v = Math.round((state.view[plane].contrast || 1) * 100);
+                        contrastHint.textContent = `CONT ${v}%`;
+                        contrastHint.style.display = 'block';
+                    }
+                }, { passive: false });
+
+                canvas.addEventListener('pointermove', (e) => {
+                    if (!drag) return;
+                    e.preventDefault();
+
+                    // Horizontal drag controls contrast (CBCT style)
+                    const dx = (e.clientX - drag.startX);
+                    const delta = dx / 300; // sensitivity
+                    const newC = clamp(drag.startContrast + delta, 0.5, 2.0); // 50%..200%
+                    state.view[plane].contrast = newC;
+
+                    if (contrastHint) {
+                        const v = Math.round(newC * 100);
+                        contrastHint.textContent = `CONT ${v}%`;
+                    }
+
+                    renderSlice(plane);
+                }, { passive: false });
+
+                const endDrag = (e) => {
+                    if (!drag) return;
+                    try { canvas.releasePointerCapture(e.pointerId); } catch(_){}
+                    drag = null;
+                    if (contrastHint && state.view[plane].contrastMode) {
+                        // keep visible but small
+                        const v = Math.round((state.view[plane].contrast || 1) * 100);
+                        contrastHint.textContent = `CONT ${v}%`;
+                    }
+                };
+
+                canvas.addEventListener('pointerup', endDrag, { passive: false });
+                canvas.addEventListener('pointercancel', endDrag, { passive: false });
+                canvas.addEventListener('pointerleave', endDrag, { passive: false });
+            }
+        });
+
+        // Undo: remove last point while drawing; otherwise remove last ROI in the active plane/slice
+        document.getElementById('undoPointBtn')?.addEventListener('click', () => {
+            const plane = state.lastActivePlane || 'axial';
+
+            if (state.isDrawing && state.currentPolygon && state.currentPolygon.plane === plane) {
+                state.currentPolygon.points.pop();
+                if (state.currentPolygon.points.length === 0) {
+                    state.isDrawing = false;
+                    state.currentPolygon = null;
+                }
+                renderSlice(plane);
+                return;
+            }
+
+            const slice = state.currentSlice[plane];
+            const list = state.polygons[plane][slice] || [];
+            if (list.length) {
+                list.pop();
+                state.polygons[plane][slice] = list;
+                updateSliceCount();
+                renderSlice(plane);
+                showNotification('Undo ROI');
+            }
+        });
+
+        // Header Reset: reset panels (view transforms + segmentation), keep ROIs
+        document.getElementById('resetViewBtn')?.addEventListener('click', () => {
+            ['axial','sagittal','coronal'].forEach(p => {
+                state.view[p] = { zoom: 1, panX: 0, panY: 0, contrast: 0.85, brightness: -35, filter: 0.3, sharpness: 0.2, move: false, contrastMode:false };
+                const f = document.getElementById(`${p}Filter`);
+                if (f) f.value = '0.3';
+                const mb = document.getElementById(`${p}MoveBtn`);
+                if (mb) mb.classList.remove('active');
+                const btn = document.getElementById(`${p}ContrastTool`);
+                if (btn) btn.classList.remove('active');
+                const hint = document.getElementById(`${p}ContrastHint`);
+                if (hint) hint.style.display = 'none';
+                const canvas = document.getElementById(`${p}Canvas`);
+                if (canvas) canvas.style.cursor = 'default';
+            });
+
+            // Turn off segmentation overlays
+            if (state.segmentationActive) resetSegmentation();
+
+            renderSlice('axial'); renderSlice('sagittal'); renderSlice('coronal');
+
+            // Reset 3D camera/view if available
+            try {
+                if (controls) controls.reset();
+                if (camera) {
+                    camera.position.set(0, 0, 400);
+                    camera.lookAt(0, 0, 0);
+                }
+            } catch (_) {}
+
+            showNotification('تم عمل Reset للشاشات');
+        });
+
+        // Back button: shown only after Segmentation
+        document.getElementById('backBtn')?.addEventListener('click', () => {
+            resetSegmentation();
+        });
+
+
+        // Volume Calculation with Error Handling
+        document.getElementById('calcVolumeBtn').addEventListener('click', function() {
+            if (!state.dicomData) {
+                showNotification('لا توجد بيانات محملة', 'error');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+                const __ss = document.getElementById('startScreen');
+                if (__ss) __ss.classList.add('hidden');
+            updateLoading(0, 'حساب الحجم ثلاثي الأبعاد...');
+
+            setTimeout(() => {
+                try {
+                    calculateVolume();
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    showNotification('تم حساب الحجم بنجاح');
+                } catch (e) {
+                    console.error('Volume calculation error:', e);
+                    showNotification('خطأ في حساب الحجم: ' + e.message, 'error');
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                }
+            }, 100);
+        });
+
+        
+// --- 3D Mesh smoothing helpers (no impact on 2D ROIs / stats) ---
+function chaikinSmoothClosed(points, iterations = 2) {
+    if (!points || points.length < 3) return points ? points.slice() : [];
+    let pts = points.map(p => ({x: p.x, y: p.y}));
+    for (let it = 0; it < iterations; it++) {
+        const out = [];
+        for (let i = 0; i < pts.length; i++) {
+            const p0 = pts[i];
+            const p1 = pts[(i + 1) % pts.length];
+            // Chaikin corner cutting: Q and R
+            const q = { x: 0.75 * p0.x + 0.25 * p1.x, y: 0.75 * p0.y + 0.25 * p1.y };
+            const r = { x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y };
+            out.push(q, r);
+        }
+        pts = out;
+    }
+    return pts;
+}
+
+function resampleClosed(points, targetCount = 64) {
+    if (!points || points.length < 3) return points ? points.slice() : [];
+    const pts = points.map(p => ({x: p.x, y: p.y}));
+    const n = pts.length;
+    // cumulative lengths
+    const cum = [0];
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % n];
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        total += d;
+        cum.push(total);
+    }
+    if (total <= 0) return pts.slice(0, Math.min(targetCount, pts.length));
+
+    const out = [];
+    for (let k = 0; k < targetCount; k++) {
+        const dist = (k / targetCount) * total;
+        // find segment
+        let seg = 0;
+        while (seg < n && cum[seg + 1] < dist) seg++;
+        const a = pts[seg % n];
+        const b = pts[(seg + 1) % n];
+        const segLen = Math.max(1e-6, cum[seg + 1] - cum[seg]);
+        const tt = (dist - cum[seg]) / segLen;
+        out.push({ x: a.x + (b.x - a.x) * tt, y: a.y + (b.y - a.y) * tt });
+    }
+    return out;
+}
+
+function smoothResample(points, targetCount = 64, iterations = 2) {
+    return resampleClosed(chaikinSmoothClosed(points, iterations), targetCount);
+}
+
+function resampleRingXY(vertsXY, targetCount) {
+    if (!vertsXY || vertsXY.length < 3) return vertsXY ? vertsXY.slice() : [];
+    const m = vertsXY.length;
+    const out = [];
+    for (let i = 0; i < targetCount; i++) {
+        const u = (i * m) / targetCount;
+        const i0 = Math.floor(u) % m;
+        const i1 = (i0 + 1) % m;
+        const f = u - Math.floor(u);
+        const a = vertsXY[i0], b = vertsXY[i1];
+        out.push({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
+    }
+    return out;
+}
+
+function calculateVolume() {
+    const axialPolys = [];
+    Object.entries(state.polygons.axial).forEach(([slice, polys]) => {
+        polys.forEach(poly => {
+            axialPolys.push({ slice: parseInt(slice), points: poly.points });
+        });
+    });
+
+    if (axialPolys.length === 0) {
+        throw new Error('يرجى رسم مضلعات في مستوى Axial أولاً');
+    }
+
+    if (state.volumeMesh) {
+        scene.remove(state.volumeMesh);
+        state.volumeMesh.geometry.dispose();
+        state.volumeMesh.material.dispose();
+        state.volumeMesh = null;
+    }
+
+    let totalVolume = 0, minArea = Infinity, maxArea = 0;
+    const areas = []; // per-polygon areas for colormap (mm²)
+    const sliceAreaMap = new Map(); // sliceIndex -> summed area (mm²) across all polygons in that slice
+    axialPolys.sort((a, b) => a.slice - b.slice);
+const vertices = [], colors = [], indices = [];
+    
+// --- Build a single continuous loft surface (no per-slice "seams") ---
+// We still compute volume using the ORIGINAL 2D points, but render the 3D using a smoothed/resampled ring.
+
+const targetCount = 72;
+
+// Build base rings (one ring per drawn slice)
+const baseRings = [];
+
+axialPolys.forEach((poly) => {
+const area = calculatePolygonArea(poly.points) * state.spacing.x * state.spacing.y; // mm²
+    areas.push(area);
+    // accumulate per-slice area so volume accounts for gaps between drawn slices
+    sliceAreaMap.set(poly.slice, (sliceAreaMap.get(poly.slice) || 0) + area);
+
+    const z = poly.slice * state.spacing.z;
+
+    // 3D ring uses a smoothed/resampled contour for visual continuity
+    let meshPts = smoothResample(poly.points, targetCount, 2);
+
+    // Convert to world XY
+    let ringXY = meshPts.map(p => ({
+        x: (p.x - state.dimensions.width / 2) * state.spacing.x,
+        y: (state.dimensions.height / 2 - p.y) * state.spacing.y
+    }));
+
+    // Enforce consistent winding (CCW in world XY) so FrontSide renders correctly
+    let signed = 0;
+    for (let i = 0; i < ringXY.length; i++) {
+        const j = (i + 1) % ringXY.length;
+        signed += ringXY[i].x * ringXY[j].y - ringXY[j].x * ringXY[i].y;
+    }
+    if (signed < 0) ringXY.reverse();
+
+    baseRings.push({ slice: poly.slice, z, area, ringXY });
+});
+
+// --- Accurate volume integration (mm³) using trapezoidal rule between drawn slices ---
+// This fixes severe under-estimation when the user traces every N slices instead of every slice.
+const sliceNumbers = Array.from(sliceAreaMap.keys()).sort((a, b) => a - b);
+
+if (sliceNumbers.length === 0) {
+    totalVolume = 0;
+    minArea = 0;
+    maxArea = 0;
+} else if (sliceNumbers.length === 1) {
+    const A = sliceAreaMap.get(sliceNumbers[0]) || 0; // mm²
+    totalVolume = A * state.spacing.z;               // mm³ (approx one-slice thickness)
+    minArea = A;
+    maxArea = A;
+} else {
+    // stats from per-slice summed areas
+    minArea = Infinity;
+    maxArea = 0;
+    for (const s of sliceNumbers) {
+        const A = sliceAreaMap.get(s) || 0;
+        minArea = Math.min(minArea, A);
+        maxArea = Math.max(maxArea, A);
+    }
+
+    totalVolume = 0;
+    for (let i = 0; i < sliceNumbers.length - 1; i++) {
+        const s0 = sliceNumbers[i];
+        const s1 = sliceNumbers[i + 1];
+        const A0 = sliceAreaMap.get(s0) || 0;
+        const A1 = sliceAreaMap.get(s1) || 0;
+        const diff = Math.max(1, (s1 - s0));          // number of slice steps
+        const dz = state.spacing.z * diff;            // mm
+        totalVolume += (A0 + A1) * 0.5 * dz;          // mm³
+    }
+}
+
+
+// Align rings to avoid "twisting" between consecutive slices (best circular offset)
+function bestRingOffset(r1, r2) {
+    const n = Math.min(r1.length, r2.length);
+    let bestOffset = 0, bestScore = Infinity;
+    for (let off = 0; off < n; off++) {
+        let score = 0;
+        for (let i = 0; i < n; i++) {
+            const a = r1[i];
+            const b = r2[(i + off) % n];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            score += dx * dx + dy * dy;
+        }
+        if (score < bestScore) { bestScore = score; bestOffset = off; }
+    }
+    return bestOffset;
+}
+
+const alignedRings = [];
+if (baseRings.length > 0) alignedRings.push(baseRings[0]);
+for (let i = 1; i < baseRings.length; i++) {
+    const prev = alignedRings[i - 1].ringXY;
+    const curr = baseRings[i].ringXY;
+
+    const off = bestRingOffset(prev, curr);
+    const rotated = [];
+    for (let k = 0; k < curr.length; k++) rotated.push(curr[(k + off) % curr.length]);
+
+    alignedRings.push({ ...baseRings[i], ringXY: rotated });
+}
+
+// Expand with interpolated rings if there are missing slices between drawn ROIs
+const rings = [];
+for (let i = 0; i < alignedRings.length; i++) {
+    rings.push({ z: alignedRings[i].z, area: alignedRings[i].area, ringXY: alignedRings[i].ringXY });
+
+    if (i < alignedRings.length - 1) {
+        const a = alignedRings[i];
+        const b = alignedRings[i + 1];
+        const gap = Math.max(0, b.slice - a.slice);
+
+        if (gap > 1) {
+            for (let g = 1; g < gap; g++) {
+                const t = g / gap;
+                const z = a.z + (b.z - a.z) * t;
+                const area = a.area + (b.area - a.area) * t;
+
+                const ringXY = [];
+                for (let k = 0; k < targetCount; k++) {
+                    const p = a.ringXY[k];
+                    const q = b.ringXY[k];
+                    ringXY.push({
+                        x: p.x + (q.x - p.x) * t,
+                        y: p.y + (q.y - p.y) * t
+                    });
+                }
+                rings.push({ z, area, ringXY });
+            }
+        }
+    }
+}
+
+// Emit vertices + colors (one ring at z per slice), then connect ring(i) to ring(i+1)
+for (let r = 0; r < rings.length; r++) {
+    const color = getAreaColor(rings[r].area, state.colorMapMin, state.colorMapMax);
+    for (let k = 0; k < targetCount; k++) {
+        const v = rings[r].ringXY[k];
+        vertices.push(v.x, v.y, rings[r].z);
+        colors.push(color.r, color.g, color.b);
+    }
+}
+
+// Side faces
+for (let r = 0; r < rings.length - 1; r++) {
+    const base1 = r * targetCount;
+    const base2 = (r + 1) * targetCount;
+    for (let i = 0; i < targetCount; i++) {
+        const a = base1 + i;
+        const b = base1 + ((i + 1) % targetCount);
+        const c = base2 + i;
+        const d = base2 + ((i + 1) % targetCount);
+
+        // Two triangles per quad (FrontSide; winding matters)
+        indices.push(a, c, b);
+        indices.push(b, c, d);
+    }
+}
+
+// Caps: close the volume (bottom: -Z, top: +Z)
+function addCap(ringIndex, flip) {
+    const base = ringIndex * targetCount;
+    // centroid
+    let cx = 0, cy = 0;
+    for (let i = 0; i < targetCount; i++) {
+        cx += vertices[(base + i) * 3 + 0];
+        cy += vertices[(base + i) * 3 + 1];
+    }
+    cx /= targetCount;
+    cy /= targetCount;
+    const cz = rings[ringIndex].z;
+
+    const capColor = getAreaColor(rings[ringIndex].area, state.colorMapMin, state.colorMapMax);
+    const centerIdx = vertices.length / 3;
+    vertices.push(cx, cy, cz);
+    colors.push(capColor.r, capColor.g, capColor.b);
+
+    for (let i = 0; i < targetCount; i++) {
+        const a = base + i;
+        const b = base + ((i + 1) % targetCount);
+        if (flip) {
+            // normal -Z
+            indices.push(centerIdx, b, a);
+        } else {
+            // normal +Z
+            indices.push(centerIdx, a, b);
+        }
+    }
+}
+
+if (rings.length >= 1) {
+    addCap(0, true);
+    addCap(rings.length - 1, false);
+}
+
+if (vertices.length === 0) throw new Error('لا توجد بيانات كافية');
+
+    let geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    try {
+        if (THREE.BufferGeometryUtils && THREE.BufferGeometryUtils.mergeVertices) {
+            const merged = THREE.BufferGeometryUtils.mergeVertices(geometry, 1e-4);
+            if (merged) {
+                geometry.dispose();
+                geometry = merged;
+                geometry.computeVertexNormals();
+            }
+        }
+    } catch (e) {}
+
+    state.volumeMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        transparent: false,
+        opacity: 1,
+        side: THREE.FrontSide,
+        depthWrite: true,
+        depthTest: true,
+        roughness: 0.35,
+        metalness: 0.05
+    }));
+    
+    scene.add(state.volumeMesh);
+
+    // Center camera
+    const box = new THREE.Box3().setFromObject(state.volumeMesh);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    camera.position.set(center.x, center.y, center.z + maxDim * 2.5);
+    controls.target.copy(center);
+    controls.update();
+
+    state.stats = { totalVolume: totalVolume / 1000, minArea, maxArea };
+    document.getElementById('totalVolume').textContent = `${(totalVolume / 1000).toFixed(2)} cm³`;
+    const v3d = document.getElementById('volume3DOverlayText'); if(v3d) v3d.textContent = `الحجم: ${(totalVolume / 1000).toFixed(2)} cm³`;
+    document.getElementById('crossSectionArea').textContent = `${maxArea.toFixed(1)} mm²`;
+    document.getElementById('narrowestPoint').textContent = `${minArea.toFixed(1)} mm²`;
+
+    // Create mask for segmentation
+    state.airwayMask = createAirwayMask(axialPolys);
+}
+
+function connectSlicesWithWalls(poly1, poly2, z1, z2, vertices, colors, indices) {
+    const verts1 = poly1.processedVerts || [];
+    const verts2 = poly2.processedVerts || [];
+    if (verts1.length < 3 || verts2.length < 3) return;
+
+    // Resample both rings to the same count to avoid index overflows / spikes
+    const maxN = Math.max(verts1.length, verts2.length, 24);
+    const r1 = resampleRingXY(verts1, maxN);
+    const r2 = resampleRingXY(verts2, maxN);
+
+    // Find best circular alignment (offset) between rings
+    let bestOffset = 0, bestScore = Infinity;
+    for (let offset = 0; offset < maxN; offset++) {
+        let score = 0;
+        for (let i = 0; i < maxN; i++) {
+            const v1 = r1[i];
+            const v2 = r2[(i + offset) % maxN];
+            const dx = v1.x - v2.x, dy = v1.y - v2.y;
+            score += dx * dx + dy * dy;
+        }
+        if (score < bestScore) { bestScore = score; bestOffset = offset; }
+    }
+
+    const r2s = [];
+    for (let i = 0; i < maxN; i++) r2s.push(r2[(i + bestOffset) % maxN]);
+
+    // More steps = smoother transition (still lightweight)
+    const steps = 6;
+    const color = new THREE.Color(0x3b82f6);
+
+    let prevRing = r1.map(v => ({x: v.x, y: v.y, z: z1}));
+
+    for (let step = 1; step <= steps; step++) {
+        const t = step / (steps + 1);
+        const z = z1 + (z2 - z1) * t;
+
+        const currRing = [];
+        for (let i = 0; i < maxN; i++) {
+            const v1 = r1[i];
+            const v2 = r2s[i];
+            currRing.push({
+                x: v1.x + (v2.x - v1.x) * t,
+                y: v1.y + (v2.y - v1.y) * t,
+                z
+            });
+        }
+
+        // Add wall between prevRing and currRing
+        const baseIdx = vertices.length / 3;
+        for (let i = 0; i < maxN; i++) {
+            const v = prevRing[i];
+            vertices.push(v.x, v.y, v.z);
+            colors.push(color.r, color.g, color.b);
+        }
+        for (let i = 0; i < maxN; i++) {
+            const v = currRing[i];
+            vertices.push(v.x, v.y, v.z);
+            colors.push(color.r, color.g, color.b);
+        }
+
+        for (let i = 0; i < maxN; i++) {
+            const next = (i + 1) % maxN;
+            const r1_i = baseIdx + i;
+            const r1_n = baseIdx + next;
+            const r2_i = baseIdx + maxN + i;
+            const r2_n = baseIdx + maxN + next;
+            indices.push(r1_i, r2_i, r1_n, r2_i, r2_n, r1_n);
+        }
+
+        prevRing = currRing;
+    }
+
+    // Final wall to the second ring at z2
+    const finalRing = r2s.map(v => ({x: v.x, y: v.y, z: z2}));
+    const baseIdx = vertices.length / 3;
+
+    for (let i = 0; i < maxN; i++) {
+        const v = prevRing[i];
+        vertices.push(v.x, v.y, v.z);
+        colors.push(color.r, color.g, color.b);
+    }
+    for (let i = 0; i < maxN; i++) {
+        const v = finalRing[i];
+        vertices.push(v.x, v.y, v.z);
+        colors.push(color.r, color.g, color.b);
+    }
+
+    for (let i = 0; i < maxN; i++) {
+        const next = (i + 1) % maxN;
+        const r1_i = baseIdx + i;
+        const r1_n = baseIdx + next;
+        const r2_i = baseIdx + maxN + i;
+        const r2_n = baseIdx + maxN + next;
+        indices.push(r1_i, r2_i, r1_n, r2_i, r2_n, r1_n);
+    }
+}
+
+function createAirwayMask(axialPolys) {
+    // Build a smooth, slice-to-slice connected mask for 2D panels (Axial/Sagittal/Coronal)
+    // by:
+    // 1) boundary smoothing per key slice
+    // 2) resampling to a fixed vertex count
+    // 3) best circular alignment between consecutive slices
+    // 4) vertex-wise interpolation to fill gaps
+    // 5) light smoothing across Z to remove "rope seams"
+    const { width, height, depth } = state.dimensions;
+    const mask = new Uint8Array(width * height * depth);
+
+    if (!Array.isArray(axialPolys) || axialPolys.length === 0) return mask;
+
+    // Keep one polygon per slice (if multiple exist, take the one with largest area)
+    const bySlice = new Map();
+    for (const p of axialPolys) {
+        if (!p || !Array.isArray(p.points) || p.points.length < 3) continue;
+        const z = Math.round(p.slice);
+        if (z < 0 || z >= depth) continue;
+
+        const area = Math.abs(calculatePolygonArea(p.points));
+        const prev = bySlice.get(z);
+        if (!prev || area > prev._area) {
+            bySlice.set(z, { z, points: p.points, _area: area });
+        }
+    }
+
+    const key = Array.from(bySlice.values()).sort((a, b) => a.z - b.z);
+    if (key.length === 0) return mask;
+
+    // Choose a stable ring size (more points = smoother boundary, still fast)
+    const RING_N = 72;
+
+    // Preprocess: smooth + resample each key slice
+    const keyRings = key.map(k => {
+        const sm = airwayChaikinSmooth(k.points, 2);
+        const ring = airwayResampleClosed(sm, RING_N);
+        return { z: k.z, ring };
+    });
+
+    // Build rings for every slice between keys (inclusive)
+    const ringsByZ = new Map();
+    for (let i = 0; i < keyRings.length; i++) {
+        const a = keyRings[i];
+        ringsByZ.set(a.z, a.ring);
+        if (i === keyRings.length - 1) break;
+
+        const b0 = keyRings[i + 1];
+        // Align b to a to avoid twists
+        const off = airwayBestCircularOffset(a.ring, b0.ring);
+        const b = airwayRotateRing(b0.ring, off);
+
+        const dz = b0.z - a.z;
+        if (dz <= 1) {
+            ringsByZ.set(b0.z, b);
+            continue;
+        }
+
+        for (let z = a.z + 1; z < b0.z; z++) {
+            const t = (z - a.z) / dz;
+            const ring = airwayInterpolateRing(a.ring, b, t);
+            // Small boundary smoothing on interpolated rings
+            const smRing = airwayChaikinSmooth(ring, 1);
+            ringsByZ.set(z, smRing);
+        }
+        ringsByZ.set(b0.z, b);
+    }
+
+    // Light smoothing across Z (keeps continuity when scrolling slices)
+    airwaySmoothRingsAcrossZ(ringsByZ, 1);
+
+    // Rasterize
+    for (const [z, ring] of ringsByZ.entries()) {
+        fillPolygonInSlice(mask, ring, z, width, height, depth);
+    }
+    return mask;
+}
+
+// --- Airway mask smoothing helpers (2D) ---
+function airwayChaikinSmooth(points, iterations = 1) {
+    // Works with both open/closed, we treat as closed here
+    let pts = (points || []).map(p => ({ x: p.x, y: p.y }));
+    if (pts.length < 3) return pts;
+
+    // Ensure no duplicate last==first for processing
+    const first = pts[0], last = pts[pts.length - 1];
+    if (Math.hypot(first.x - last.x, first.y - last.y) < 1e-6) pts = pts.slice(0, -1);
+
+    for (let it = 0; it < iterations; it++) {
+        const out = [];
+        const n = pts.length;
+        for (let i = 0; i < n; i++) {
+            const p0 = pts[i];
+            const p1 = pts[(i + 1) % n];
+            // Chaikin corner cutting
+            out.push({ x: 0.75 * p0.x + 0.25 * p1.x, y: 0.75 * p0.y + 0.25 * p1.y });
+            out.push({ x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y });
+        }
+        pts = out;
+    }
+    return pts;
+}
+
+function airwayResampleClosed(points, targetN) {
+    const pts = (points || []).map(p => ({ x: p.x, y: p.y }));
+    if (pts.length < 3) return pts;
+
+    // Compute perimeter
+    const n = pts.length;
+    const segLen = new Array(n);
+    let perim = 0;
+    for (let i = 0; i < n; i++) {
+        const a = pts[i], b = pts[(i + 1) % n];
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        segLen[i] = d;
+        perim += d;
+    }
+    if (perim < 1e-6) return pts.slice(0, Math.min(targetN, pts.length));
+
+    const step = perim / targetN;
+    const out = [];
+    let curSeg = 0;
+    let curPos = 0;
+    let cur = { x: pts[0].x, y: pts[0].y };
+    out.push({ x: cur.x, y: cur.y });
+
+    for (let k = 1; k < targetN; k++) {
+        let dist = step;
+        while (dist > 0) {
+            const a = pts[curSeg];
+            const b = pts[(curSeg + 1) % n];
+            const remaining = segLen[curSeg] - curPos;
+
+            if (remaining >= dist) {
+                const t = (curPos + dist) / segLen[curSeg];
+                cur = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+                curPos += dist;
+                dist = 0;
+            } else {
+                // Move to next segment
+                dist -= remaining;
+                curSeg = (curSeg + 1) % n;
+                curPos = 0;
+                cur = { x: pts[curSeg].x, y: pts[curSeg].y };
+            }
+        }
+        out.push({ x: cur.x, y: cur.y });
+    }
+    return out;
+}
+
+function airwayBestCircularOffset(r1, r2) {
+    const n = Math.min(r1.length, r2.length);
+    if (n < 3) return 0;
+
+    let bestOff = 0;
+    let bestScore = Infinity;
+
+    for (let off = 0; off < n; off++) {
+        let score = 0;
+        for (let i = 0; i < n; i++) {
+            const a = r1[i];
+            const b = r2[(i + off) % n];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            score += dx * dx + dy * dy;
+        }
+        if (score < bestScore) { bestScore = score; bestOff = off; }
+    }
+    return bestOff;
+}
+
+function airwayRotateRing(ring, offset) {
+    const n = ring.length;
+    if (!n) return ring;
+    const out = new Array(n);
+    for (let i = 0; i < n; i++) out[i] = ring[(i + offset) % n];
+    return out.map(p => ({ x: p.x, y: p.y }));
+}
+
+function airwayInterpolateRing(r1, r2, t) {
+    const n = Math.min(r1.length, r2.length);
+    const out = new Array(n);
+    for (let i = 0; i < n; i++) {
+        const a = r1[i], b = r2[i];
+        out[i] = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+    return out;
+}
+
+function airwaySmoothRingsAcrossZ(ringsByZ, passes = 1) {
+    if (!ringsByZ || ringsByZ.size < 3) return;
+    const zs = Array.from(ringsByZ.keys()).sort((a, b) => a - b);
+
+    for (let pass = 0; pass < passes; pass++) {
+        const nextMap = new Map(ringsByZ);
+        for (let idx = 1; idx < zs.length - 1; idx++) {
+            const z0 = zs[idx - 1], z1 = zs[idx], z2 = zs[idx + 1];
+            const r0 = ringsByZ.get(z0), r1 = ringsByZ.get(z1), r2 = ringsByZ.get(z2);
+            if (!r0 || !r1 || !r2) continue;
+            const n = Math.min(r0.length, r1.length, r2.length);
+            if (n < 8) continue;
+
+            const sm = new Array(n);
+            for (let i = 0; i < n; i++) {
+                sm[i] = {
+                    x: (r0[i].x + 2 * r1[i].x + r2[i].x) / 4,
+                    y: (r0[i].y + 2 * r1[i].y + r2[i].y) / 4
+                };
+            }
+            nextMap.set(z1, sm);
+        }
+        ringsByZ.clear();
+        for (const [z, r] of nextMap.entries()) ringsByZ.set(z, r);
+    }
+}
+
+
+function fillPolygonInSlice(mask, points, z, width, height, depth) {
+    if (z < 0 || z >= depth) return;
+    
+    // Rasterize polygon using scanline algorithm
+    const minY = Math.floor(Math.min(...points.map(p => p.y)));
+    const maxY = Math.ceil(Math.max(...points.map(p => p.y)));
+    
+    for (let y = Math.max(0, minY); y <= Math.min(height - 1, maxY); y++) {
+        const intersections = [];
+        for (let i = 0; i < points.length; i++) {
+            const p1 = points[i], p2 = points[(i + 1) % points.length];
+            if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+                const x = p1.x + (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+                intersections.push(x);
+            }
+        }
+        intersections.sort((a, b) => a - b);
+        
+        for (let i = 0; i < intersections.length; i += 2) {
+            if (i + 1 >= intersections.length) break;
+            const x1 = Math.max(0, Math.floor(intersections[i]));
+            const x2 = Math.min(width - 1, Math.ceil(intersections[i + 1]));
+            for (let x = x1; x <= x2; x++) {
+                mask[z * height * width + y * width + x] = 1;
+            }
+        }
+    }
+}
+
+function interpolatePoints(pts1, pts2, t) {
+    const c1 = getCentroid(pts1), c2 = getCentroid(pts2);
+    const cx = c1.x + (c2.x - c1.x) * t;
+    const cy = c1.y + (c2.y - c1.y) * t;
+    
+    const scale1 = getRadius(pts1, c1), scale2 = getRadius(pts2, c2);
+    const scale = (scale1 + (scale2 - scale1) * t) / scale1;
+    
+    return pts1.map(p => ({
+        x: cx + (p.x - c1.x) * scale,
+        y: cy + (p.y - c1.y) * scale
+    }));
+}
+
+function getCentroid(pts) {
+    return pts.reduce((acc, p) => ({x: acc.x + p.x, y: acc.y + p.y}), {x: 0, y: 0});
+}
+function getCentroid(pts) {
+    return {
+        x: pts.reduce((sum, p) => sum + p.x, 0) / pts.length,
+        y: pts.reduce((sum, p) => sum + p.y, 0) / pts.length
+    };
+}
+
+function getRadius(pts, center) {
+    return Math.max(...pts.map(p => 
+        Math.sqrt(Math.pow(p.x - center.x, 2) + Math.pow(p.y - center.y, 2))
+    ));
+}
+
+        function calculatePolygonArea(points) {
+            if (points.length < 3) return 0;
+            let area = 0;
+            for (let i = 0; i < points.length; i++) {
+                const j = (i + 1) % points.length;
+                area += points[i].x * points[j].y;
+                area -= points[j].x * points[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
+
+        function getAreaColor(area, min, max) {
+            const ratio = Math.min(1, Math.max(0, (area - min) / (max - min)));
+            // Red to Blue gradient
+            return new THREE.Color().setHSL((ratio * 0.6), 0.8, 0.5);
+        }
+
+        // Clear Polygons
+        document.getElementById('clearPolygonsBtn').addEventListener('click', () => {
+            state.polygons = { axial: {}, sagittal: {}, coronal: {} };
+            state.isDrawing = false;
+            state.currentPolygon = null;
+            updateSliceCount();
+            
+            ['axial', 'sagittal', 'coronal'].forEach(plane => renderSlice(plane));
+            
+            if (state.volumeMesh) {
+                scene.remove(state.volumeMesh);
+                state.volumeMesh.geometry.dispose();
+                state.volumeMesh.material.dispose();
+                state.volumeMesh = null;
+            }
+            
+            document.getElementById('totalVolume').textContent = '0.00 cm³';
+            const v3d = document.getElementById('volume3DOverlayText'); if(v3d) v3d.textContent = 'الحجم: 0.00 cm³';
+            document.getElementById('crossSectionArea').textContent = '0 mm²';
+            document.getElementById('narrowestPoint').textContent = '0 mm²';
+            
+            showNotification('تم مسح جميع المناطق');
+        });
+
+        // Segmentation
+        document.getElementById('segmentBtn').addEventListener('click', () => {
+    if (!state.airwayMask) {
+        showNotification('يرجى الضغط على \"حساب الحجم 3D\" أولاً', 'error');
+        return;
+    }
+    applySegmentation();
+});
+document.getElementById('applySegmentBtn').addEventListener('click', () => {
+            if (!state.rawDicomData) {
+                showNotification('لا توجد بيانات للمعالجة', 'error');
+                return;
+            }
+            applySegmentation();
+        });
+
+        document.getElementById('resetSegmentBtn').addEventListener('click', resetSegmentation);
+
+        function applySegmentation() {
+    if (!state.airwayMask) {
+        showNotification('يرجى الضغط على "حساب الحجم 3D" أولاً', 'error');
+        return;
+    }
+
+    // We do NOT overwrite slice pixel data (that makes the airway look black).
+    // Instead we enable a colormap overlay driven by the airwayMask.
+    state.segmentationActive = true;
+    const bb = document.getElementById('backBtn');
+    if (bb) bb.classList.remove('hidden');
+
+    // Re-render 2D panels with colormap overlay
+    ['axial', 'sagittal', 'coronal'].forEach(plane => renderSlice(plane));
+
+    // 3D: show the SAME solid mesh as the calculated volume (with vertex colormap)
+    update3DSegmentation();
+
+    showNotification('تم عرض الـ Segmentation مع Color Map على جميع الـ Panels');
+}
+
+function update3DSegmentation() {
+            try {
+                if (!scene) initThreeJS();
+                if (!scene) return;
+
+                // Remove any previous segmentation object that isn't the main volume mesh
+                if (segmentationGeometry && segmentationGeometry !== state.volumeMesh) {
+                    scene.remove(segmentationGeometry);
+                    try { segmentationGeometry.geometry && segmentationGeometry.geometry.dispose(); } catch {}
+                    try {
+                        if (segmentationGeometry.material) {
+                            const mats = Array.isArray(segmentationGeometry.material) ? segmentationGeometry.material : [segmentationGeometry.material];
+                            mats.forEach(m => { try { m.dispose(); } catch {} });
+                        }
+                    } catch {}
+                    segmentationGeometry = null;
+                }
+
+                if (!state.volumeMesh) {
+                    showNotification('يرجى حساب الحجم 3D أولاً لعرض الـ Segmentation', 'error');
+                    return;
+                }
+
+                // Ensure the mesh is truly SOLID (no mirror / no DoubleSide / no transparency)
+                const mat = state.volumeMesh.material;
+                if (mat) {
+                    mat.transparent = false;
+                    mat.opacity = 1;
+                    mat.side = THREE.FrontSide;
+                    mat.depthWrite = true;
+                    mat.depthTest = true;
+                    mat.needsUpdate = true;
+                }
+
+                // Use the same mesh as the segmentation output (exactly as 3D volume)
+                segmentationGeometry = state.volumeMesh;
+                segmentationGeometry.visible = true;
+
+                // Hide grid during segmentation so nothing shows "behind" the solid model
+                if (gridHelper3D) gridHelper3D.visible = false;
+
+                // Auto-fit camera
+                try {
+                    const box = new THREE.Box3().setFromObject(segmentationGeometry);
+                    const size = new THREE.Vector3();
+                    const center = new THREE.Vector3();
+                    box.getSize(size);
+                    box.getCenter(center);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    camera.position.set(center.x, center.y, center.z + maxDim * 2.2);
+                    controls && controls.target && controls.target.copy(center);
+                    controls && controls.update && controls.update();
+                } catch {}
+
+            } catch (e) {
+                console.error('3D segmentation error:', e);
+                showNotification('خطأ في 3D Segmentation: ' + (e.message || e), 'error');
+            }
+        }
+
+        function resetSegmentation() {
+            try {
+                // Restore original slices
+                state.slices.axial = state.originalSlices.axial.map(s => s.slice());
+                state.slices.sagittal = state.originalSlices.sagittal.map(s => s.slice());
+                state.slices.coronal = state.originalSlices.coronal.map(s => s.slice());
+
+                state.segmentationActive = false;
+
+                const bb = document.getElementById('backBtn');
+                if (bb) bb.classList.add('hidden');
+
+                // Re-render without overlay
+                ['axial', 'sagittal', 'coronal'].forEach(plane => renderSlice(plane));
+
+                // Remove only custom segmentation meshes (never remove the main volume mesh)
+                if (segmentationGeometry && segmentationGeometry !== state.volumeMesh) {
+                    scene.remove(segmentationGeometry);
+                    segmentationGeometry = null;
+                }
+
+                // Bring back grid
+                if (gridHelper3D) gridHelper3D.visible = true;
+
+                showNotification('تم إعادة الضبط');
+            } catch (e) {
+                console.error('Reset error:', e);
+            }
+        }
+
+
+        // --- Snapshots + Report (ported from cbct.html, non-invasive) ---
+        function takeSnapshot(view){
+            try{
+                let img = null;
+                if(view === 'volume'){
+                    try{
+                        if(typeof renderer !== 'undefined' && renderer && renderer.domElement){
+                            // Ensure latest frame
+                            try{ if(typeof scene !== 'undefined' && typeof camera !== 'undefined') renderer.render(scene, camera); }catch(e){}
+                            const src = renderer.domElement;
+                            const w = src.width || src.clientWidth || 1024;
+                            const h = src.height || src.clientHeight || 768;
+
+                            // Compose: 3D canvas + volume text overlay (so it appears in the snapshot)
+                            const out = document.createElement('canvas');
+                            out.width = w;
+                            out.height = h;
+                            const ctx = out.getContext('2d');
+
+                            ctx.drawImage(src, 0, 0, w, h);
+
+                            const overlayText =
+                                (document.getElementById('volume3DOverlayText')?.textContent) ||
+                                ('الحجم: ' + (document.getElementById('totalVolume')?.textContent || '0.00 cm³'));
+
+                            const barH = Math.max(28, Math.round(h * 0.07));
+                            ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                            ctx.fillRect(0, 0, w, barH);
+
+                            const fontPx = Math.max(16, Math.round(w * 0.028));
+                            ctx.font = 'bold ' + fontPx + 'px Tajawal, sans-serif';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(overlayText, w / 2, barH / 2);
+
+                            img = out.toDataURL('image/png');
+                        }
+                    }catch(e){
+                        console.error('Volume snapshot error:', e);
+                        img = null;
+                    }
+                } else {
+                    const cv = document.getElementById(view + 'Canvas');
+                    if(cv) img = cv.toDataURL('image/png');
+                }
+                if(!img){
+                    showNotification('لا يمكن أخذ Snapshot حالياً', 'error');
+                    return;
+                }
+                state.reportList.push({ view, img, type: state.selectedReportType || 'Airway', date: new Date().toLocaleTimeString() });
+                const sc = document.getElementById('snapCount'); if(sc) sc.textContent = String(state.reportList.length);
+                showNotification('تم حفظ Snapshot في التقرير', 'success');
+            }catch(e){
+                console.error('Snapshot error:', e);
+                showNotification('خطأ في Snapshot: ' + (e.message || e), 'error');
+            }
+        }
+
+        function showReport(){
+            const sc = document.getElementById('snapCount'); if(sc) sc.textContent = String((state.reportList||[]).length);
+            const r = document.getElementById('reportModal');
+            const b = document.getElementById('repoContent');
+            if(!r || !b){ showNotification('Report UI غير موجود', 'error'); return; }
+            b.innerHTML = "";
+            if(!state.reportList || state.reportList.length === 0){
+                b.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">No snapshots taken yet.</div>';
+            } else {
+                state.reportList.forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'repo-item';
+                    div.innerHTML = `<img src="${item.img}" class="repo-img" />
+                    <div class="repo-info">
+                      <div style="color:#93c5fd; font-weight:900;">${String(item.view || '').toUpperCase()} View</div>
+                      <div>Time: ${item.date || ''}</div>
+                      <button class="toolbar-btn px-3 py-2 rounded-lg text-xs font-bold text-red-200 border border-red-500/40 bg-red-500/10 hover:bg-red-500/20" style="width:fit-content;" onclick="delReport(${idx})">Delete</button>
+                    </div>`;
+                    b.appendChild(div);
+                });
+            }
+            r.style.display = 'flex';
+        }
+
+        function delReport(idx){
+            try{
+                state.reportList.splice(idx, 1);
+                const sc = document.getElementById('snapCount'); if(sc) sc.textContent = String(state.reportList.length);
+                showReport();
+            }catch(e){
+                console.error(e);
+            }
+        }
+
+        async function downloadPDF(){
+            try{
+                if(!state.reportList || state.reportList.length === 0) return showNotification('لا توجد صور لإنشاء PDF', 'error');
+                if(!window.jspdf) return alert("PDF Library not loaded. Check internet connection.");
+                showNotification('Generating PDF...', 'success');
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let y = 20;
+
+                doc.setFontSize(18);
+                doc.text("RRZ Airway Report", 105, y, { align: "center" });
+                y += 10;
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 105, y, { align: "center" });
+                y += 15;
+                doc.line(20, y, 190, y);
+                y += 10;
+
+                for(let i=0; i<state.reportList.length; i++){
+                    const item = state.reportList[i];
+                    if(y > 250) { doc.addPage(); y = 20; }
+
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`Image ${i+1}: ${String(item.view || '').toUpperCase()} View`, 20, y);
+                    y += 7;
+
+                    try {
+                        const imgProps = doc.getImageProperties(item.img);
+                        const pdfWidth = 170;
+                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                        if(y + pdfHeight > 280) { doc.addPage(); y = 20; }
+                        doc.addImage(item.img, 'PNG', 20, y, pdfWidth, pdfHeight);
+                        y += pdfHeight + 15;
+                    } catch(e) {
+                        console.error("Error adding image to PDF", e);
+                    }
+                }
+
+                doc.save("RRZ_Airway_Report.pdf");
+            }catch(e){
+                console.error(e);
+                showNotification('PDF error: ' + (e.message || e), 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            
+            // Demo placeholder
+            if (scene) {
+                const geometry = new THREE.BoxGeometry(50, 50, 50);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x3b82f6, 
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.2
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                scene.add(cube);
+                
+                function rotate() {
+                    if (!state.dicomData && cube) {
+                        cube.rotation.x += 0.005;
+                        cube.rotation.y += 0.005;
+                        requestAnimationFrame(rotate);
+                    } else if (cube) {
+                        scene.remove(cube);
+                    }
+                }
+                rotate();
+            }
+        });
+
+    
+
+// ===== New Case + Dashboard =====
+function goDashboard(){
+    try{
+        // Prefer dashboard.html if موجود داخل نفس الفولدر
+        window.location.href = 'dashboard.html';
+    }catch(e){
+        window.location.href = 'dashboard.html';
+    }
+}
+
+function newCase(){
+    const ok = confirm('بدء حالة جديدة؟ سيتم مسح الشرائح/الـ ROI/الـ Volume/الـ Snapshots الخاصة بالحالة الحالية.');
+    if(!ok) return;
+    hardResetCase();
+}
+
+function hardResetCase(){
+    try{
+        // Close report modal if open
+        const rm = document.getElementById('reportModal');
+        if(rm) rm.classList.add('hidden');
+    }catch(_){}
+
+    try{
+        // Reset segmentation overlays & 3D volume if present
+        if(typeof resetSegmentation === 'function'){
+            try{ resetSegmentation(); }catch(_){}
+        }
+    }catch(_){}
+
+    try{
+        // Remove 3D mesh from scene
+        if(state && state.volumeMesh && typeof scene !== 'undefined' && scene){
+            try{ scene.remove(state.volumeMesh); }catch(_){}
+        }
+    }catch(_){}
+
+    // Reset state object (safe defaults)
+    try{
+        if(typeof state !== 'undefined' && state){
+            state.dicomData = null;
+            state.rawDicomData = null;
+            state.slices = { axial: [], sagittal: [], coronal: [] };
+            state.originalSlices = { axial: [], sagittal: [], coronal: [] };
+            state.currentSlice = { axial: 0, sagittal: 0, coronal: 0 };
+            state.dimensions = { width: 0, height: 0, depth: 0 };
+            state.spacing = { x: 1, y: 1, z: 1 };
+            state.polygons = { axial: {}, sagittal: {}, coronal: {} };
+            state.isDrawing = false;
+            state.currentPolygon = null;
+            state.volumeMesh = null;
+            state.segmentationActive = false;
+            state.stats = { totalVolume: 0, minArea: Infinity, maxArea: 0 };
+            state.colorMapMin = 0;
+            state.colorMapMax = 150;
+            state.fileCount = 0;
+            state.reportList = [];
+        }
+    }catch(_){}
+
+    // Clear 2D canvases + reset sliders
+    ['axial','sagittal','coronal'].forEach(p => {
+        try{
+            const cv = document.getElementById(p + 'Canvas');
+            if(cv){
+                const ctx = cv.getContext('2d');
+                if(ctx) ctx.clearRect(0,0,cv.width,cv.height);
+            }
+        }catch(_){}
+        try{
+            const slider = document.getElementById(p + 'Slider');
+            if(slider){
+                slider.value = '0';
+                slider.min = '0';
+                slider.max = '0';
+            }
+        }catch(_){}
+        try{
+            const num = document.getElementById(p + 'SliceNum');
+            if(num) num.textContent = '0 / 0';
+        }catch(_){}
+    });
+
+    // Reset stats text
+    try{ const tv = document.getElementById('totalVolume'); if(tv) tv.textContent = '0.00'; }catch(_){}
+    try{ const csa = document.getElementById('crossSectionArea'); if(csa) csa.textContent = '0'; }catch(_){}
+    try{ const np = document.getElementById('narrowestPoint'); if(np) np.textContent = '0'; }catch(_){}
+    try{ const sc = document.getElementById('sliceCount'); if(sc) sc.textContent = '0'; }catch(_){}
+    try{ const sn = document.getElementById('snapCount'); if(sn) sn.textContent = '0'; }catch(_){}
+    try{ const ov = document.getElementById('volume3DOverlayText'); if(ov) ov.textContent = 'الحجم: 0.00 cm³'; }catch(_){}
+
+    // Reset 3D camera/controls
+    try{
+        if(typeof controls !== 'undefined' && controls) controls.reset();
+        if(typeof camera !== 'undefined' && camera){
+            camera.position.set(0, 0, 400);
+            camera.lookAt(0, 0, 0);
+        }
+        if(typeof renderer !== 'undefined' && renderer && typeof scene !== 'undefined' && scene && typeof camera !== 'undefined' && camera){
+            renderer.render(scene, camera);
+        }
+    }catch(_){}
+
+    // Reset file input
+    try{
+        const fi = document.getElementById('dicomFileInput');
+        if(fi) fi.value = '';
+    }catch(_){}
+
+    // Show start screen again
+    try{
+        const ss = document.getElementById('startScreen');
+        if(ss) ss.classList.remove('hidden');
+    }catch(_){}
+
+    try{
+        if(typeof showNotification === 'function'){
+            showNotification('تم بدء حالة جديدة ✅');
+        }
+    }catch(_){}
+}
+
+</script>
+<script>
+/* === Mobile UX + Touch bridge (Airway) === */
+(function(){
+  const isMobileUA = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  function isMobileLayout(){
+    return isMobileUA || (window.innerWidth <= 980);
+  }
+
+  function ensureMobileLayoutHooks(){
+    if(!isMobileLayout()) return;
+
+    const main = document.querySelector('main');
+    if(!main) return;
+
+    // tag key containers for targeted CSS
+    const aside = main.querySelector('aside');
+    const grid  = main.querySelector('div.flex-1');
+    if(aside) aside.classList.add('tools-sidebar');
+    if(grid)  grid.classList.add('viewports-grid');
+
+    // Add Tools toggle button (non-invasive)
+    const header = document.querySelector('header');
+    if(header && !document.getElementById('toggleToolsBtn')){
+      const btn = document.createElement('button');
+      btn.id = 'toggleToolsBtn';
+      btn.className = 'toolbar-btn px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-2';
+      btn.innerHTML = '☰ أدوات';
+      btn.addEventListener('click', function(){
+        document.body.classList.toggle('tools-open');
+      });
+
+      // insert near the action buttons area
+      const rightBox = header.querySelector('div.flex.items-center.gap-2') || header.querySelector('div.flex.items-center.gap-3') || header.firstElementChild;
+      if(rightBox && rightBox.parentElement){
+        rightBox.parentElement.insertBefore(btn, rightBox.nextSibling);
+      } else {
+        header.appendChild(btn);
+      }
+
+      // tap on grid closes tools
+      if(grid){
+        grid.addEventListener('pointerdown', function(){
+          if(document.body.classList.contains('tools-open')) document.body.classList.remove('tools-open');
+        }, {passive:true});
+      }
+    }
+  }
+
+  // Touch -> Mouse bridge for existing mousedown/mousemove logic (polygon + pan)
+  function bridgeTouchToMouse(canvas){
+    if(!canvas || canvas.__touchBridgeEnabled) return;
+    canvas.__touchBridgeEnabled = true;
+
+    // Prevent browser gestures interfering with canvas interactions
+    canvas.style.touchAction = 'none';
+    canvas.style.webkitUserSelect = 'none';
+    canvas.style.userSelect = 'none';
+
+    function dispatchMouse(type, pe){
+      if(pe.pointerType !== 'touch') return;
+      try { pe.preventDefault(); } catch(e){}
+      const me = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        clientX: pe.clientX,
+        clientY: pe.clientY,
+        button: 0
+      });
+      canvas.dispatchEvent(me);
+    }
+
+    canvas.addEventListener('pointerdown', function(pe){
+      dispatchMouse('mousedown', pe);
+      try { canvas.setPointerCapture(pe.pointerId); } catch(e){}
+    }, {passive:false});
+
+    canvas.addEventListener('pointermove', function(pe){
+      dispatchMouse('mousemove', pe);
+    }, {passive:false});
+
+    canvas.addEventListener('pointerup', function(pe){
+      dispatchMouse('mouseup', pe);
+      try { canvas.releasePointerCapture(pe.pointerId); } catch(e){}
+    }, {passive:false});
+
+    canvas.addEventListener('pointercancel', function(pe){
+      dispatchMouse('mouseup', pe);
+    }, {passive:false});
+  }
+
+  function enableTouch(){
+    // Canvases used in the viewer
+    ['axialCanvas','sagittalCanvas','coronalCanvas'].forEach(function(id){
+      bridgeTouchToMouse(document.getElementById(id));
+    });
+
+    // 3D renderer canvas (try common ids)
+    bridgeTouchToMouse(document.querySelector('#threeCanvas') || document.querySelector('#threeContainer canvas') || document.querySelector('#volume3d canvas'));
+  }
+
+  window.addEventListener('load', function(){
+    ensureMobileLayoutHooks();
+    enableTouch();
+  });
+
+  window.addEventListener('resize', function(){
+    ensureMobileLayoutHooks();
+  });
+})();
+</script>
+
+  <script src="shared/tablet-input.js"></script>
+</body>
+</html>

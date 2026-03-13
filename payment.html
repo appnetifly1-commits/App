@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدفع - Royal Ray Zone</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c5a059">
+<!-- في <head> كل صفحات HTML -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#c5a059">
+<meta name="msapplication-TileColor" content="#c5a059">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* شريط التنقل */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        
+        .logo-text {
+            font-size: 1.5em;
+            color: #c5a059;
+            font-weight: bold;
+        }
+        
+        /* محتوى الصفحة */
+        .payment-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .payment-title {
+            color: #c5a059;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .payment-subtitle {
+            color: #94a3b8;
+            font-size: 1.2em;
+        }
+        
+        /* خطط الدفع */
+        .payment-plan-card {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #c5a059;
+        }
+        
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .plan-name {
+            font-size: 1.8em;
+            color: white;
+        }
+        
+        .plan-price {
+            font-size: 2.5em;
+            color: #c5a059;
+            font-weight: bold;
+        }
+        
+        /* طرق الدفع */
+        .payment-methods {
+            margin: 40px 0;
+        }
+        
+        .methods-title {
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .method-card {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .method-card:hover, .method-card.active {
+            border-color: #c5a059;
+            background: rgba(15, 23, 42, 0.8);
+            transform: translateY(-5px);
+        }
+        
+        .method-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #c5a059;
+        }
+        
+        .method-name {
+            font-size: 1.3em;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .method-desc {
+            color: #94a3b8;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .method-number {
+            background: rgba(197, 160, 89, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #f0d699;
+            font-family: monospace;
+            font-size: 1.1em;
+            direction: ltr;
+        }
+        
+        /* تفاصيل البطاقة */
+        .card-details {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .card-details.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: white;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #c5a059;
+            box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* زر الدفع */
+        .pay-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #c5a059, #b89040);
+            color: #0f172a;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+        
+        .pay-btn:hover {
+            background: linear-gradient(135deg, #f0d699, #c5a059);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(197, 160, 89, 0.3);
+        }
+        
+        .pay-btn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* معلومات الأمان */
+        .security-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+        
+        .security-icon {
+            color: #10b981;
+        }
+        
+        /* إشعار */
+        .notification {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        /* زر العودة */
+        .back-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .back-btn:hover {
+            background: #475569;
+        }
+        
+        /* تحسينات للجوال */
+        @media (max-width: 768px) {
+            .payment-container {
+                padding: 25px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .methods-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="shared/tablet.css">
+</head>
+<body>
+    
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="images/logo.png" alt="Logo" class="logo-img" 
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50/c5a059/0f172a?text=RRZ'">
+            <div class="logo-text">Royal Ray Zone</div>
+        </div>
+        
+        <button class="back-btn" onclick="goBack()">
+            ← العودة
+        </button>
+    </nav>
+    
+    <!-- محتوى الدفع -->
+    <div class="payment-container">
+        <header class="payment-header">
+            <h1 class="payment-title">إكمال الاشتراك</h1>
+            <p class="payment-subtitle">اختر طريقة الدفع المناسبة لإكمال اشتراكك في الخطة الملكية</p>
+        </header>
+        
+        <!-- تفاصيل الخطة -->
+        <div class="payment-plan-card">
+            <div class="plan-header">
+                <h2 class="plan-name">Royal Plan</h2>
+                <div class="plan-price">$29</div>
+            </div>
+            <div style="color: #94a3b8; line-height: 1.6;">
+                <p>✅ 30 تحليل شهري لأشعة الأسنان</p>
+                <p>✅ تحليل متقدم بالذكاء الاصطناعي</p>
+                <p>✅ دعم فني 24/7 + تقارير PDF</p>
+                <p>✅ تجربة مجانية 7 أيام (استرداد كامل المبلغ خلال 7 أيام)</p>
+            </div>
+        </div>
+        
+        <!-- طرق الدفع -->
+        <div class="payment-methods">
+            <h2 class="methods-title">اختر طريقة الدفع</h2>
+            
+            <div class="methods-grid">
+                <!-- فيزا/ماستركارد -->
+                <div class="method-card active" onclick="selectPaymentMethod('card')" id="cardMethod">
+                    <div class="method-icon">💳</div>
+                    <h3 class="method-name">بطاقة ائتمان/خصم</h3>
+                    <p class="method-desc">Visa, MasterCard, Meeza</p>
+                </div>
+                
+                <!-- فودافون كاش -->
+                <div class="method-card" onclick="selectPaymentMethod('vodafone')" id="vodafoneMethod">
+                    <div class="method-icon">📱</div>
+                    <h3 class="method-name">فودافون كاش</h3>
+                    <p class="method-desc">الدفع عبر رقم المحفظة</p>
+                    <div class="method-number">01096267331</div>
+                </div>
+                
+                <!-- انستاباي -->
+                <div class="method-card" onclick="selectPaymentMethod('instapay')" id="instapayMethod">
+                    <div class="method-icon">⚡</div>
+                    <h3 class="method-name">انستاباي</h3>
+                    <p class="method-desc">التحويل الفوري</p>
+                    <div class="method-number">01201120898</div>
+                </div>
+            </div>
+            
+            <!-- تفاصيل البطاقة -->
+            <div class="card-details active" id="cardDetails">
+                <h3 style="color: white; margin-bottom: 20px;">معلومات البطاقة</h3>
+                
+                <div class="form-group">
+                    <label for="cardNumber">رقم البطاقة</label>
+                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" 
+                           oninput="formatCardNumber(this)">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiryDate">تاريخ الانتهاء</label>
+                        <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5"
+                               oninput="formatExpiryDate(this)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cvv">رمز الأمان (CVV)</label>
+                        <input type="password" id="cvv" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cardName">اسم حامل البطاقة</label>
+                    <input type="text" id="cardName" placeholder="كما هو مكتوب على البطاقة">
+                </div>
+            </div>
+            
+            <!-- إشعار المحفظة -->
+            <div class="card-details" id="walletDetails">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">📱</div>
+                    <h3 style="color: #c5a059; margin-bottom: 15px;">اتبع هذه الخطوات:</h3>
+                    <ol style="color: #e2e8f0; line-height: 2; text-align: right; padding-right: 20px;">
+                        <li>افتح تطبيق <span id="walletAppName">فودافون كاش</span></li>
+                        <li>اختر "إرسال أموال"</li>
+                        <li>أدخل الرقم: <strong><span id="walletNumber">01096267331</span></strong></li>
+                        <li>أدخل المبلغ: <strong>29 دولار (ما يعادل ~1400 جنيه)</strong></li>
+                        <li>اكتب في الملاحظات: <strong>Royal Ray Zone</strong></li>
+                        <li>أرسل التحويل</li>
+                    </ol>
+                    <p style="color: #94a3b8; margin-top: 20px; font-style: italic;">
+                        بعد التحويل، ستصلك رسالة تأكيد على البريد الإلكتروني خلال 5 دقائق.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- إشعار انستاباي -->
+            <div class="card-details" id="instapayDetails">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">⚡</div>
+                    <h3 style="color: #c5a059; margin-bottom: 15px;">اتبع هذه الخطوات:</h3>
+                    <ol style="color: #e2e8f0; line-height: 2; text-align: right; padding-right: 20px;">
+                        <li>افتح تطبيق <strong>البنك الخاص بك</strong></li>
+                        <li>اختر "التحويل عبر انستاباي"</li>
+                        <li>أدخل رقم الهاتف: <strong>01201120898</strong></li>
+                        <li>أدخل المبلغ: <strong>29 دولار (ما يعادل ~1400 جنيه)</strong></li>
+                        <li>اكتب في الوصف: <strong>Royal Ray Zone Subscription</strong></li>
+                        <li>أكمل التحويل</li>
+                    </ol>
+                    <p style="color: #94a3b8; margin-top: 20px; font-style: italic;">
+                        التحويل فوري! ستصل رسالة التأكيد على البريد الإلكتروني خلال دقائق.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- معلومات الأمان -->
+        <div class="security-info">
+            <span class="security-icon">🔒</span>
+            <span>جميع عمليات الدفع مشفرة وآمنة 100%</span>
+        </div>
+        
+        <!-- إشعار -->
+        <div class="notification" id="paymentNotification">
+            ✅ تم استلام طلبك بنجاح! جاري التحقق من الدفع...
+        </div>
+        
+        <!-- زر الدفع -->
+        <button class="pay-btn" id="payButton" onclick="processPayment()">
+            تأكيد الدفع وإكمال الاشتراك
+        </button>
+        
+        <!-- شروط وأحكام -->
+        <div style="margin-top: 30px; padding: 20px; background: rgba(15, 23, 42, 0.5); border-radius: 10px;">
+            <p style="color: #94a3b8; font-size: 0.9em; text-align: center;">
+                بالضغط على "تأكيد الدفع"، أنت توافق على 
+                <a href="agreement.html" onclick="showTerms()" style="color: #c5a059; text-decoration: none;">الشروط والأحكام</a>
+                وسياسة الاستخدام.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // بيانات الدفع
+        let selectedMethod = 'card';
+        let paymentInProgress = false;
+        
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('صفحة الدفع جاهزة');
+            // تعيين طريقة الدفع الافتراضية
+            selectPaymentMethod('card');
+            
+            // إضافة مستمع للأخطاء
+            window.addEventListener('error', function(e) {
+                console.error('حدث خطأ:', e.message, 'في:', e.filename, 'سطر:', e.lineno);
+            });
+        });
+        
+        // اختيار طريقة الدفع
+        function selectPaymentMethod(method) {
+            console.log('اختيار طريقة الدفع:', method);
+            selectedMethod = method;
+            
+            // تحديث البطاقات النشطة
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // إخفاء كل التفاصيل
+            document.querySelectorAll('.card-details').forEach(detail => {
+                detail.classList.remove('active');
+            });
+            
+            // تفعيل البطاقة المختارة وعرض تفاصيلها
+            if (method === 'card') {
+                console.log('تفعيل بطاقة الائتمان');
+                document.getElementById('cardMethod').classList.add('active');
+                document.getElementById('cardDetails').classList.add('active');
+            } else if (method === 'vodafone') {
+                console.log('تفعيل فودافون كاش');
+                document.getElementById('vodafoneMethod').classList.add('active');
+                document.getElementById('walletDetails').classList.add('active');
+                document.getElementById('walletAppName').textContent = 'فودافون كاش';
+                document.getElementById('walletNumber').textContent = '01096267331';
+            } else if (method === 'instapay') {
+                console.log('تفعيل انستاباي');
+                document.getElementById('instapayMethod').classList.add('active');
+                document.getElementById('instapayDetails').classList.add('active');
+            }
+        }
+        
+        // تنسيق رقم البطاقة
+        function formatCardNumber(input) {
+            console.log('تنسيق رقم البطاقة');
+            let value = input.value.replace(/\D/g, '');
+            let formatted = '';
+            
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formatted += ' ';
+                }
+                formatted += value[i];
+            }
+            
+            input.value = formatted.substring(0, 19);
+        }
+        
+        // تنسيق تاريخ الانتهاء
+        function formatExpiryDate(input) {
+            console.log('تنسيق تاريخ الانتهاء');
+            let value = input.value.replace(/\D/g, '');
+            
+            if (value.length >= 2) {
+                let month = value.substring(0, 2);
+                let year = value.substring(2, 4);
+                input.value = month + '/' + year;
+            } else {
+                input.value = value;
+            }
+        }
+        
+        // معالجة الدفع
+        function processPayment() {
+            console.log('بدء معالجة الدفع');
+            
+            if (paymentInProgress) {
+                console.log('عملية دفع جارية بالفعل');
+                return;
+            }
+            
+            const payButton = document.getElementById('payButton');
+            const notification = document.getElementById('paymentNotification');
+            
+            // التحقق من بيانات البطاقة إذا كانت الطريقة المختارة
+            if (selectedMethod === 'card') {
+                console.log('التحقق من بيانات البطاقة');
+                const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                const expiryDate = document.getElementById('expiryDate').value;
+                const cvv = document.getElementById('cvv').value;
+                const cardName = document.getElementById('cardName').value;
+                
+                if (cardNumber.length < 16 || cardNumber.length > 19) {
+                    alert('يرجى إدخال رقم بطاقة صحيح');
+                    return;
+                }
+                
+                if (!expiryDate.match(/^\d{2}\/\d{2}$/)) {
+                    alert('يرجى إدخال تاريخ انتهاء صحيح (MM/YY)');
+                    return;
+                }
+                
+                if (cvv.length !== 3) {
+                    alert('يرجى إدخال رمز الأمان CVV (3 أرقام)');
+                    return;
+                }
+                
+                if (!cardName.trim()) {
+                    alert('يرجى إدخال اسم حامل البطاقة');
+                    return;
+                }
+            }
+            
+            // بدء عملية الدفع
+            paymentInProgress = true;
+            payButton.disabled = true;
+            payButton.innerHTML = '⏳ جاري معالجة الدفع...';
+            notification.style.display = 'block';
+            
+            console.log('الانتقال لصفحة الاتفاقية خلال 2 ثانية...');
+            
+            // الانتقال المباشر لصفحة الاتفاقية بعد 2 ثانية (محاكاة معالجة الدفع)
+            setTimeout(() => {
+                console.log('تمت معالجة الدفع، الانتقال لاتفاقية الاستخدام');
+                window.location.href = "agreement.html?plan=royal";
+            }, 2000);
+        }
+        
+        // العودة للخلف
+        function goBack() {
+            console.log('العودة للخلف');
+            if (confirm('هل تريد العودة لصفحة الاشتراكات؟ سيتم إلغاء عملية الدفع الحالية.')) {
+                window.location.href = "subscription.html";
+            }
+        }
+        
+        // عرض الشروط
+        function showTerms(event) {
+            console.log('عرض الشروط');
+            event.preventDefault();
+            window.location.href = "agreement.html";
+            return false;
+        }
+        
+        // إغلاق النافذة بالنقر خارجها
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('details-modal')) {
+                console.log('إغلاق النافذة المنبثقة');
+                event.target.style.display = 'none';
+            }
+        });
+  // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+// ========== PWA Service Worker Registration ==========
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(function(registration) {
+                console.log('✅ Service Worker مسجل بنجاح:', registration.scope);
+                
+                // تحقق من التحديثات
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 تم اكتشاف تحديث جديد!');
+                });
+            })
+            .catch(function(error) {
+                console.log('❌ فشل تسجيل Service Worker:', error);
+            });
+    });
+}
+
+// ========== PWA Install Prompt ==========
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // منع المتصفح من عرض التثبيت التلقائي
+    e.preventDefault();
+    // حفظ الحدث لاستخدامه لاحقاً
+    deferredPrompt = e;
+    
+    // إظهار زر التثبيت إذا كان موجوداً
+    if (installButton) {
+        installButton.style.display = 'block';
+        installButton.addEventListener('click', (e) => {
+            // عرض موجه التثبيت
+            deferredPrompt.prompt();
+            // الانتظار لرد المستخدم
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ وافق المستخدم على التثبيت');
+                } else {
+                    console.log('❌ رفض المستخدم التثبيت');
+                }
+                deferredPrompt = null;
+            });
+        });
+    }
+});
+    </script>
+  <script src="shared/tablet-input.js"></script>
+</body>
+</html>

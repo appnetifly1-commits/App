@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشروط والاتفاقية - Royal Ray Zone</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c5a059">
+    <!-- في <head> كل صفحات HTML -->
+   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#c5a059">
+<meta name="msapplication-TileColor" content="#c5a059">
+    
+   
+<style>
+    .agreement-container {
+        direction: rtl; /* للغة العربية */
+        font-family: Arial, sans-serif;
+        max-width: 400px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #1a1a2e; /* لون داكن متناسق مع الصورة */
+        border-radius: 15px;
+        color: white;
+    }
+
+    .condition-item {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    .condition-check {
+        width: 18px;
+        height: 18px;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+    /* تنسيق الزر الفاخر */
+    .fancy-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: not-allowed; /* شكل الماوس وهو معطل */
+        background: linear-gradient(45deg, #444, #666); /* لون رمادي وهو مطفأ */
+        color: #aaa;
+        transition: all 0.3s ease;
+    }
+
+    /* تنسيق الزر عندما يصبح مفعلًا */
+    .fancy-btn.enabled {
+        cursor: pointer;
+        background: linear-gradient(45deg, #28a745, #20c997); /* أخضر جذاب */
+        color: white;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .fancy-btn.enabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+    }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* شريط التنقل */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        
+        .logo-text {
+            font-size: 1.5em;
+            color: #c5a059;
+            font-weight: bold;
+        }
+        
+        /* محتوى الاتفاقية */
+        .agreement-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+        
+        .agreement-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .agreement-title {
+            color: #c5a059;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .agreement-subtitle {
+            color: #94a3b8;
+            font-size: 1.2em;
+        }
+        
+        /* قسم الموافقة على جميع الشروط */
+        .master-consent {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(197, 160, 89, 0.3);
+        }
+        
+        .master-consent h3 {
+            color: #c5a059;
+            margin-bottom: 15px;
+        }
+        
+        .master-consent p {
+            color: #e2e8f0;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        /* عناصر الموافقة الفردية */
+        .consent-item {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .consent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .consent-title {
+            color: white;
+            font-size: 1.2em;
+            line-height: 1.4;
+        }
+        
+        .required-badge {
+            background: #ef4444;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .optional-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .consent-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        /* خانة الاختيار */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .consent-checkbox {
+            width: 22px;
+            height: 22px;
+            accent-color: #c5a059;
+            cursor: pointer;
+        }
+        
+        .consent-checkbox:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* أزرار العرض */
+        .view-btn {
+            background: transparent;
+            color: #c5a059;
+            border: 1px solid #c5a059;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .view-btn:hover {
+            background: rgba(197, 160, 89, 0.1);
+        }
+        
+        /* أزرار التنقل */
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 150px;
+        }
+        
+        .back-btn {
+            background: #334155;
+            color: white;
+        }
+        
+        .back-btn:hover {
+            background: #475569;
+        }
+        
+        .continue-btn {
+            background: linear-gradient(135deg, #c5a059, #b89040);
+            color: #0f172a;
+        }
+        
+        .continue-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #f0d699, #c5a059);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(197, 160, 89, 0.3);
+        }
+        
+        .continue-btn:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* النافذة المنبثقة */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 50px auto;
+            border: 2px solid #c5a059;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-title {
+            color: #c5a059;
+            font-size: 1.8em;
+        }
+        
+        .close-modal {
+            background: #334155;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            background: #475569;
+        }
+        
+        .modal-body {
+            color: #e2e8f0;
+            line-height: 1.8;
+            text-align: right;
+        }
+        
+        .modal-body h3 {
+            color: #c5a059;
+            margin: 25px 0 15px 0;
+            font-size: 1.3em;
+        }
+        
+        .modal-body ul, .modal-body ol {
+            padding-right: 20px;
+            margin: 15px 0;
+        }
+        
+        .modal-body li {
+            margin-bottom: 10px;
+        }
+        
+        .note-box {
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #f0d699;
+            font-style: italic;
+        }
+        
+        /* تحسينات للجوال */
+        @media (max-width: 768px) {
+            .agreement-container {
+                padding: 25px;
+            }
+            
+            .consent-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .consent-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .navigation-buttons {
+                flex-direction: column;
+            }
+            
+            .nav-btn {
+                width: 100%;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="shared/tablet.css">
+</head>
+<body>
+    
+    <!-- شريط التنقل -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="images/logo.png" alt="Logo" class="logo-img" 
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50/c5a059/0f172a?text=RRZ'">
+            <div class="logo-text">Royal Ray Zone</div>
+        </div>
+    </nav>
+    
+    <!-- محتوى الاتفاقية -->
+    <div class="agreement-container">
+        <header class="agreement-header">
+            <h1 class="agreement-title">الشروط والاتفاقية</h1>
+            <p class="agreement-subtitle">الخطوة 4 من 4 - اقرأ ووافق على الشروط التالية</p>
+        </header>
+        
+        <!-- الموافقة على جميع الشروط -->
+        <div class="master-consent">
+            <h3>✅ الموافقة على جميع الشروط</h3>
+            <p>
+                اختيار الموافقة على جميع الشروط يشمل الموافقة على جميع عمليات جمع واستخدام المعلومات الشخصية المطلوبة والاختيارية.
+                لديك الحق في إعطاء الموافقة الفردية على كل بند، وخدمة Royal Ray Zone متاحة حتى إذا رفضت الموافقة على جمع واستخدام البنود الاختيارية.
+            </p>
+            <div class="checkbox-container">
+                <input type="checkbox" id="t_all" class="consent-checkbox" onchange="toggleAllTerms(this.checked)">
+                <label for="t_all" style="color: white; font-weight: bold;">
+                    أوافق على جميع الشروط أعلاه
+                </label>
+            </div>
+        </div>
+        
+        <!-- الشروط المطلوبة 1 -->
+        <div class="consent-item">
+            <div class="consent-header">
+                <div class="consent-title">
+                    <span class="required-badge">مطلوب</span>
+                    شروط استخدام Royal Ray Zone
+                </div>
+                <div class="consent-actions">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="t_req1" class="consent-checkbox" onchange="syncTermsState()">
+                        <label for="t_req1" style="color: #e2e8f0;">موافق</label>
+                    </div>
+                    <button class="view-btn" onclick="openModal('شروط استخدام Royal Ray Zone')">عرض</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- الشروط المطلوبة 2 -->
+        <div class="consent-item">
+            <div class="consent-header">
+                <div class="consent-title">
+                    <span class="required-badge">مطلوب</span>
+                    جمع واستخدام ونقل المعلومات الشخصية
+                </div>
+                <div class="consent-actions">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="t_req2" class="consent-checkbox" onchange="syncTermsState()">
+                        <label for="t_req2" style="color: #e2e8f0;">موافق</label>
+                    </div>
+                    <button class="view-btn" onclick="openModal('سياسة المعلومات الشخصية')">عرض</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- الشروط الاختيارية -->
+        <div class="consent-item">
+            <div class="consent-header">
+                <div class="consent-title">
+                    <span class="optional-badge">اختياري</span>
+                    جمع معلومات شخصية إضافية لأغراض التسويق واستقبال المعلومات الإعلانية
+                </div>
+                <div class="consent-actions">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="t_opt1" class="consent-checkbox" onchange="syncTermsState()">
+                        <label for="t_opt1" style="color: #e2e8f0;">موافق</label>
+                    </div>
+                    <button class="view-btn" onclick="openModal('موافقة التسويق الاختيارية')">عرض</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- أزرار التنقل -->
+    <div class="navigation-buttons">
+      <button class="nav-btn back-btn" onclick="goBackFromTerms()">
+        رجوع
+       </button>
+       <button class="nav-btn continue-btn" id="btnContinue" onclick="enterWorkflow()" disabled>
+        المتابعة للتحليل
+       </button>
+      </div>
+    </div>
+    
+    <!-- النافذة المنبثقة للشروط -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">شروط الاستخدام</h2>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- محتوى الشروط سيتم إضافته ديناميكياً -->
+            </div>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+    <p>بالمتابعة، أنت توافق على شروط الاستخدام.</p>
+    
+    <a href="analysis.html" style="text-decoration: none;">
+      </a>
+</div>
+
+
+    <div class="condition-item">
+        <input type="checkbox" id="data-usage" class="condition-check">
+        <label for="data-usage">أسمح للتطبيق بالوصول إلى الكاميرا ومعالجة الصور</label>
+   
+    <script>
+        // بيانات الشروط القانونية
+        const LEGAL_TEXT = {
+            termsOfUse: `
+                <div class="note-box">
+                    ملاحظة: استبدل [أدخل...] بمعلومات عملك الرسمية. هذه القوالب ليست نصيحة قانونية؛ استشر محامياً لولايتك القضائية.
+                </div>
+                
+                <h3>ROYAL RAY ZONE – شروط الاستخدام (البرمجيات الطبية)</h3>
+                <p><strong>آخر تحديث: [أدخل التاريخ]</strong></p>
+                
+                <h3>1) قبول هذه الشروط</h3>
+                <p>بإنشاء حساب أو الوصول إلى خدمة Royal Ray Zone ("الخدمة"، "المنصة"، "البرنامج")، فإنك تؤكد أنك قد قرأت وفهمت ووافقت على الالتزام بشروط الاستخدام هذه، وأن لديك السلطة لقبولها نيابة عن عيادتك أو مؤسستك (إذا كان ذلك ينطبق). إذا لم توافق، لا تستخدم الخدمة.</p>
+                
+                <h3>2) من يمكنه استخدام الخدمة</h3>
+                <p>الخدمة مخصصة لمقدمي الرعاية الصحية المرخصين (مثل أطباء الأسنان، أخصائيي تقويم الأسنان، أخصائيي الأشعة الفموية) والموظفين السريريين المصرح لهم بالعمل تحت الإشراف المهني. الخدمة غير مصممة للاستخدام الذاتي للمرضى أو التشخيص الاستهلاكي.</p>
+                
+                <h3>3) إخلاء المسؤولية الطبية – ليس تشخيصاً / ليس نصيحة طبية</h3>
+                <p>يوفر Royal Ray Zone أدوات دعم القرار السريري، بما في ذلك التحليل بمساعدة الذكاء الاصطناعي للصور والمدخلات ذات الصلة. الخدمة:
+                • لا تقدم تشخيصاً نهائياً.
+                • لا تحل محل الحكم السريري المهني.
+                • لا تنشئ علاقة طبيب-مريض بينك وبين Royal Ray Zone.</p>
+                <p>أنت تتحمل المسؤولية الكاملة عن:
+                (أ) التحقق من النتائج، (ب) تفسير المخرجات، (ج) القرارات السريرية، (د) التوثيق، (هـ) الموافقة المستنيرة، (و) الامتثال للقوانين المحلية واللوائح المهنية.</p>
+                <p>قد تكون مخرجات الذكاء الاصطناعي غير مكتملة أو غير دقيقة أو غير مناسبة لحالات معينة. يجب عليك استخدام الخدمة كأداة مساعدة فقط.</p>
+                
+                <h3>4) عدم استخدام الطوارئ</h3>
+                <p>الخدمة غير مخصصة لحالات الطوارئ. لا تستخدمها في حالات الطوارئ أو الحالات المهددة للحياة. في حالات الطوارئ، اتبع البروتوكولات السريرية القياسية وخدمات الطوارئ المحلية.</p>
+                
+                <h3>5) التزامات المستخدم (مسؤوليات الطبيب/العيادة)</h3>
+                <p>أنت توافق على:
+                • تقديم معلومات حساب دقيقة وتحديثها.
+                • الحفاظ على سرية بيانات اعتماد تسجيل الدخول الخاصة بك.
+                • استخدام الخدمة فقط للأغراض السريرية القانونية.
+                • الحصول على جميع أذونات/موافقات المرضى المطلوبة لتحميل ومعالجة الصور والبيانات الشخصية/الصحية (بما في ذلك الموافقة الصريحة عند الاقتضاء).
+                • التأكد من أن لديك السلطة القانونية لمعالجة وتحمل ومشاركة أي بيانات تقدمها.
+                • تطبيق تقليل البيانات: قم بتحميل ما هو ضروري فقط للغرض السريري.</p>
+                
+                <h3>6) موافقة المريض والتوثيق</h3>
+                <p>أنت مسؤول عن الحصول على موافقة/تفويض المريض والحفاظ عليه (كتابة أو غير ذلك كما هو مطلوب قانونياً) بما في ذلك:
+                • جمع وتحمل الصور والبيانات الشخصية،
+                • المعالجة والتحليل بالذكاء الاصطناعي،
+                • التخزين والاسترجاع،
+                • المشاركة/النقل إلى مزودي الخدمة (المعالجين/المعالجين الفرعيين) عند الحاجة لتقديم الخدمة،
+                • تحويلات البيانات العابرة للحدود إذا تمت معالجة البيانات خارج بلد المريض (حيث ينطبق).</p>
+                <p>يجب أن تكون قادراً على تقديم دليل على الموافقة عند الطلب من قبل المنظمين أو الطلبات القانونية.</p>
+                
+                <h3>7) الاستخدامات المسموح بها والمحظورة</h3>
+                <p>مسموح: دعم القرار السريري، التقارير المنظمة، تحسين الجودة الداخلية (حسب المسموح).
+                محظور:
+                • استخدام الخدمة لتقديم تشخيص طبي مباشر للجمهور،
+                • تحميل البيانات بدون سلطة/موافقة،
+                • محاولة عكس هندسة النماذج، تجاوز الأمان، كشط البيانات، أو استغلال الثغرات الأمنية،
+                • تحميل محتوى غير قانوني أو ينتهك الحقوق،
+                • استخدام الخدمة بطرق تنتهك لوائح الأجهزة الطبية/الصحية في ولايتك القضائية.</p>
+                
+                <h3>8) الملكية الفكرية والترخيص</h3>
+                <p>نمنحك ترخيصاً محدوداً غير حصري غير قابل للتحويل وقابل للإلغاء للوصول إلى الخدمة واستخدامها خلال فترة اشتراكك. تبقى جميع الحقوق والملكية والمصلحة في الخدمة والبرنامج وواجهة المستخدم والنماذج والتوثيق مع Royal Ray Zone ومرخصيها. لا يجوز لك نسخ أو تعديل أو توزيع أو منح ترخيص فرعي أو إنشاء أعمال مشتقة إلا كما هو مسموح به صراحةً.</p>
+                
+                <h3>9) قيود الذكاء الاصطناعي وإشعار الجودة</h3>
+                <p>نماذج الذكاء الاصطناعي هي أدوات إحصائية وقد:
+                • تفشل في جودة الصور الرديئة، التشوهات، التشريح غير المعتاد، اختلافات الأطفال/المسنين، الزرعات، أو الوسائط غير القياسية،
+                • تكون حساسة للوضع والتعرض،
+                • تنتج إيجابيات/سلبيات كاذبة.</p>
+                <p>تقر بأن المخرجات يجب التحقق منها سريرياً واستخدامها مع الإشراف البشري.</p>
+                
+                <h3>10) الأمان والتحكم في الوصول</h3>
+                <p>يجب عليك تنفيذ ممارسات أمنية معقولة بما في ذلك:
+                • حماية نقاط النهاية وأجهزة العيادة،
+                • تقييد الوصول للشخص المصرح له،
+                • تدوير كلمات المرور على الفور وإلغاء الوصول للموظفين السابقين.</p>
+                
+                <h3>11) التعامل مع البيانات والتخزين</h3>
+                <p>يخضع استخدامك للخدمة أيضاً لسياسة المعلومات الشخصية. قد نطبق فترات الاحتفاظ والتشفير وضوابط الوصول وسجلات التدقيق.</p>
+                
+                <h3>12) خدمات الطرف الثالث</h3>
+                <p>قد نستخدم مزودي سحابة ذوي سمعة طيبة، أو تحليلات، أو خدمات بنية تحتية لتشغيل الخدمة. حيث تتم معالجة البيانات الشخصية/الصحية من قبل هؤلاء المزودين، فإنهم يتصرفون كمزودي خدمات (معالجين/معالجين فرعيين) تحت ضمانات تعاقدية مناسبة.</p>
+                
+                <h3>13) الاشتراك والرسوم والفوترة</h3>
+                <p>إذا اخترت خدمات مدفوعة:
+                • يتم عرض الرسوم ودورة الفوترة والنطاق عند الدفع،
+                • قد تطبق الضرائب حسب الولاية القضائية،
+                • قد يؤدي عدم الدفع إلى التعليق.</p>
+                
+                <h3>14) المبالغ المستردة والإلغاء</h3>
+                <p>ما لم يقتض القانون المحلي ذلك، قد تكون الرسوم غير قابلة للاسترداد بمجرد تخصيص سعة الخدمة أو حدوث الاستخدام. قد نقدم أرصدة أو مبالغ مستردة تقديرية في حالات استثنائية.</p>
+                
+                <h3>15) التعليق والإنهاء</h3>
+                <p>يجوز لنا تعليق الحسابات أو إنهاؤها بسبب الانتهاك، أو الاحتيال المشتبه به، أو مخاطر الأمن، أو المعالجة غير القانونية، أو المخاطر التنظيمية. يمكنك إنهاء العقد بالتوقف عن الاستخدام وطلب إغلاق الحساب مع مراعاة التزامات الاحتفاظ القانونية.</p>
+                
+                <h3>16) إخلاء مسؤولية الضمانات</h3>
+                <p>يتم توفير الخدمة "كما هي" و"كما هي متاحة". نحن نتنصل من جميع الضمانات، بما في ذلك الملاءمة لغرض معين، وعدم الانتهاك، والتوافر غير المنقطع.</p>
+                
+                <h3>17) تحديد المسؤولية</h3>
+                <p>إلى أقصى حد يسمح به القانون، لا تتحمل Royal Ray Zone المسؤولية عن:
+                • القرارات السريرية التي يتخذها المستخدمون،
+                • الأضرار غير المباشرة أو العرضية أو الخاصة أو التبعية،
+                • فقدان الأرباح أو البيانات أو السمعة الطيبة،
+                حتى مع إبلاغ إمكانية ذلك. تبلغ مسؤوليتنا الإجمالية (إن وجدت) إلى الرسوم المدفوعة في دورة الفوترة الأخيرة ما لم يقتض القانون غير ذلك.</p>
+                
+                <h3>18) التعويض</h3>
+                <p>أنت توافق على تعويض Royal Ray Zone وحمايتها من المطالبات الناشئة عن:
+                • استخدامك السريري، قرارات التشخيص/العلاج،
+                • عدم وجود موافقة/سلطة مناسبة للمريض،
+                • انتهاك قوانين الخصوصية/البيانات،
+                • الانتهاك بسبب المحتوى الذي تقوم بتحميله.</p>
+                
+                <h3>19) التغييرات في الشروط</h3>
+                <p>يجوز لنا تحديث هذه الشروط. سيتم إخطار التغييرات الجوهرية عبر الخدمة. يعني الاستمرار في الاستخدام القبول.</p>
+                
+                <h3>20) القانون الحاكم وتسوية المنازعات</h3>
+                <p>القانون الحاكم: [أدخل البلد/المنطقة]. المكان: [أدخل المحكمة/التحكيم]. إذا كنت تعمل عبر بلدان متعددة، استشر محامياً لتوطين هذا القسم.</p>
+                
+                <h3>الاتصال</h3>
+                <p>جهة الاتصال القانونية/الخصوصية: [أدخل البريد الإلكتروني]<br>
+                عنوان الشركة: [أدخل العنوان]</p>
+            `,
+            
+            personalInfoPolicy: `
+                <div class="note-box">
+                    ملاحظة: استبدل [أدخل...] بمعلومات عملك الرسمية. هذه القوالب ليست نصيحة قانونية؛ استشر محامياً لولايتك القضائية.
+                </div>
+                
+                <h3>ROYAL RAY ZONE – سياسة المعلومات الشخصية (الخصوصية والبيانات الصحية)</h3>
+                <p><strong>آخر تحديث: [أدخل التاريخ]</strong></p>
+                
+                <h3>1) الغرض والنطاق</h3>
+                <p>توضح هذه السياسة كيف يقوم Royal Ray Zone بجمع واستخدام وتخزين وكشف وحماية المعلومات الشخصية والبيانات الصحية ذات الصلة المعالجة من خلال الخدمة. يتم التعامل مع البيانات الصحية عمومًا على أنها "فئة خاصة/حساسة" في العديد من الأطر.</p>
+                
+                <h3>2) الأدوار (المتحكم/المعالج)</h3>
+                <p>اعتمادًا على حالة الاستخدام:
+                • قد تكون عيادتك/أنت المتحكم (تقرر غرض ووسائل معالجة بيانات المريض).
+                • يتصرف Royal Ray Zone كمعالج/مزود خدمة يعالج البيانات بناءً على تعليماتك لتقديم الخدمة.
+                في بعض الحالات المحدودة (إدارة الحساب، الفوترة، سجلات الأمان)، قد يتصرف Royal Ray Zone كمتحكم مستقل.</p>
+                
+                <h3>3) البيانات التي نجمعها</h3>
+                <p>أ) بيانات الحساب: الاسم، البريد الإلكتروني، الهاتف، كلمة المرور (مشفرة)، معلومات العيادة.
+                ب) البيانات السريرية التي تقوم بتحميلها: صور الأشعة، الصور السريرية، البيانات الوصفية، التعليقات التوضيحية.
+                ج) البيانات الشخصية للمريض (فقط إذا قمت بتحميلها): المعرفات، العمر، الملاحظات.
+                د) البيانات الفنية: معلومات الجهاز، IP، السجلات، مسارات التدقيق، الطوابع الزمنية، تحليلات الاستخدام.
+                هـ) بيانات الدفع: مراجع المعاملات والتأكيدات؛ نحاول تجنب تخزين تفاصيل البطاقة الكاملة حيثما أمكن.</p>
+                
+                <h3>4) الأساس القانوني والموافقة</h3>
+                <p>غالبًا ما تتطلب معالجة البيانات الصحية موافقة صريحة أو أساس قانوني آخر مع ضمانات مناسبة. أنت (العيادة/الطبيب) مسؤول عن الحصول على أي موافقة مطلوبة من المريض لتحميل ومعالجة الذكاء الاصطناعي، بما في ذلك الموافقة الصريحة عند الاقتضاء.</p>
+                
+                <h3>5) كيف نستخدم البيانات</h3>
+                <p>نستخدم البيانات ل:
+                • تقديم مخرجات التحليل، التقارير، وميزات سير العمل،
+                • تأمين المنصة، اكتشاف سوء الاستخدام، والحفاظ على السجلات،
+                • تحسين الموثوقية والأداء،
+                • تقديم دعم العملاء،
+                • إدارة الاشتراكات، الفوترة، وإدارة الحساب،
+                • الامتثال للالتزامات القانونية والطلبات القانونية.</p>
+                
+                <h3>6) إشعار معالجة الذكاء الاصطناعي والإشراف البشري</h3>
+                <p>مخرجات الذكاء الاصطناعي مساعدة. يجب عليك تطبيق الإشراف البشري والتحقق السريري؛ لا تعتمد فقط على المخرجات الآلية للقرارات ذات التأثيرات الكبيرة.</p>
+                
+                <h3>7) الإفصاح/المشاركة</h3>
+                <p>يجوز لنا مشاركة البيانات:
+                • مع مستخدمي العيادة المصرح لهم تحت حسابك،
+                • مع مزودي الخدمة المختارين (الاستضافة، التخزين، المراقبة، الدعم) بموجب عقد،
+                • للامتثال القانوني، منع الاحتيال، أو حوادث الأمان،
+                • بتعليماتك الصريحة (مثل التصدير).
+                نحن لا نبيع بيانات صحة المريض.</p>
+                
+                <h3>8) التحويلات العابرة للحدود</h3>
+                <p>اعتمادًا على موقع الاستضافة، قد تتم معالجة البيانات خارج بلدك. قد تتطلب التحويلات العابرة للحدود ضمانات محددة و/أو موافقة بموجب قوانين معينة. أنت مسؤول عن التأكد من أن إشعارات/موافقات المريض الخاصة بك تغطي المعالجة العابرة للحدود عند الاقتضاء.</p>
+                
+                <h3>9) الاحتفاظ</h3>
+                <p>نحتفظ بالبيانات طالما كانت هناك حاجة لتقديم الخدمة، والامتثال القانوني، وتسوية المنازعات. عند إغلاق الحساب، قد نحذف البيانات أو نلغي هويتها ما لم يكن مطلوبًا قانونيًا الاحتفاظ بها.</p>
+                
+                <h3>10) تدابير الأمان</h3>
+                <p>نطبق تدابير معقولة مثل التشفير أثناء النقل، التحكم في الوصول، تسجيل التدقيق، النسخ الاحتياطي، المراقبة، وعمليات الاستجابة للحوادث. لا يوجد نظام آمن بنسبة 100٪؛ يجب على المستخدمين أيضًا تأمين أجهزتهم وبيانات اعتمادهم.</p>
+                
+                <h3>11) الحقوق والطلبات</h3>
+                <p>وفقًا للقانون المحلي، قد يتمتع الأفراد بحقوق مثل الوصول، التصحيح، الحذف، سحب الموافقة، التقييد/الاعتراض، إمكانية النقل، وإشعارات الخرق. الطلبات: [أدخل البريد الإلكتروني]. قد نطلب التحقق من الهوية.</p>
+                
+                <h3>12) بيانات الأطفال</h3>
+                <p>إذا قمت بتحميل بيانات تتعلق بالقصر، يجب عليك التأكد من السلطة القانونية وموافقة الوصي حسب المطلوب.</p>
+                
+                <h3>13) الحوادث وإشعار الخرق</h3>
+                <p>نحافظ على العمليات لتقييم والاستجابة للحوادث. حيثما يقتضي القانون، قد يتم إصدار إشعارات للأطراف المتأثرة و/أو السلطات.</p>
+                
+                <h3>14) التغييرات</h3>
+                <p>يجوز لنا تحديث هذه السياسة وسننشر النسخة المحدثة في الخدمة.</p>
+                
+                <h3>الاتصال</h3>
+                <p>جهة اتصال الخصوصية: [أدخل البريد الإلكتروني]</p>
+            `,
+            
+            marketingConsent: `
+                <div class="note-box">
+                    ملاحظة: استبدل [أدخل...] بمعلومات عملك الرسمية. هذه القوالب ليست نصيحة قانونية؛ استشر محامياً لولايتك القضائية.
+                </div>
+                
+                <h3>ROYAL RAY ZONE – موافقة التسويق الاختيارية</h3>
+                <p><strong>آخر تحديث: [أدخل التاريخ]</strong></p>
+                
+                <h3>1) ما الذي توافق عليه (اختياري)</h3>
+                <p>إذا قمت بتمكين هذه الموافقة الاختيارية، فإنك تسمح لـ Royal Ray Zone بإرسال تحديثات المنتج، والإعلانات، والمحتوى التعليمي، والعروض الترويجية، ودعوات الأحداث، والاستطلاعات، وطلبات التعليقات.</p>
+                
+                <h3>2) القنوات</h3>
+                <p>البريد الإلكتروني، الرسائل القصيرة/واتساب (حيثما يكون قانونيًا)، إشعارات في التطبيق. المكالمات الهاتفية فقط إذا كان مسموحًا صراحةً وقانونيًا.</p>
+                
+                <h3>3) البيانات التي نستخدمها</h3>
+                <p>قد نستخدم تفاصيل جهة الاتصال لحسابك وإشارات استخدام المنتج العامة (وليس محتوى المريض السريري). نحن لا نستخدم صور/بيانات صحة المريض للتسويق.</p>
+                
+                <h3>4) السحب (عدم الموافقة)</h3>
+                <p>يمكنك سحب موافقة التسويق في أي وقت باستخدام إعدادات التطبيق، أو روابط إلغاء الاشتراك، أو الاتصال بـ [أدخل البريد الإلكتروني]. لا يؤثر السحب على المعالجة المطلوبة الضرورية لتقديم الخدمة.</p>
+                
+                <h3>5) تسويق الطرف الثالث</h3>
+                <p>نحن لا نبيع بياناتك لأطراف ثالثة للتسويق الخاص بهم. يتصرف مزودو الخدمة المستخدمون لإرسال الاتصالات بموجب عقد ولا يجوز لهم استخدام بياناتك لأغراضهم الخاصة.</p>
+                
+                <h3>6) التغييرات</h3>
+                <p>يجوز لنا تحديث لغة الموافقة هذه؛ قد يُطلب منك الموافقة مرة أخرى إذا لزم الأمر.</p>
+                
+                <h3>الاتصال</h3>
+                <p>تفضيلات التسويق: [أدخل البريد الإلكتروني]</p>
+            `
+        };
+        
+        // عناصر DOM
+        const t_all = document.getElementById('t_all');
+        const t_req1 = document.getElementById('t_req1');
+        const t_req2 = document.getElementById('t_req2');
+        const t_opt1 = document.getElementById('t_opt1');
+        const btnContinue = document.getElementById('btnContinue');
+        const modal = document.getElementById('termsModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        // تفعيل/تعطيل جميع الشروط
+        // تفعيل/تعطيل جميع الشروط
+function toggleAllTerms(checked) {
+    t_req1.checked = checked;
+    t_req2.checked = checked;
+    t_opt1.checked = checked;
+    syncTermsState();
+    syncCheckboxes(); // إضافة هذه السطر
+}
+        
+        // مزامنة حالة الشروط
+       // مزامنة حالة الشروط
+function syncTermsState() {
+    const r1 = t_req1.checked;
+    const r2 = t_req2.checked;
+    const o1 = t_opt1.checked;
+    
+    // تحديث خانة "الكل"
+    t_all.checked = (r1 && r2 && o1);
+    
+    // تفعيل زر المتابعة إذا تم الموافقة على الشروط المطلوبة
+    if (btnContinue) {
+        btnContinue.disabled = !(r1 && r2);
+    }
+    
+    syncCheckboxes(); // إضافة هذه السطر
+}
+       // مزامنة خانات الموافقة مع الخانات الرئيسية
+function syncCheckboxes() {
+    const mainCheck1 = document.getElementById('t_req1')?.checked || false;
+    const mainCheck2 = document.getElementById('t_req2')?.checked || false;
+    const bottomCheck1 = document.getElementById('terms');
+    const bottomCheck2 = document.getElementById('data-usage');
+    
+    if (bottomCheck1) bottomCheck1.checked = mainCheck1;
+    if (bottomCheck2) bottomCheck2.checked = mainCheck2;
+    
+    // تحديث حالة زر المتابعة السفلي
+    const allBottomChecked = bottomCheck1.checked && bottomCheck2.checked;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (submitBtn) {
+        if (allBottomChecked) {
+            submitBtn.disabled = false;
+            submitBtn.classList.add('enabled');
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('enabled');
+        }
+    }
+}
+        
+        // فتح النافذة المنبثقة
+        function openModal(title) {
+            modalTitle.textContent = title;
+            
+            // تحميل المحتوى المناسب
+            if (title === 'شروط استخدام Royal Ray Zone') {
+                modalBody.innerHTML = LEGAL_TEXT.termsOfUse;
+            } else if (title === 'سياسة المعلومات الشخصية') {
+                modalBody.innerHTML = LEGAL_TEXT.personalInfoPolicy;
+            } else if (title === 'موافقة التسويق الاختيارية') {
+                modalBody.innerHTML = LEGAL_TEXT.marketingConsent;
+            }
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // إغلاق النافذة
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // إغلاق النافذة بالنقر خارجها
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // العودة للخلف
+        function goBackFromTerms() {
+            // العودة للصفحة السابقة (الاشتراك)
+            window.location.href = "subscription.html";
+        }
+        
+        // الدخول لسير العمل (رفع الصور)
+       // الدخول لسير العمل (تسجيل بيانات المريض)
+// الدخول لسير العمل (الانتقال إلى dashboard)
+function enterWorkflow() {
+    if (t_req1.checked && t_req2.checked) {
+        // حفظ الموافقة في localStorage
+        localStorage.setItem('termsAccepted', 'true');
+        localStorage.setItem('termsAcceptedDate', new Date().toISOString());
+        localStorage.setItem('marketingConsent', t_opt1.checked ? 'true' : 'false');
+        
+        // الانتقال لصفحة dashboard
+        window.location.href = "dashboard.html";
+    }
+}
+        
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            // التحقق إذا كان المستخدم قد وافق مسبقاً
+            const termsAccepted = localStorage.getItem('termsAccepted');
+            if (termsAccepted === 'true') {
+                // يمكننا توجيهه مباشرة لصفحة رفع الصور
+                // أو نطلب منه الموافقة مرة أخرى
+            }
+            
+            // تحديث الحالة الأولية
+            syncTermsState();
+        });
+        
+        // إغلاق النافذة بالضغط على زر ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+  // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+// ========== PWA Service Worker Registration ==========
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(function(registration) {
+                console.log('✅ Service Worker مسجل بنجاح:', registration.scope);
+                
+                // تحقق من التحديثات
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 تم اكتشاف تحديث جديد!');
+                });
+            })
+            .catch(function(error) {
+                console.log('❌ فشل تسجيل Service Worker:', error);
+            });
+    });
+}
+
+// ========== PWA Install Prompt ==========
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // منع المتصفح من عرض التثبيت التلقائي
+    e.preventDefault();
+    // حفظ الحدث لاستخدامه لاحقاً
+    deferredPrompt = e;
+    
+    // إظهار زر التثبيت إذا كان موجوداً
+    if (installButton) {
+        installButton.style.display = 'block';
+        installButton.addEventListener('click', (e) => {
+            // عرض موجه التثبيت
+            deferredPrompt.prompt();
+            // الانتظار لرد المستخدم
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ وافق المستخدم على التثبيت');
+                } else {
+                    console.log('❌ رفض المستخدم التثبيت');
+                }
+                deferredPrompt = null;
+            });
+        });
+    }
+});
+    </script>
+
+<script>
+/* ===== Agreement -> Dashboard Glue (clean + robust) =====
+   - Enables both "المتابعة للتحليل" (btnContinue) and "سماح ومتابعة للتحليل" (submitBtn)
+   - Accepts either the TOP required checkboxes (t_req1+t_req2) or the BOTTOM ones (terms+data-usage)
+   - On continue: sets localStorage termsAccepted=true then redirects to dashboard.html
+*/
+
+function _getEl(id){ return document.getElementById(id); }
+
+function _isTopAccepted(){
+  const a = _getEl('t_req1'), b = _getEl('t_req2');
+  if (!a || !b) return null;
+  return !!(a.checked && b.checked);
+}
+
+function _isBottomAccepted(){
+  const a = _getEl('terms'), b = _getEl('data-usage');
+  if (!a || !b) return null;
+  return !!(a.checked && b.checked);
+}
+
+function _isAccepted(){
+  const top = _isTopAccepted();
+  const bottom = _isBottomAccepted();
+  // Prefer the set that exists on the page
+  if (top !== null) return top;
+  if (bottom !== null) return bottom;
+  return false;
+}
+
+function _setButtonsState(){
+  const ok = _isAccepted();
+
+  const btnContinue = _getEl('btnContinue');
+  if (btnContinue) btnContinue.disabled = !ok;
+
+  const submitBtn = _getEl('submitBtn');
+  if (submitBtn){
+    submitBtn.disabled = !ok;
+    submitBtn.classList.toggle('enabled', ok);
+  }
+}
+
+function _persistTerms(){
+  localStorage.setItem('termsAccepted', 'true');
+  localStorage.setItem('termsAcceptedDate', new Date().toISOString());
+
+  const marketing = _getEl('t_opt1');
+  localStorage.setItem('marketingConsent', (marketing && marketing.checked) ? 'true' : 'false');
+}
+
+// Override / ensure these exist (used by your HTML)
+window.enterWorkflow = function(){
+  if (!_isAccepted()){
+    alert('يجب الموافقة على الشروط المطلوبة أولاً.');
+    _setButtonsState();
+    return;
+  }
+  _persistTerms();
+  window.location.href = "dashboard.html";
+};
+
+window.startAnalysis = function(){
+  // same behavior as enterWorkflow
+  window.enterWorkflow();
+};
+
+// Keep UI synced
+document.addEventListener('change', function(e){
+  const t = e.target;
+  if (!t) return;
+  if (t.classList && (t.classList.contains('consent-checkbox') || t.classList.contains('
+
+
+
+
+
+
+
+-check'))){
+    _setButtonsState();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+  _setButtonsState();
+});
+</script>
+
+  <script src="shared/tablet-input.js"></script>
+</body>
+</html>
