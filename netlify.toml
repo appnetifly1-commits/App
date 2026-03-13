@@ -1,13 +1,7 @@
 [build]
-  # The directory where your build sits. "." means the root of the repo.
+  base = ""
   publish = "."
-  
-  # The directory where your serverless functions are located.
+  command = ""
   functions = "netlify/functions"
 
-  # Added an explicit build command (use "" if you have no build step).
-  command = ""
-
-  # Added an explicit base directory.
-  base = ""
 
