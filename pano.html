@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Royal Ray Zone — Panoramic AI</title>
 
-  <link rel="stylesheet" href="panorama/style.css" />
-  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="./panorama/style.css" />
+  <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#2563eb" />
 
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="shared/tablet.css">
+  <link rel="stylesheet" href="./shared/tablet.css" />
 </head>
 <body>
 
@@ -24,7 +24,7 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <button class="btn btn-ghost" type="button" onclick="window.location.href='dashboard.html'">
+        <button class="btn btn-ghost" type="button" onclick="window.location.href='./dashboard.html'">
           <i class="fa-solid fa-arrow-right"></i>
           العودة للـ Dashboard
         </button>
@@ -146,15 +146,15 @@
 
   </main>
 
-  <script src="shared/aiClient.js"></script>
-  <script src="panorama/app.js"></script>
+  <script src="./shared/aiClient.js"></script>
+  <script src="./panorama/app.js"></script>
+  <script src="./shared/tablet-input.js"></script>
   <script>
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').then(() => console.log('Service Worker Registered'));
+      navigator.serviceWorker.register('./service-worker.js').then(() => console.log('Service Worker Registered'));
     }
   </script>
-  <script src="shared/tablet-input.js"></script>
 
   <script>
     // RRZ PDF export override: include segmentation + detection images with written report
