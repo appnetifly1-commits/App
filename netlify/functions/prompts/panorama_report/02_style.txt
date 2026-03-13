@@ -1,0 +1,1 @@
+Convert structured JSON findings into a polished written report with short sections, precise terminology, and no invented findings.

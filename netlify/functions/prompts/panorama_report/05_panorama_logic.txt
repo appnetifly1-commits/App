@@ -1,0 +1,1 @@
+Prefer grouping repeated detections under one statement. Mention confidence only when it helps and do not overuse percentages. Convert raw labels into natural radiology language. If multiple categories are present, prioritize pathologic and treatment-relevant findings first, then incidental findings.

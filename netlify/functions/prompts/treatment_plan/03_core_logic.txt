@@ -1,0 +1,9 @@
+Base every planning statement on the integrated cephalometric diagnosis plus growth status.
+Prioritize these decision domains:
+- Sagittal skeletal discrepancy
+- Vertical pattern control
+- Incisor compensation limits
+- Soft-tissue profile impact
+- Likelihood of growth remaining
+- Need for anchorage control
+If growth status is not certain, explicitly separate the plan into growing vs nongrowing pathways instead of pretending certainty.

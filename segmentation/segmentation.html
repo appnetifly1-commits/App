@@ -1,0 +1,4185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Royal CBCT"/>
+<meta name="theme-color" content="#080d1a"/>
+<meta name="description" content="Royal CBCT Segmentation — DICOM ZIP · Auto + Manual · 3D Mesh"/>
+<title>Royal CBCT Segmentation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#080d1a;--surface:#0e1628;--surface2:#131c30;--border:#1e2d4a;
+  --accent:#00e5ff;--accent2:#7c3aed;--green:#22d3a0;--red:#f43f5e;
+  --text:#c8d8f0;--text2:#6a85aa;--r:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:50px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;border:1px solid var(--border);padding:3px 8px;border-radius:6px}
+.brand-title{font-size:13px;font-weight:500}.brand-sub{font-size:10px;color:var(--text2)}
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:292px;flex-shrink:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--border);background:var(--surface)}
+.sidebar::-webkit-scrollbar{width:3px}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:7px}
+.card-h{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);padding-bottom:5px;border-bottom:1px solid var(--border)}
+.row{display:flex;flex-direction:column;gap:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+label.lbl{font-size:9px;color:var(--text2);letter-spacing:.04em;text-transform:uppercase}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 5px var(--accent)}
+input[type=range]:disabled{opacity:.3;cursor:not-allowed}
+select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:5px;font-size:11px;width:100%;cursor:pointer;outline:none}
+select:disabled{opacity:.3;cursor:not-allowed}
+select:focus{border-color:var(--accent)}
+input[type=file]{font-size:10px;color:var(--text2);cursor:pointer;width:100%}
+input[type=file]::file-selector-button{background:var(--accent2);color:#fff;border:none;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:10px;margin-right:6px}
+.btn{padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text);transition:all .12s;white-space:nowrap;text-align:center;width:100%}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;font-weight:700;border-color:var(--accent)}
+.btn.primary:hover:not(:disabled){box-shadow:0 0 10px var(--accent)}
+.btn.success{background:var(--green);color:#000;font-weight:700;border-color:var(--green)}
+.btn.danger{background:#1a0a10;border-color:var(--red);color:var(--red)}
+.btn.danger:hover:not(:disabled){background:var(--red);color:#fff}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.hint{font-size:9px;color:var(--text2);line-height:1.4}
+.pb-wrap{background:var(--bg);border-radius:3px;height:5px;overflow:hidden}
+.pb{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .2s}
+.kv{display:flex;justify-content:space-between;font-size:10px}
+.kv .k{color:var(--text2)}.kv .v{font-family:'Space Mono',monospace;font-size:9px;color:var(--accent)}
+.viewer-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.tab{padding:9px 22px;font-size:12px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .12s;user-select:none}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.panels{flex:1;overflow:hidden;position:relative}
+.panel{position:absolute;inset:0;display:none;flex-direction:column}
+.panel.active{display:flex}
+.viewers2d-wrap{flex:1;display:flex;overflow:hidden;min-height:0}
+.view2d-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
+.view2d-pane+.view2d-pane{border-left:2px solid var(--border)}
+.view2d-tag{position:absolute;top:6px;left:8px;z-index:8;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--accent);background:rgba(8,13,26,.85);padding:2px 7px;border-radius:4px;pointer-events:none;border:1px solid rgba(0,229,255,.25)}
+.view2d-slicenum{position:absolute;bottom:6px;left:8px;z-index:8;font-family:'Space Mono',monospace;font-size:9px;color:var(--text2);background:rgba(8,13,26,.75);padding:1px 5px;border-radius:3px;pointer-events:none}
+.canvasWrap{flex:1;position:relative;overflow:hidden;background:#000;cursor:crosshair}
+.canvasWrap.fov-mode{cursor:cell}
+#viewCanvas,#maskCanvas,#scoutAxial,#fovCanvas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);image-rendering:pixelated}
+#maskCanvas{pointer-events:all;z-index:4;touch-action:none}
+#scoutAxial{pointer-events:none;z-index:6}
+#fovCanvas{pointer-events:none;z-index:7}
+#coronalView,#coronalOver{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);image-rendering:pixelated}
+#coronalOver{pointer-events:all;z-index:6;touch-action:none}
+.coronalWrap{flex:1;position:relative;overflow:hidden;background:#000;cursor:crosshair}
+.coronalWrap.fov-mode{cursor:cell}
+#coronalFovCanvas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:7}
+.hud{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:var(--text2);text-align:center;pointer-events:none;line-height:1.7;z-index:9;background:rgba(8,13,26,.7);padding:12px 20px;border-radius:8px}
+.btn-scout-active{background:#0a1f2a!important;border-color:var(--accent)!important;color:var(--accent)!important;box-shadow:0 0 8px var(--accent)!important}
+.btn-fov-active{background:#1a0e2a!important;border-color:#ffd966!important;color:#ffd966!important;box-shadow:0 0 8px #ffd96655!important}
+.bottom-bar{height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.pills{display:flex;gap:5px;align-items:center;font-size:10px;color:var(--text2)}
+.pill{font-size:9px;background:var(--border);border-radius:3px;padding:1px 5px;font-family:'Space Mono',monospace;color:var(--text)}
+.info-txt{font-size:9px;color:var(--text2);font-family:'Space Mono',monospace}
+#panel3d{background:#020408}
+/* ── Axis Gizmo ── */
+#axisGizmo{position:absolute;bottom:42px;right:12px;width:90px;height:90px;pointer-events:none;z-index:20;}
+#axisGizmo canvas{width:90px;height:90px;}
+#canvas3d{position:absolute;inset:0;width:100%;height:calc(100% - 32px);cursor:grab;display:block}
+#canvas3d:active{cursor:grabbing}
+.mesh-empty{position:absolute;inset:0;bottom:32px;display:flex;align-items:center;justify-content:center;pointer-events:none;flex-direction:column;gap:10px}
+.mesh-empty .ico{font-size:40px;opacity:.3}
+.mesh-empty .msg{font-size:13px;color:var(--text2);text-align:center;line-height:1.7}
+.mesh-bar{position:absolute;bottom:0;left:0;right:0;height:32px;display:flex;align-items:center;padding:0 12px;gap:14px;border-top:1px solid var(--border);background:rgba(8,13,26,.9);font-size:9px;color:var(--text2);font-family:'Space Mono',monospace;z-index:10}
+.mesh-bar b{color:var(--accent)}
+#notif{position:fixed;bottom:18px;right:18px;background:var(--surface2);border:1px solid var(--accent);border-radius:7px;padding:8px 14px;font-size:11px;color:var(--accent);z-index:9999;display:none;animation:slideIn .18s ease}
+@keyframes slideIn{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* ── Projects ── */
+.vol-item{display:flex;flex-direction:column;gap:4px;padding:7px 7px;border-radius:8px;border:1px solid transparent;transition:background .12s,border-color .12s}
+.vol-item-head{display:flex;align-items:center;gap:5px}
+.proj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px currentColor}
+.vol-name{flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:500}
+.vol-name.editable{cursor:pointer}.vol-name.editable:hover{color:var(--accent)}
+.vol-name small{font-size:8px;color:var(--text2);font-weight:400;margin-left:3px}
+.vol-ops{display:flex;align-items:center;gap:3px}
+.proj-btn{width:auto!important;padding:2px 6px!important;font-size:9px!important;flex-shrink:0;line-height:1.4}
+.eye-btn{width:auto!important;padding:2px 6px!important;font-size:11px!important;flex-shrink:0;line-height:1.2;border-color:var(--border)!important}
+.eye-btn.hidden-vol{opacity:0.35}
+.vol-opacity-row{display:flex;align-items:center;gap:6px;padding:0 2px}
+.vol-opacity-row label{font-size:8px;color:var(--text2);flex-shrink:0;letter-spacing:.03em;width:42px}
+.vol-opacity-row input[type=range]{height:2px;flex:1}
+.vol-opacity-val{font-family:'Space Mono',monospace;font-size:8px;color:var(--accent);flex-shrink:0;width:24px;text-align:right}
+.proj-active-badge{font-size:9px;font-family:'Space Mono',monospace;padding:2px 8px;border-radius:3px;border:1px solid currentColor;display:none;animation:slideIn .18s ease}
+.btn-add-proj{background:linear-gradient(135deg,#001f0d,#000d06);border-color:#00ff88!important;color:#00ff88!important;font-weight:700}
+.btn-add-proj:hover:not(:disabled){box-shadow:0 0 10px #00ff88!important}
+/* ── Project mode picker ── */
+.proj-mode-picker{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(2,4,8,.82);backdrop-filter:blur(4px)}
+.proj-mode-box{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:16px;min-width:320px;box-shadow:0 0 40px rgba(0,229,255,.15)}
+.proj-mode-box h3{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
+.proj-mode-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.proj-mode-opt{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 10px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .14s;background:var(--bg)}
+.proj-mode-opt:hover{border-color:var(--accent);box-shadow:0 0 14px rgba(0,229,255,.18)}
+.proj-mode-opt .ico{font-size:26px}
+.proj-mode-opt .lbl{font-size:11px;font-weight:600;color:var(--text)}
+.proj-mode-opt .sub{font-size:9px;color:var(--text2);text-align:center;line-height:1.4}
+.proj-mode-opt.poly-opt:hover{border-color:#a78bfa;box-shadow:0 0 14px rgba(124,58,237,.25)}
+.proj-mode-cancel{font-size:10px;color:var(--text2);text-align:center;cursor:pointer;padding:4px;border-radius:4px}
+.proj-mode-cancel:hover{color:var(--text)}
+/* ── Polygon canvas overlay ── */
+#polyCanvas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);image-rendering:pixelated;z-index:5;pointer-events:none}
+/* ── 3D Lighting/Contrast panel ── */
+.mesh-controls{position:absolute;top:10px;right:10px;z-index:15;background:rgba(8,13,26,.88);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:200px;backdrop-filter:blur(6px)}
+.mesh-controls .mc-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);padding-bottom:4px;border-bottom:1px solid var(--border)}
+.mc-row{display:flex;flex-direction:column;gap:2px}
+.mc-row label{font-size:9px;color:var(--text2);display:flex;justify-content:space-between}
+.mc-row label span{font-family:'Space Mono',monospace;color:var(--accent)}
+.mc-row input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+.mc-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 5px var(--accent)}
+.mc-toggle{font-size:10px;color:var(--text2);cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px}
+.mc-toggle:hover{color:var(--text)}
+/* ── Volume HUD (top-left of 3D panel) ── */
+#volHud{position:absolute;top:10px;left:10px;z-index:18;display:none;flex-direction:column;gap:4px;pointer-events:none}
+.vol-hud-row{display:flex;align-items:center;gap:7px;background:rgba(8,13,26,.82);border:1px solid rgba(0,229,255,.22);border-radius:6px;padding:5px 10px;backdrop-filter:blur(4px)}
+.vol-hud-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px currentColor}
+.vol-hud-name{font-size:10px;color:var(--text);font-weight:500;min-width:60px;white-space:nowrap}
+.vol-hud-val{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.04em}
+.vol-hud-unit{font-size:9px;color:var(--text2);margin-left:1px}
+/* ── Snapshot button ── */
+#btnSnapshot{position:absolute;bottom:42px;left:12px;z-index:18;width:auto!important;padding:5px 12px;font-size:11px;display:none;background:rgba(8,13,26,.88);border-color:var(--accent2);color:var(--accent2)}
+#btnSnapshot:hover{background:var(--accent2)!important;color:#fff!important;box-shadow:0 0 10px var(--accent2)}
+#snapBadge{position:absolute;bottom:70px;left:12px;z-index:18;font-size:8px;font-family:'Space Mono',monospace;color:var(--accent2);background:rgba(8,13,26,.85);border:1px solid var(--accent2);border-radius:3px;padding:1px 5px;display:none}
+/* ── Mesh build overlay ── */
+@keyframes meshpulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.mesh-build-overlay{position:absolute;inset:0;bottom:32px;background:rgba(2,4,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:26;backdrop-filter:blur(4px)}
+.mesh-build-overlay .mbo-ico{font-size:36px;animation:meshpulse 1.1s ease-in-out infinite}
+.mesh-build-overlay .mbo-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.1em}
+.mesh-build-overlay .mbo-sub{font-size:10px;color:var(--text2);font-family:'Space Mono',monospace}
+.mesh-build-overlay .mbo-pb{width:220px;background:var(--border);border-radius:3px;height:5px;overflow:hidden}
+.mesh-build-overlay .mbo-pb-inner{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .25s}
+.mesh-build-overlay .mbo-warn{font-size:9px;color:#ffd966;text-align:center;max-width:220px;line-height:1.5}
+/* ── Report Modal ── */
+.report-modal{position:fixed;inset:0;z-index:9990;background:rgba(2,4,8,.9);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.report-box{background:var(--surface2);border:1px solid var(--border);border-radius:14px;width:min(740px,96vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 0 50px rgba(0,229,255,.12);overflow:hidden}
+.report-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.report-title{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.report-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.report-body::-webkit-scrollbar{width:4px}.report-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.report-section{display:flex;flex-direction:column;gap:7px}
+.report-sec-h{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);padding-bottom:4px;border-bottom:1px solid var(--border)}
+.report-vol-table{display:grid;grid-template-columns:10px 1fr 90px auto;gap:6px 10px;align-items:center;font-size:10px}
+.report-vol-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 4px currentColor}
+.report-vol-name{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-vol-bar-wrap{background:var(--border);border-radius:2px;height:5px;overflow:hidden}
+.report-vol-bar{height:100%;border-radius:2px}
+.report-vol-val{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;text-align:right}
+.snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.snap-item{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg)}
+.snap-item img{width:100%;display:block}
+.snap-item .snap-ts{position:absolute;bottom:0;left:0;right:0;background:rgba(8,13,26,.8);font-size:8px;font-family:'Space Mono',monospace;color:var(--text2);padding:3px 6px}
+.snap-item .snap-del{position:absolute;top:4px;right:4px;background:rgba(8,13,26,.8);color:var(--red);border:1px solid var(--red);border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:16px;text-align:center;padding:0;display:flex;align-items:center;justify-content:center}
+.snap-empty{font-size:10px;color:var(--text2);text-align:center;padding:18px 0;font-style:italic}
+.report-note-wrap{display:flex;flex-direction:column;gap:4px}
+.report-note{font-size:10px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:6px 9px;resize:vertical;width:100%;min-height:55px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box}
+.report-note:focus{border-color:var(--accent)}
+.report-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+
+/* ── Sidebar toggle & overlay ── */
+#sidebarToggle{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:18px;flex-shrink:0;transition:all .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#sidebarToggle:hover{border-color:var(--accent);color:var(--accent)}
+#sidebarToggle.open{background:#0a1f2a;border-color:var(--accent);color:var(--accent);box-shadow:0 0 8px var(--accent)}
+#sidebarOverlay{display:none;position:fixed;inset:0;z-index:199;background:rgba(2,4,8,.6);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#sidebarOverlay.visible{display:block}
+/* Sidebar transition */
+.sidebar{transition:transform .22s cubic-bezier(.4,0,.2,1),opacity .22s;will-change:transform}
+.sidebar.collapsed{transform:translateX(-100%);opacity:0;pointer-events:none;position:absolute;z-index:200;height:calc(100% - 50px);top:50px;left:0;max-height:100%}
+.sidebar.collapsed+.viewer-area{margin-left:0}
+
+/* ── Touch targets: bigger range thumbs on touch devices ── */
+@media (pointer:coarse){
+  input[type=range]{height:5px}
+  input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
+  .mc-row input[type=range]::-webkit-slider-thumb{width:20px;height:20px}
+  .btn{padding:9px 12px;font-size:12px}
+  .tab{padding:11px 18px;font-size:13px}
+}
+
+/* ── Responsive: tablet ── */
+@media(max-width:900px){
+  .sidebar{width:270px}
+  .view2d-pane+.view2d-pane{border-left:1px solid var(--border)}
+}
+
+/* ── Responsive: mobile landscape / small tablet ── */
+@media(max-width:700px){
+  .sidebar{width:88vw;max-width:320px;position:fixed;top:50px;left:0;z-index:200;height:calc(100% - 50px);border-right:none;box-shadow:4px 0 24px rgba(0,0,0,.7)}
+  .sidebar.collapsed{transform:translateX(-100%)}
+  .layout{position:relative}
+  /* Stack 2D panes vertically on narrow screens */
+  .viewers2d-wrap{flex-direction:column}
+  .view2d-pane+.view2d-pane{border-left:none;border-top:2px solid var(--border)}
+  /* Shrink bottom bar pills */
+  .bottom-bar{overflow-x:auto;gap:4px;padding:0 8px}
+  .pills{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:3px;font-size:9px}
+  .brand-sub{display:none}
+  .topbar{padding:0 10px;gap:8px}
+}
+
+/* ── Responsive: phone portrait ── */
+@media(max-width:480px){
+  body{height:100dvh}
+  .topbar{height:46px}
+  .sidebar{top:46px;height:calc(100% - 46px)}
+  .brand-title{font-size:12px}
+  .logo{font-size:11px;padding:2px 6px}
+  .tab{padding:9px 14px;font-size:11px}
+  .g4{grid-template-columns:1fr 1fr}
+  /* Hide one of the 2D panes on very small screens to save space */
+  #coronalPane{display:none}
+  .bottom-bar .pills .pill:nth-child(n+7){display:none}
+}
+
+/* ── Safe area insets (notch/home bar) ── */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .bottom-bar{padding-bottom:calc(env(safe-area-inset-bottom)/2)}
+  body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <button id="sidebarToggle" title="Toggle Tools Panel" aria-label="Toggle sidebar">☰</button>
+    <div class="logo">RRZ</div>
+    <div>
+      <div class="brand-title">Royal CBCT Segmentation</div>
+      <div class="brand-sub">DICOM ZIP · Auto + Manual · 3D Mesh</div>
+    </div>
+  </div>
+  <button id="btnHelp" class="btn" style="width:auto;padding:4px 14px">Help</button>
+</header>
+
+<div id="sidebarOverlay"></div>
+
+<div class="layout">
+<aside class="sidebar">
+
+  <div class="card">
+    <div class="card-h">Upload (DICOM ZIP)</div>
+    <div class="row">
+      <label class="lbl">Load ZIP containing .dcm</label>
+      <input id="zipInput" type="file" accept=".zip"/>
+    </div>
+    <div class="g4">
+      <div class="kv"><span class="k">Slice</span><span class="v" id="sliceIdx">-</span></div>
+      <div class="kv"><span class="k">Total</span><span class="v" id="sliceTotal">-</span></div>
+      <div class="kv"><span class="k">W</span><span class="v" id="dimW">-</span></div>
+      <div class="kv"><span class="k">H</span><span class="v" id="dimH">-</span></div>
+    </div>
+    <div class="row">
+      <label class="lbl">Axial Slice (Z)</label>
+      <input id="sliceRange" type="range" min="0" max="0" value="0" disabled/>
+    </div>
+    <div class="g2">
+      <button id="btnPrev" class="btn" disabled>◀ Prev</button>
+      <button id="btnNext" class="btn" disabled>Next ▶</button>
+    </div>
+    <div class="row">
+      <label class="lbl">Window Width (<span id="wwVal">3000</span>)</label>
+      <input id="winW" type="range" min="200" max="8000" value="3000" disabled/>
+    </div>
+    <div class="row">
+      <label class="lbl">Window Level (<span id="wlVal">800</span>)</label>
+      <input id="winL" type="range" min="-2000" max="4000" value="800" disabled/>
+    </div>
+    <div class="row">
+      <label class="lbl">Invert</label>
+      <select id="invert" disabled>
+        <option value="auto" selected>Auto (DICOM)</option>
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+    <div class="g2">
+      <button id="btnExportMask" class="btn" disabled>Export Mask</button>
+      <button id="btnExportAll" class="btn" disabled>Export All ZIP</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Auto Segmentation</div>
+    <div class="g2">
+      <div class="row">
+        <label class="lbl">Mode</label>
+        <select id="autoMode" disabled>
+          <option value="teeth">Teeth</option>
+          <option value="bone">Bone</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="lbl">Preset</label>
+        <select id="autoPreset" disabled>
+          <option value="fast">Fast</option>
+          <option value="balanced" selected>Balanced</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label class="lbl">Threshold (<span id="thrVal">140</span>)</label>
+      <input id="thr" type="range" min="0" max="255" value="140" disabled/>
+    </div>
+    <div class="row">
+      <label class="lbl">Smooth (<span id="smVal">2</span>)</label>
+      <input id="smooth" type="range" min="0" max="5" value="2" disabled/>
+    </div>
+    <div class="row">
+      <label class="lbl">Keep Largest CC</label>
+      <select id="keepLargest" disabled>
+        <option value="1" selected>Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="g2">
+      <button id="btnAuto" class="btn primary" disabled>Run (Current)</button>
+      <button id="btnAutoAll" class="btn" disabled>All Slices</button>
+    </div>
+    <div class="pb-wrap"><div id="progBar" class="pb" style="width:0%"></div></div>
+    <div class="hint" id="progText">Idle</div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Manual Segmentation</div>
+    <div class="g3">
+      <button id="toolBrush" class="btn primary" disabled>🖌 Brush</button>
+      <button id="toolEraser" class="btn" disabled>⬜ Eraser</button>
+      <button id="toolPolygon" class="btn" disabled>⬡ Polygon</button>
+    </div>
+    <div class="row">
+      <label class="lbl">Brush Size (<span id="bsVal">18</span>)</label>
+      <input id="brushSize" type="range" min="1" max="80" value="18" disabled/>
+    </div>
+    <div class="g2">
+      <div class="row">
+        <label class="lbl">Opacity</label>
+        <input id="maskAlpha" type="range" min="10" max="90" value="45" disabled/>
+      </div>
+      <div class="row">
+        <label class="lbl">Color</label>
+        <select id="maskColor" disabled>
+          <option value="bone" selected>Bone</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="red">Red</option>
+          <option value="cyan">Cyan</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <button id="btnUndo" class="btn" disabled>↩ Undo</button>
+      <button id="btnClearSlice" class="btn" disabled>Clear Slice</button>
+    </div>
+    <button id="btnAddNerve" class="btn" disabled>🧠 Add Nerve</button>
+    <button id="btnMeshFromPainted" class="btn success" disabled style="margin-top:2px;display:none">⬡ Mesh from Painted Slices</button>
+    <div class="hint" id="paintedMeshHint" style="display:none"></div>
+    <div class="g2">
+      <button id="btnToggleOverlay" class="btn" disabled>Show/Hide</button>
+      <button id="btnClearAll" class="btn danger" disabled>Clear ALL</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">3D Reconstruction</div>
+    <div class="g2">
+      <div class="row">
+        <label class="lbl">XY Downsample</label>
+        <select id="ds" disabled>
+          <option value="1" selected>1× (High)</option>
+          <option value="2">2× (Normal)</option>
+          <option value="4">4× (Fast)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="lbl">Z Downsample</label>
+        <select id="dsZ" disabled>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <button id="btnBuildMesh" class="btn success" disabled>⬡ Build 3D Mesh (Auto)</button>
+      <button id="btnDownloadSTL" class="btn" disabled>↓ Download STL</button>
+    </div>
+    <button id="btnAddProject" class="btn btn-add-proj" style="display:none" disabled>+ Add Project</button>
+    <div class="hint">One click: auto-segments <b style="color:var(--accent)">Bone + Teeth</b> on every slice, then builds the 3D mesh. <b style="color:var(--green)">v4 pipeline:</b> 4× linear Z-upsample → 3D Gaussian blur → density isosurface → Taubin polish. No staircases.</div>
+  </div>
+
+  <div id="cardProjects" class="card" style="display:none">
+    <div class="card-h" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Volumes &amp; Projects</span>
+      <span id="projCount" style="color:var(--text2);font-size:9px;font-weight:400"></span>
+    </div>
+    <div id="projList" style="display:flex;flex-direction:column;gap:5px"></div>
+    <div class="hint">👁 show/hide · slider = translucency · double-click name to rename projects.</div>
+  </div>
+
+  <!-- ── Report Card ── -->
+  <div id="cardReport" class="card" style="display:none">
+    <div class="card-h">📋 Report &amp; Export</div>
+    <div class="hint" style="line-height:1.6">Use <b style="color:var(--accent2)">📷 Snapshot</b> in the 3D view to capture views, then export a PDF report with volume data and all screenshots.</div>
+    <div class="g2">
+      <button id="btnShowReport" class="btn primary">📋 Show Report</button>
+      <button id="btnQuickPDF" class="btn success">⬇ Quick PDF</button>
+    </div>
+    <div id="snapCountInfo" style="font-size:9px;color:var(--text2);text-align:center;font-family:'Space Mono',monospace">No snapshots yet</div>
+  </div>
+
+</aside>
+
+<div class="viewer-area">
+  <div class="tabs">
+    <div class="tab active" data-tab="2d">2D Viewer</div>
+    <div class="tab" data-tab="3d">3D Mesh</div>
+  </div>
+  <div class="panels">
+
+    <div class="panel active" id="panel2d">
+      <div class="viewers2d-wrap">
+        <!-- ── Axial Pane ── -->
+        <div class="view2d-pane" id="axialPane">
+          <div class="view2d-tag">AXIAL</div>
+          <div class="view2d-slicenum" id="axialSliceNum">—</div>
+          <div class="canvasWrap" id="canvasWrap">
+            <canvas id="viewCanvas"></canvas>
+            <canvas id="maskCanvas"></canvas>
+            <canvas id="polyCanvas"></canvas>
+            <canvas id="scoutAxial"></canvas>
+            <canvas id="fovCanvas" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:7"></canvas>
+            <div class="hud" id="hud">Load a DICOM ZIP to start.<br><span style="font-size:10px;opacity:.6">Upload a ZIP containing .dcm files via the sidebar.</span></div>
+          </div>
+        </div>
+        <!-- ── Coronal Pane ── -->
+        <div class="view2d-pane" id="coronalPane">
+          <div class="view2d-tag" style="color:#ffd966">CORONAL</div>
+          <div class="view2d-slicenum" id="coronalSliceNum">—</div>
+          <div class="coronalWrap" id="coronalWrap">
+            <canvas id="coronalView"></canvas>
+            <canvas id="coronalOver"></canvas>
+            <canvas id="coronalFovCanvas"></canvas>
+            <div class="hud" id="hudCoronal" style="display:none">Load a DICOM ZIP to enable MPR.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="pills">
+          <span class="pill">Wheel</span> slice &nbsp;
+          <span class="pill">B</span> brush &nbsp;
+          <span class="pill">E</span> eraser &nbsp;
+          <span class="pill">P</span> polygon &nbsp;
+          <span class="pill">[ ]</span> size &nbsp;
+          <span class="pill">U</span> undo &nbsp;
+          <span class="pill">Esc</span> cancel poly &nbsp;
+          <span class="pill">←→</span> axial &nbsp;
+          <span class="pill">↑↓</span> coronal
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button id="btnScout" class="btn" style="width:auto;padding:3px 12px;font-size:10px" disabled>📍 Scout Lines</button>
+          <button id="btnFOV" class="btn" style="width:auto;padding:3px 12px;font-size:10px" disabled>📐 Scout FOV</button>
+          <button id="btnClearFOV" class="btn danger" style="width:auto;padding:3px 10px;font-size:10px;display:none">✕ Reset FOV</button>
+          <div class="info-txt" id="memInfo"></div>
+          <div id="activeProjBadge" class="proj-active-badge"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel3d">
+      <canvas id="canvas3d"></canvas>
+      <canvas id="axisGizmo" width="180" height="180"></canvas>
+
+      <!-- ── Volume HUD (top-left) ── -->
+      <div id="volHud"></div>
+
+      <!-- ── Snapshot button + badge ── -->
+      <button id="btnSnapshot" class="btn">📷 Snapshot</button>
+      <div id="snapBadge"></div>
+
+      <!-- ── 3D Lighting & Contrast Controls ── -->
+      <div class="mesh-controls" id="meshControls" style="display:none">
+        <div class="mc-title">Lighting &amp; Contrast</div>
+        <div class="mc-row">
+          <label>Exposure <span id="exposureVal">1.0×</span></label>
+          <input id="slExposure" type="range" min="20" max="300" value="100" step="5">
+        </div>
+        <div class="mc-row">
+          <label>Contrast <span id="contrastVal">0</span></label>
+          <input id="slContrast" type="range" min="-60" max="60" value="0" step="2">
+        </div>
+        <div class="mc-row">
+          <label>Key Light <span id="keyLightVal">2.2×</span></label>
+          <input id="slKeyLight" type="range" min="0" max="500" value="220" step="10">
+        </div>
+        <div class="mc-row">
+          <label>Fill Light <span id="fillLightVal">1.0×</span></label>
+          <input id="slFillLight" type="range" min="0" max="300" value="100" step="10">
+        </div>
+        <div class="mc-row">
+          <label>Ambient <span id="ambientVal">0.7×</span></label>
+          <input id="slAmbient" type="range" min="0" max="200" value="70" step="5">
+        </div>
+        <div class="mc-row">
+          <label>Roughness <span id="roughnessVal">0.18</span></label>
+          <input id="slRoughness" type="range" min="0" max="100" value="18" step="2">
+        </div>
+      </div>
+      <button id="btnMeshControls" style="position:absolute;top:10px;right:10px;z-index:16;width:auto;padding:4px 10px;font-size:10px;display:none" class="btn">🎛 Lighting</button>
+
+      <div class="mesh-empty" id="meshEmpty">
+        <div class="ico">⬡</div>
+        <div class="msg">Paint slices with the brush tool,<br>then click <strong style="color:var(--green)">Build 3D Mesh</strong>.</div>
+      </div>
+
+      <!-- ── Mesh Build Progress Overlay ── -->
+      <div class="mesh-build-overlay" id="meshBuildOverlay" style="display:none">
+        <div class="mbo-ico">⬡</div>
+        <div class="mbo-title" id="mboTitle">Building 3D Mesh…</div>
+        <div class="mbo-sub" id="mboSub">Initializing…</div>
+        <div class="mbo-pb"><div class="mbo-pb-inner" id="mboPb" style="width:0%"></div></div>
+        <div class="mbo-warn" id="mboWarn"></div>
+        <button onclick="cancelMeshBuild()" style="margin-top:8px;padding:5px 18px;background:#1a0a10;border:1px solid var(--red);color:var(--red);border-radius:5px;font-size:10px;cursor:pointer;font-family:'Space Mono',monospace">✕ Cancel</button>
+      </div>
+
+      <div class="mesh-bar">
+        <span>Verts: <b id="m3Verts">-</b></span>
+        <span>Tris: <b id="m3Tris">-</b></span>
+        <span>Painted slices: <b id="m3Slices">-</b></span>
+        <span style="margin-left:auto">Drag=rotate · Scroll=zoom · Shift+Drag=pan · Dbl-click=reset</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ── Report Modal ── -->
+<div class="report-modal" id="reportModal" style="display:none">
+  <div class="report-box">
+    <div class="report-header">
+      <div class="report-title">📋 CBCT Segmentation Report</div>
+      <button onclick="closeReport()" class="btn" style="width:auto;padding:3px 10px;font-size:10px">✕ Close</button>
+    </div>
+    <div class="report-body">
+      <div class="report-section">
+        <div class="report-sec-h">Volume Measurements (cm³)</div>
+        <div id="reportVolTable" class="report-vol-table"></div>
+      </div>
+      <div class="report-section">
+        <div class="report-sec-h">Scan Information</div>
+        <div id="reportScanInfo" style="font-size:10px;color:var(--text2);display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;line-height:1.8"></div>
+      </div>
+      <div class="report-section">
+        <div class="report-sec-h" style="display:flex;justify-content:space-between;align-items:center">
+          <span>3D Snapshots</span>
+          <button onclick="takeSnapshot()" class="btn" style="width:auto;padding:2px 9px;font-size:9px;pointer-events:all">📷 Add Snapshot</button>
+        </div>
+        <div id="reportSnapGrid" class="snap-grid"></div>
+      </div>
+      <div class="report-section report-note-wrap">
+        <div class="report-sec-h">Clinical Notes</div>
+        <textarea id="reportNotes" class="report-note" placeholder="Add clinical observations, treatment notes or follow-up instructions…"></textarea>
+      </div>
+    </div>
+    <div class="report-footer">
+      <button onclick="exportReportPDF()" class="btn primary" style="flex:1;font-weight:700;font-size:12px">⬇ Export PDF Report</button>
+      <button onclick="clearSnapshots()" class="btn danger" style="width:auto;padding:5px 12px">🗑 Clear Snapshots</button>
+    </div>
+  </div>
+</div>
+
+<div id="notif"></div>
+
+<script>
+// Robust async script loader — tries vendor/ first, then multiple CDNs
+function loadScript(urls) {
+  return new Promise((resolve, reject) => {
+    let i = 0;
+    function tryNext() {
+      if (i >= urls.length) { reject(new Error('All sources failed: ' + urls.join(', '))); return; }
+      const s = document.createElement('script');
+      s.src = urls[i++];
+      s.onload = resolve;
+      s.onerror = tryNext;
+      document.head.appendChild(s);
+    }
+    tryNext();
+  });
+}
+
+// Load all libs in parallel — app waits for window._libsReady
+window._libsReady = Promise.all([
+  loadScript([
+    'vendor/jszip.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+    'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
+  ]),
+  loadScript([
+    'vendor/daikon.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/daikon/1.2.42/daikon.min.js',
+    'https://unpkg.com/daikon@1.2.42/release/current/daikon-min.js'
+  ]),
+  loadScript([
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://unpkg.com/three@0.128.0/build/three.min.js'
+  ]),
+  loadScript([
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+  ])
+]).catch(err => { console.warn('Lib load warning:', err); });
+</script>
+
+<script>
+'use strict';
+
+// ── Inline worker sources as blob URLs ──────────────────────
+const WORKER_AUTO_SRC = `
+function postProgress(pct,text){postMessage({type:'progress',pct,text});}
+function countOn(mask){let c=0;for(let i=0;i<mask.length;i++)if(mask[i])c++;return c;}
+function adaptiveThreshold(gray,w,h,thr,minF,maxF){
+  const n=w*h;let t=thr,mask=null;
+  for(let iter=0;iter<7;iter++){
+    mask=thresholdMask(gray,w,h,t);
+    const c=countOn(mask),frac=c/n;
+    if(frac<minF){t=Math.max(0,t-15);continue;}
+    if(frac>maxF){t=Math.min(255,t+15);continue;}
+    return{mask,t,c};
+  }
+  return{mask,t:thr,c:countOn(mask)};
+}
+function thresholdMask(gray,w,h,thr){
+  const m=new Uint8Array(w*h);
+  for(let i=0;i<m.length;i++)m[i]=gray[i]>=thr?255:0;
+  return m;
+}
+function boxDilate(src,w,h,r){
+  if(r<=0)return src;const dst=new Uint8Array(w*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let on=0;const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r),x0=Math.max(0,x-r),x1=Math.min(w-1,x+r);
+    for(let yy=y0;yy<=y1&&!on;yy++){const row=yy*w;for(let xx=x0;xx<=x1;xx++)if(src[row+xx]){on=1;break;}}
+    dst[y*w+x]=on?255:0;
+  }return dst;
+}
+function boxErode(src,w,h,r){
+  if(r<=0)return src;const dst=new Uint8Array(w*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let ok=1;const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r),x0=Math.max(0,x-r),x1=Math.min(w-1,x+r);
+    for(let yy=y0;yy<=y1&&ok;yy++){const row=yy*w;for(let xx=x0;xx<=x1;xx++)if(!src[row+xx]){ok=0;break;}}
+    dst[y*w+x]=ok?255:0;
+  }return dst;
+}
+function keepLargestCC(mask,w,h){
+  const n=w*h,vis=new Uint8Array(n),q=new Int32Array(n);
+  let best=-1,bestSize=0;
+  function bfs(start){
+    let qh=0,qt=0;q[qt++]=start;vis[start]=1;let size=0;
+    while(qh<qt){
+      const i=q[qh++];size++;const x=i%w,y=(i/w)|0;
+      if(x>0&&!vis[i-1]&&mask[i-1]){vis[i-1]=1;q[qt++]=i-1;}
+      if(x<w-1&&!vis[i+1]&&mask[i+1]){vis[i+1]=1;q[qt++]=i+1;}
+      if(y>0&&!vis[i-w]&&mask[i-w]){vis[i-w]=1;q[qt++]=i-w;}
+      if(y<h-1&&!vis[i+w]&&mask[i+w]){vis[i+w]=1;q[qt++]=i+w;}
+    }return size;
+  }
+  for(let i=0;i<n;i++)if(mask[i]&&!vis[i]){const s=bfs(i);if(s>bestSize){bestSize=s;best=i;}}
+  if(best<0)return mask;
+  vis.fill(0);const out=new Uint8Array(n);let qh=0,qt=0;q[qt++]=best;vis[best]=1;out[best]=255;
+  while(qh<qt){
+    const i=q[qh++];const x=i%w,y=(i/w)|0;
+    if(x>0&&!vis[i-1]&&mask[i-1]){vis[i-1]=1;out[i-1]=255;q[qt++]=i-1;}
+    if(x<w-1&&!vis[i+1]&&mask[i+1]){vis[i+1]=1;out[i+1]=255;q[qt++]=i+1;}
+    if(y>0&&!vis[i-w]&&mask[i-w]){vis[i-w]=1;out[i-w]=255;q[qt++]=i-w;}
+    if(y<h-1&&!vis[i+w]&&mask[i+w]){vis[i+w]=1;out[i+w]=255;q[qt++]=i+w;}
+  }return out;
+}
+function invertIfNeeded(gray,w,h){
+  let sum=0,n=w*h;for(let i=0;i<n;i+=20)sum+=gray[i];
+  const avg=sum/Math.ceil(n/20);
+  if(avg>180){const out=new Uint8Array(n);for(let i=0;i<n;i++)out[i]=255-gray[i];return out;}
+  return gray;
+}
+let done=0;
+onmessage=(e)=>{
+  const m=e.data;
+  try{
+    if(m.type==='start'){done=0;postProgress(0,'Auto: preparing…');return;}
+    if(m.type==='job'){
+      const{jobIndex,total:tt,zIndex,mode,thr,smooth,keepLargest,width,height}=m;
+      const gray=new Uint8Array(m.gray);
+      postProgress(Math.round((jobIndex-1)/tt*100),'Auto: '+jobIndex+'/'+tt);
+      const g2=invertIfNeeded(gray,width,height);
+      let mask,usedThr,onCount;
+      if(mode==='bone_teeth'){
+        // Combined: run bone threshold (lower, broader) AND teeth threshold, then OR the results
+        const tBone=Math.max(0,Math.min(255,thr-20));
+        const tTeeth=thr;
+        const aBone=adaptiveThreshold(g2,width,height,tBone,0.01,0.65);
+        const aTeeth=adaptiveThreshold(g2,width,height,tTeeth,0.002,0.35);
+        const merged=new Uint8Array(width*height);let cnt=0;
+        for(let i=0;i<merged.length;i++){merged[i]=(aBone.mask[i]||aTeeth.mask[i])?255:0;if(merged[i])cnt++;}
+        mask=merged;usedThr=tBone;onCount=cnt;
+      } else {
+        let t=thr;if(mode==='bone')t=Math.max(0,Math.min(255,thr-20));
+        const targets=(mode==='bone')?{min:0.01,max:0.65}:{min:0.002,max:0.35};
+        const at=adaptiveThreshold(g2,width,height,t,targets.min,targets.max);
+        mask=at.mask;usedThr=at.t;onCount=at.c;
+      }
+      const r=Math.max(0,Math.min(5,smooth));
+      if(r){mask=boxDilate(mask,width,height,r);mask=boxErode(mask,width,height,r);const r2=Math.max(1,r-1);mask=boxErode(mask,width,height,r2);mask=boxDilate(mask,width,height,r2);}
+      if(keepLargest)mask=keepLargestCC(mask,width,height);
+      done++;
+      postMessage({type:'result',zIndex,width,height,alphaMask:mask.buffer,usedThr,onCount},[mask.buffer]);
+      postProgress(Math.round(done/tt*100),'Auto: '+done+'/'+tt+' done');
+      return;
+    }
+    if(m.type==='finish'){postMessage({type:'done'});return;}
+  }catch(err){postMessage({type:'error',message:err?.message||String(err)});}
+};
+`;
+
+const WORKER_MESH_SRC = `
+function postP(p,t){postMessage({type:'mesh_progress',pct:p,text:t});}
+function i3(x,y,z,NX,NY){return(z*NY+y)*NX+x;}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PIPELINE — turns sparse painted slices into one continuous smooth solid:
+//
+//  STEP 0 ── Z-GAP BRIDGING (THE KEY FIX)
+//            Detects every gap between painted slices (even if 20 slices apart)
+//            and fills those empty slices with a smooth linear blend of the two
+//            surrounding painted slice images.  After this step every column of
+//            voxels from the first to last painted slice is fully solid.
+//
+//  STEP 1 ── 12× LINEAR Z-UPSAMPLING (smoothMode) / 6× (normal)
+//            Inserts 11 sub-slices between every pair by linear interpolation.
+//            Full-resolution — no downsampling at any stage.
+//
+//  STEP 2 ── 3D SEPARABLE GAUSSIAN BLUR (σ=7.2 smoothMode / σ=2.8 normal)
+//            Wide sigma converts sharp binary edges into deep gradient fields.
+//            Marching Cubes isosurface can ONLY produce curves — zero staircases.
+//
+//  STEP 3 ── ISOSURFACE THRESHOLD @ 0.32
+//
+//  STEP 4 ── SURFACE EXTRACTION (Marching Cubes / cube faces)
+//
+//  STEP 5 ── ADJACENCY BUILD
+//
+//  STEP 6 ── 320-ROUND TAUBIN SMOOTHING (λ/μ polish) → glass surface
+//
+//  STEP 7 ── PER-VERTEX NORMALS
+//
+//  STEP 8 ── BINARY STL EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+
+onmessage=(e)=>{
+  const m=e.data;
+  try{
+    if(m.type!=='build_mesh')return;
+    const NX=m.nx|0,NY=m.ny|0,NZ=m.nz|0;
+    const vs=m.voxelSize||{x:1,y:1,z:1};
+    const smoothMode=!!m.smoothMode; // painted-slices path requests extra-smooth output
+    const isLight=!!m.lightMode; // mobile / low-memory device or huge volume
+    // Work on a mutable float copy so we can bridge gaps
+    const rawU8=new Uint8Array(m.vol);
+    const raw=new Float32Array(NX*NY*NZ);
+    for(let i=0;i<raw.length;i++) raw[i]=rawU8[i]/255;
+
+    // ── STEP 0: Z-Gap Bridging ─────────────────────────────────────────────
+    // Problem: if the user only paints slices 1, 10, 25 and leaves gaps empty,
+    // the Z-upsampler faithfully reproduces those zeros — slices never connect.
+    // Solution: find every consecutive pair of painted slices (z0, z1) and fill
+    // ALL empty slices between them with a smooth linear blend of z0 and z1.
+    // Result: the volume becomes one solid mass from first to last painted slice.
+    postP(1,'Bridging Z-gaps…');
+    const slicePx=NX*NY;
+
+    // Identify which z-slices have any painted voxels
+    const hasPaint=new Uint8Array(NZ);
+    for(let z=0;z<NZ;z++){
+      const base=z*slicePx;
+      for(let i=0;i<slicePx;i++){if(raw[base+i]>0){hasPaint[z]=1;break;}}
+    }
+
+    // Collect painted z-indices in order
+    const paintedZ=[];
+    for(let z=0;z<NZ;z++) if(hasPaint[z]) paintedZ.push(z);
+
+    // For every consecutive pair of painted slices, fill the gap with a SOLID bridge.
+    // KEY FIX: use MAX (union) instead of linear lerp.
+    // Linear lerp causes pixels exclusive to one endpoint to fade below the
+    // isosurface threshold before reaching the midpoint of long gaps, creating
+    // disconnected floating slabs.  Union keeps every painted pixel at FULL
+    // density throughout the entire bridge so the mesh is always one solid piece.
+    for(let pi=0;pi<paintedZ.length-1;pi++){
+      const z0=paintedZ[pi], z1=paintedZ[pi+1];
+      if(z1===z0+1) continue; // adjacent — no gap to fill
+      const base0=z0*slicePx, base1=z1*slicePx;
+      for(let gz=z0+1;gz<z1;gz++){
+        const baseG=gz*slicePx;
+        for(let i=0;i<slicePx;i++){
+          const v0=raw[base0+i], v1=raw[base1+i];
+          // SOLID UNION BRIDGE: any pixel painted in either endpoint stays at
+          // full density throughout the whole gap — one fused solid object.
+          if(v0>0||v1>0) raw[baseG+i]=Math.max(v0,v1);
+        }
+      }
+    }
+
+    
+    // ── OPTIONAL (smoothMode): 3D Morphological Closing ────────────────────
+    // This removes slice-to-slice "steps" by fusing small gaps and rounding edges
+    // before Z-upsampling + blur. (dilate then erode with a 3×3×3 kernel)
+    if(smoothMode){
+      postP(2,'Closing (fuse edges)…');
+      const tmp=new Float32Array(raw.length);
+      // DILATE (max in 3×3×3)
+      for(let z=0;z<NZ;z++){
+        for(let y=0;y<NY;y++){
+          for(let x=0;x<NX;x++){
+            let mx=0;
+            for(let dz=-1;dz<=1;dz++){
+              const zz=z+dz; if(zz<0||zz>=NZ) continue;
+              for(let dy=-1;dy<=1;dy++){
+                const yy=y+dy; if(yy<0||yy>=NY) continue;
+                const base=(zz*NY+yy)*NX;
+                for(let dx=-1;dx<=1;dx++){
+                  const xx=x+dx; if(xx<0||xx>=NX) continue;
+                  const v=raw[base+xx];
+                  if(v>mx) mx=v;
+                }
+              }
+            }
+            tmp[(z*NY+y)*NX+x]=mx;
+          }
+        }
+      }
+      // ERODE (min in 3×3×3)
+      for(let z=0;z<NZ;z++){
+        for(let y=0;y<NY;y++){
+          for(let x=0;x<NX;x++){
+            let mn=1;
+            for(let dz=-1;dz<=1;dz++){
+              const zz=z+dz; if(zz<0||zz>=NZ) continue;
+              for(let dy=-1;dy<=1;dy++){
+                const yy=y+dy; if(yy<0||yy>=NY) continue;
+                const base=(zz*NY+yy)*NX;
+                for(let dx=-1;dx<=1;dx++){
+                  const xx=x+dx; if(xx<0||xx>=NX) continue;
+                  const v=tmp[base+xx];
+                  if(v<mn) mn=v;
+                }
+              }
+            }
+            raw[(z*NY+y)*NX+x]=mn;
+          }
+        }
+      }
+    }
+
+    // ── STEP 1: 6× Linear Z-upsampling ────────────────────────────────────
+    // 5 interpolated sub-slices per gap gives ultra-smooth Z density gradient.
+    postP(3,'Linear Z-upsampling…');
+    // Adaptive ZSUB: cap to prevent memory exhaustion on large/mobile datasets.
+    // Max upsampled Z = 600 slices; on light-mode devices use smaller multiplier.
+    const ZSUB_TARGET=smoothMode?(isLight?4:6):4;
+    const ZSUB_CAP=NZ>1?Math.max(1,Math.floor(599/(NZ-1))):ZSUB_TARGET;
+    const ZSUB=Math.min(ZSUB_TARGET,ZSUB_CAP);
+    const UZ=NZ>1?(NZ-1)*ZSUB+1:NZ;
+    const zStep=vs.z/ZSUB;
+    const fvol=new Float32Array(NX*NY*UZ);
+
+    // Copy real slices into upsampled grid
+    for(let z=0;z<NZ;z++){
+      const src=z*slicePx, dst=z*ZSUB*slicePx;
+      for(let i=0;i<slicePx;i++) fvol[dst+i]=raw[src+i];
+    }
+    // Interpolate sub-slices
+    for(let z=0;z<NZ-1;z++){
+      const base0=z*ZSUB*slicePx, base1=(z+1)*ZSUB*slicePx;
+      for(let sub=1;sub<ZSUB;sub++){
+        const t=sub/ZSUB, omt=1-t;
+        const dst=(z*ZSUB+sub)*slicePx;
+        for(let i=0;i<slicePx;i++) fvol[dst+i]=fvol[base0+i]*omt+fvol[base1+i]*t;
+      }
+    }
+
+    // ── STEP 2: 3D Separable Gaussian Blur ────────────────────────────────
+    // σ adaptive: wide enough to fuse bridged slices, capped for performance on mobile.
+    postP(12,'3D Gaussian blur X…');
+    const SIGMA=smoothMode?(isLight?2.8:3.6):2.0; // was 7.2 – massively reduced for safety
+    const R=Math.ceil(SIGMA*2.5)|0;
+    const kSz=R*2+1;
+    const kern=new Float32Array(kSz);
+    let kSum=0;
+    for(let i=0;i<kSz;i++){const d=i-R;kern[i]=Math.exp(-d*d/(2*SIGMA*SIGMA));kSum+=kern[i];}
+    for(let i=0;i<kSz;i++) kern[i]/=kSum;
+
+    let buf0=fvol, buf1=new Float32Array(NX*NY*UZ), buf2;
+
+    // X pass
+    for(let z=0;z<UZ;z++) for(let y=0;y<NY;y++){
+      for(let x=0;x<NX;x++){
+        let val=0;
+        for(let ki=0;ki<kSz;ki++){
+          const xx=Math.max(0,Math.min(NX-1,x+ki-R));
+          val+=buf0[i3(xx,y,z,NX,NY)]*kern[ki];
+        }
+        buf1[i3(x,y,z,NX,NY)]=val;
+      }
+    }
+    postP(18,'3D Gaussian blur Y…');
+    // Y pass
+    buf2=buf0;buf0=buf1;buf1=buf2;
+    for(let z=0;z<UZ;z++) for(let x=0;x<NX;x++){
+      for(let y=0;y<NY;y++){
+        let val=0;
+        for(let ki=0;ki<kSz;ki++){
+          const yy=Math.max(0,Math.min(NY-1,y+ki-R));
+          val+=buf0[i3(x,yy,z,NX,NY)]*kern[ki];
+        }
+        buf1[i3(x,y,z,NX,NY)]=val;
+      }
+    }
+    postP(24,'3D Gaussian blur Z…');
+    // Z pass
+    buf2=buf0;buf0=buf1;buf1=buf2;
+    for(let y=0;y<NY;y++) for(let x=0;x<NX;x++){
+      for(let z=0;z<UZ;z++){
+        let val=0;
+        for(let ki=0;ki<kSz;ki++){
+          const zz=Math.max(0,Math.min(UZ-1,z+ki-R));
+          val+=buf0[i3(x,y,zz,NX,NY)]*kern[ki];
+        }
+        buf1[i3(x,y,z,NX,NY)]=val;
+      }
+    }
+    const blurred=buf1;
+
+    // ── STEP 3+4: Surface Extraction ─────────────────────────────────────
+    // smoothMode (Projects) → Marching Cubes: sub-voxel interpolated vertices,
+    //                          naturally curved surface, zero staircases.
+    // !smoothMode (main 3D)  → Original box-face extraction (unchanged).
+    postP(32, smoothMode ? 'Marching Cubes isosurface…' : 'Thresholding isosurface…');
+    const THRESH=smoothMode?0.32:0.28;
+
+    const posArr=[],triArr=[];
+    if(smoothMode){
+    // ════════════════════════════════════════════════════════════
+    // PATH A — Projects mesh: TRUE MARCHING CUBES
+    // Vertices interpolated on voxel edges → curved, smooth surface
+    // ════════════════════════════════════════════════════════════
+
+    // ── Standard Marching Cubes edge table (Paul Bourke, 1994) ──
+    // 256 entries: bitmask of which 12 edges are cut for each cube configuration
+    const MC_ET=[
+0x000,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,
+0x190,0x099,0x393,0x29a,0x596,0x49f,0x795,0x69c,0x99c,0x895,0xb9f,0xa96,0xd9a,0xc93,0xf99,0xe90,
+0x230,0x339,0x033,0x13a,0x636,0x73f,0x435,0x53c,0xa3c,0xb35,0x83f,0x936,0xe3a,0xf33,0xc39,0xd30,
+0x3a0,0x2a9,0x1a3,0x0aa,0x7a6,0x6af,0x5a5,0x4ac,0xbac,0xaa5,0x9af,0x8a6,0xfaa,0xea3,0xda9,0xca0,
+0x460,0x569,0x663,0x76a,0x066,0x16f,0x265,0x36c,0xc6c,0xd65,0xe6f,0xf66,0x86a,0x963,0xa69,0xb60,
+0x5f0,0x4f9,0x7f3,0x6fa,0x1f6,0x0ff,0x3f5,0x2fc,0xdfc,0xcf5,0xfff,0xef6,0x9fa,0x8f3,0xbf9,0xaf0,
+0x650,0x759,0x453,0x55a,0x256,0x35f,0x055,0x15c,0xe5c,0xf55,0xc5f,0xd56,0xa5a,0xb53,0x859,0x950,
+0x7c0,0x6c9,0x5c3,0x4ca,0x3c6,0x2cf,0x1c5,0x0cc,0xfcc,0xec5,0xdcf,0xcc6,0xbca,0xac3,0x9c9,0x8c0,
+0x8c0,0x9c9,0xac3,0xbca,0xcc6,0xdcf,0xec5,0xfcc,0x0cc,0x1c5,0x2cf,0x3c6,0x4ca,0x5c3,0x6c9,0x7c0,
+0x950,0x859,0xb53,0xa5a,0xd56,0xc5f,0xf55,0xe5c,0x15c,0x055,0x35f,0x256,0x55a,0x453,0x759,0x650,
+0xaf0,0xbf9,0x8f3,0x9fa,0xef6,0xfff,0xcf5,0xdfc,0x2fc,0x3f5,0x0ff,0x1f6,0x6fa,0x7f3,0x4f9,0x5f0,
+0xb60,0xa69,0x963,0x86a,0xf66,0xe6f,0xd65,0xc6c,0x36c,0x265,0x16f,0x066,0x76a,0x663,0x569,0x460,
+0xca0,0xda9,0xea3,0xfaa,0x8a6,0x9af,0xaa5,0xbac,0x4ac,0x5a5,0x6af,0x7a6,0x0aa,0x1a3,0x2a9,0x3a0,
+0xd30,0xc39,0xf33,0xe3a,0x936,0x83f,0xb35,0xa3c,0x53c,0x435,0x73f,0x636,0x13a,0x033,0x339,0x230,
+0xe90,0xf99,0xc93,0xd9a,0xa96,0xb9f,0x895,0x99c,0x69c,0x795,0x49f,0x596,0x29a,0x393,0x099,0x190,
+0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x000];
+
+    // ── Triangle table: for each config, list of edge-index triples (-1 = end) ──
+    const MC_TT=[
+[-1],
+[0,8,3,-1],[0,1,9,-1],[1,8,3,9,8,1,-1],[1,2,10,-1],[0,8,3,1,2,10,-1],[9,2,10,0,2,9,-1],[2,8,3,2,10,8,10,9,8,-1],
+[3,11,2,-1],[0,11,2,8,11,0,-1],[1,9,0,2,3,11,-1],[1,11,2,1,9,11,9,8,11,-1],[3,10,1,11,10,3,-1],[0,10,1,0,8,10,8,11,10,-1],[3,9,0,3,11,9,11,10,9,-1],[9,8,10,10,8,11,-1],
+[4,7,8,-1],[4,3,0,7,3,4,-1],[0,1,9,8,4,7,-1],[4,1,9,4,7,1,7,3,1,-1],[1,2,10,8,4,7,-1],[3,4,7,3,0,4,1,2,10,-1],[9,2,10,9,0,2,8,4,7,-1],[2,10,9,2,9,7,2,7,3,7,9,4,-1],
+[8,4,7,3,11,2,-1],[11,4,7,11,2,4,2,0,4,-1],[9,0,1,8,4,7,2,3,11,-1],[4,7,11,9,4,11,9,11,2,9,2,1,-1],[3,10,1,3,11,10,7,8,4,-1],[1,11,10,1,4,11,1,0,4,7,11,4,-1],[4,7,8,9,0,11,9,11,10,11,0,3,-1],[4,7,11,4,11,9,9,11,10,-1],
+[9,5,4,-1],[9,5,4,0,8,3,-1],[0,5,4,1,5,0,-1],[8,5,4,8,3,5,3,1,5,-1],[1,2,10,9,5,4,-1],[3,0,8,1,2,10,4,9,5,-1],[5,2,10,5,4,2,4,0,2,-1],[2,10,5,3,2,5,3,5,4,3,4,8,-1],
+[9,5,4,2,3,11,-1],[0,11,2,0,8,11,4,9,5,-1],[0,5,4,0,1,5,2,3,11,-1],[2,1,5,2,5,8,2,8,11,4,8,5,-1],[10,3,11,10,1,3,9,5,4,-1],[4,9,5,0,8,1,8,10,1,8,11,10,-1],[5,4,0,5,0,11,5,11,10,11,0,3,-1],[5,4,8,5,8,10,10,8,11,-1],
+[9,7,8,5,7,9,-1],[9,3,0,9,5,3,5,7,3,-1],[0,7,8,0,1,7,1,5,7,-1],[1,5,3,3,5,7,-1],[9,7,8,9,5,7,10,1,2,-1],[10,1,2,9,5,0,5,3,0,5,7,3,-1],[8,0,2,8,2,5,8,5,7,10,5,2,-1],[2,10,5,2,5,3,3,5,7,-1],
+[7,9,5,7,8,9,3,11,2,-1],[9,5,7,9,7,2,9,2,0,2,7,11,-1],[2,3,11,0,1,8,1,7,8,1,5,7,-1],[11,2,1,11,1,7,7,1,5,-1],[9,5,8,8,5,7,10,1,3,10,3,11,-1],[5,7,0,5,0,9,7,11,0,1,0,10,11,10,0,-1],[11,10,0,11,0,3,10,5,0,8,0,7,5,7,0,-1],[11,10,5,7,11,5,-1],
+[10,6,5,-1],[0,8,3,5,10,6,-1],[9,0,1,5,10,6,-1],[1,8,3,1,9,8,5,10,6,-1],[1,6,5,2,6,1,-1],[1,6,5,1,2,6,3,0,8,-1],[9,6,5,9,0,6,0,2,6,-1],[5,9,8,5,8,2,5,2,6,3,2,8,-1],
+[2,3,11,10,6,5,-1],[11,0,8,11,2,0,10,6,5,-1],[0,1,9,2,3,11,5,10,6,-1],[5,10,6,1,9,2,9,11,2,9,8,11,-1],[6,3,11,6,5,3,5,1,3,-1],[0,8,11,0,11,5,0,5,1,5,11,6,-1],[3,11,6,0,3,6,0,6,5,0,5,9,-1],[6,5,9,6,9,11,11,9,8,-1],
+[5,10,6,4,7,8,-1],[4,3,0,4,7,3,6,5,10,-1],[1,9,0,5,10,6,8,4,7,-1],[10,6,5,1,9,7,1,7,3,7,9,4,-1],[6,1,2,6,5,1,4,7,8,-1],[1,2,5,5,2,6,3,0,4,3,4,7,-1],[8,4,7,9,0,5,0,6,5,0,2,6,-1],[7,3,9,7,9,4,3,2,9,5,9,6,2,6,9,-1],
+[3,11,2,7,8,4,10,6,5,-1],[5,10,6,4,7,2,4,2,0,2,7,11,-1],[0,1,9,4,7,8,2,3,11,5,10,6,-1],[9,2,1,9,11,2,9,4,11,7,11,4,5,10,6,-1],[8,4,7,3,11,5,3,5,1,5,11,6,-1],[5,1,11,5,11,6,1,0,11,7,11,4,0,4,11,-1],[0,5,9,0,6,5,0,3,6,11,6,3,8,4,7,-1],[6,5,9,6,9,11,4,7,9,7,11,9,-1],
+[10,4,9,6,4,10,-1],[4,10,6,4,9,10,0,8,3,-1],[10,0,1,10,6,0,6,4,0,-1],[8,3,1,8,1,6,8,6,4,6,1,10,-1],[1,4,9,1,2,4,2,6,4,-1],[3,0,8,1,2,9,2,4,9,2,6,4,-1],[0,2,4,4,2,6,-1],[8,3,2,8,2,4,4,2,6,-1],
+[10,4,9,10,6,4,11,2,3,-1],[0,8,2,2,8,11,4,9,10,4,10,6,-1],[3,11,2,0,1,6,0,6,4,6,1,10,-1],[6,4,1,6,1,10,4,8,1,2,1,11,8,11,1,-1],[9,6,4,9,3,6,9,1,3,11,6,3,-1],[8,11,1,8,1,0,11,6,1,9,1,4,6,4,1,-1],[3,11,6,3,6,0,0,6,4,-1],[6,4,8,11,6,8,-1],
+[7,10,6,7,8,10,8,9,10,-1],[0,7,3,0,10,7,0,9,10,6,7,10,-1],[10,6,7,1,10,7,1,7,8,1,8,0,-1],[10,6,7,10,7,1,1,7,3,-1],[1,2,6,1,6,8,1,8,9,8,6,7,-1],[2,6,9,2,9,1,6,7,9,0,9,3,7,3,9,-1],[7,8,0,7,0,6,6,0,2,-1],[7,3,2,6,7,2,-1],
+[2,3,11,10,6,8,10,8,9,8,6,7,-1],[2,0,7,2,7,11,0,9,7,6,7,10,9,10,7,-1],[1,8,0,1,7,8,1,10,7,6,7,10,2,3,11,-1],[11,2,1,11,1,7,10,6,1,6,7,1,-1],[8,9,6,8,6,7,9,1,6,11,6,3,1,3,6,-1],[0,9,1,11,6,7,-1],[7,8,0,7,0,6,3,11,0,11,6,0,-1],[7,11,6,-1],
+[7,6,11,-1],[3,0,8,11,7,6,-1],[0,1,9,11,7,6,-1],[8,1,9,8,3,1,11,7,6,-1],[10,1,2,6,11,7,-1],[1,2,10,3,0,8,6,11,7,-1],[2,9,0,2,10,9,6,11,7,-1],[6,11,7,2,10,3,10,8,3,10,9,8,-1],
+[7,2,3,6,2,7,-1],[7,0,8,7,6,0,6,2,0,-1],[2,7,6,2,3,7,0,1,9,-1],[1,6,2,1,8,6,1,9,8,8,7,6,-1],[10,7,6,10,1,7,1,3,7,-1],[10,7,6,1,7,10,1,8,7,1,0,8,-1],[0,3,7,0,7,10,0,10,9,6,10,7,-1],[7,6,10,7,10,8,8,10,9,-1],
+[6,8,4,11,8,6,-1],[3,6,11,3,0,6,0,4,6,-1],[8,6,11,8,4,6,9,0,1,-1],[9,4,6,9,6,3,9,3,1,11,3,6,-1],[6,8,4,6,11,8,2,10,1,-1],[1,2,10,3,0,11,0,6,11,0,4,6,-1],[4,11,8,4,6,11,0,2,9,2,10,9,-1],[10,9,3,10,3,2,9,4,3,11,3,6,4,6,3,-1],
+[8,2,3,8,4,2,4,6,2,-1],[0,4,2,4,6,2,-1],[1,9,0,2,3,4,2,4,6,4,3,8,-1],[1,9,4,1,4,2,2,4,6,-1],[8,1,3,8,6,1,8,4,6,6,10,1,-1],[10,1,0,10,0,6,6,0,4,-1],[4,6,3,4,3,8,6,10,3,0,3,9,10,9,3,-1],[10,9,4,6,10,4,-1],
+[4,9,5,7,6,11,-1],[0,8,3,4,9,5,11,7,6,-1],[5,0,1,5,4,0,7,6,11,-1],[11,7,6,8,3,4,3,5,4,3,1,5,-1],[9,5,4,10,1,2,7,6,11,-1],[6,11,7,1,2,10,0,8,3,4,9,5,-1],[7,6,11,5,4,10,4,2,10,4,0,2,-1],[3,4,8,3,5,4,3,2,5,10,5,2,11,7,6,-1],
+[7,2,3,7,6,2,5,4,9,-1],[9,5,4,0,8,6,0,6,2,6,8,7,-1],[3,6,2,3,7,6,1,5,0,5,4,0,-1],[6,2,8,6,8,7,2,1,8,4,8,5,1,5,8,-1],[9,5,4,10,1,6,1,7,6,1,3,7,-1],[1,6,10,1,7,6,1,0,7,8,7,0,9,5,4,-1],[4,0,10,4,10,5,0,3,10,6,10,7,3,7,10,-1],[7,6,10,7,10,8,5,4,10,4,8,10,-1],
+[6,9,5,6,11,9,11,8,9,-1],[3,6,11,0,6,3,0,5,6,0,9,5,-1],[0,11,8,0,5,11,0,1,5,5,6,11,-1],[6,11,3,6,3,5,5,3,1,-1],[1,2,10,9,5,11,9,11,8,11,5,6,-1],[0,11,3,0,6,11,0,9,6,5,6,9,1,2,10,-1],[11,8,5,11,5,6,8,0,5,10,5,2,0,2,5,-1],[6,11,3,6,3,5,2,10,3,10,5,3,-1],
+[5,8,9,5,2,8,5,6,2,3,8,2,-1],[9,5,6,9,6,0,0,6,2,-1],[1,5,8,1,8,0,5,6,8,3,8,2,6,2,8,-1],[1,5,6,2,1,6,-1],[1,3,6,1,6,10,3,8,6,5,6,9,8,9,6,-1],[10,1,0,10,0,6,9,5,0,5,6,0,-1],[0,3,8,5,6,10,-1],[10,5,6,-1],
+[11,5,10,7,5,11,-1],[11,5,10,11,7,5,8,3,0,-1],[5,11,7,5,10,11,1,9,0,-1],[10,7,5,10,11,7,9,8,1,8,3,1,-1],[11,1,2,11,7,1,7,5,1,-1],[0,8,3,1,2,7,1,7,5,7,2,11,-1],[9,7,5,9,2,7,9,0,2,2,11,7,-1],[7,5,2,7,2,11,5,9,2,3,2,8,9,8,2,-1],
+[2,5,10,2,3,5,3,7,5,-1],[8,2,0,8,5,2,8,7,5,10,2,5,-1],[9,0,1,5,10,3,5,3,7,3,10,2,-1],[9,8,2,9,2,1,8,7,2,10,2,5,7,5,2,-1],[1,3,5,3,7,5,-1],[0,8,7,0,7,1,1,7,5,-1],[9,0,3,9,3,5,5,3,7,-1],[9,8,7,5,9,7,-1],
+[5,8,4,5,10,8,10,11,8,-1],[5,0,4,5,11,0,5,10,11,11,3,0,-1],[0,1,9,8,4,10,8,10,11,10,4,5,-1],[10,11,4,10,4,5,11,3,4,9,4,1,3,1,4,-1],[2,5,1,2,8,5,2,11,8,4,5,8,-1],[0,4,11,0,11,3,4,5,11,2,11,1,5,1,11,-1],[0,2,5,0,5,9,2,11,5,4,5,8,11,8,5,-1],[9,4,5,2,11,3,-1],
+[2,5,10,3,5,2,3,4,5,3,8,4,-1],[5,10,2,5,2,4,4,2,0,-1],[3,10,2,3,5,10,3,8,5,4,5,8,0,1,9,-1],[5,10,2,5,2,4,1,9,2,9,4,2,-1],[8,4,5,8,5,3,3,5,1,-1],[0,4,5,1,0,5,-1],[8,4,5,8,5,3,9,0,5,0,3,5,-1],[9,4,5,-1],
+[4,11,7,4,9,11,9,10,11,-1],[0,8,3,4,9,7,9,11,7,9,10,11,-1],[1,10,11,1,11,4,1,4,0,7,4,11,-1],[3,1,4,3,4,8,1,10,4,7,4,11,10,11,4,-1],[4,11,7,9,11,4,9,2,11,9,1,2,-1],[9,7,4,9,11,7,9,1,11,2,11,1,0,8,3,-1],[11,7,4,11,4,2,2,4,0,-1],[11,7,4,11,4,2,8,3,4,3,2,4,-1],
+[2,9,10,2,7,9,2,3,7,7,4,9,-1],[9,10,7,9,7,4,10,2,7,8,7,0,2,0,7,-1],[3,7,10,3,10,2,7,4,10,1,10,0,4,0,10,-1],[1,10,2,8,7,4,-1],[4,9,1,4,1,7,7,1,3,-1],[4,9,1,4,1,7,0,8,1,8,7,1,-1],[4,0,3,7,4,3,-1],[4,8,7,-1],
+[9,10,8,10,11,8,-1],[3,0,9,3,9,11,11,9,10,-1],[0,1,10,0,10,8,8,10,11,-1],[3,1,10,11,3,10,-1],[1,2,11,1,11,9,9,11,8,-1],[3,0,9,3,9,11,1,2,9,2,11,9,-1],[0,2,11,8,0,11,-1],[3,2,11,-1],
+[2,3,8,2,8,10,10,8,9,-1],[9,10,2,0,9,2,-1],[2,3,8,2,8,10,0,1,8,1,10,8,-1],[1,10,2,-1],[1,3,8,9,1,8,-1],[0,9,1,-1],[0,3,8,-1],[-1]
+    ];
+
+    // Corner offsets for the 8 corners of a Marching Cubes cell
+    const MC_CX=[0,1,1,0,0,1,1,0];
+    const MC_CY=[0,0,1,1,0,0,1,1];
+    const MC_CZ=[0,0,0,0,1,1,1,1];
+    // The two endpoint corners for each of the 12 edges
+    const MC_EC=[[0,1],[1,2],[3,2],[0,3],[4,5],[5,6],[7,6],[4,7],[0,4],[1,5],[2,6],[3,7]];
+
+    const vmap=new Map();
+    const NX1=NX+1, NY1=NY+1;
+
+    // Encode a directed edge as a unique integer key for vertex sharing
+    function ekey(cx,cy,cz,dir){return (cx + NX1*(cy + NY1*cz))*3 + dir;}
+
+    for(let z=0;z<UZ-1;z++){
+      for(let y=0;y<NY-1;y++){
+        for(let x=0;x<NX-1;x++){
+          // Sample density at all 8 corners
+          const cv=[
+            blurred[i3(x,  y,  z,  NX,NY)],blurred[i3(x+1,y,  z,  NX,NY)],
+            blurred[i3(x+1,y+1,z,  NX,NY)],blurred[i3(x,  y+1,z,  NX,NY)],
+            blurred[i3(x,  y,  z+1,NX,NY)],blurred[i3(x+1,y,  z+1,NX,NY)],
+            blurred[i3(x+1,y+1,z+1,NX,NY)],blurred[i3(x,  y+1,z+1,NX,NY)]
+          ];
+          // Build cube configuration index
+          let ci=0;
+          for(let c=0;c<8;c++) if(cv[c]>=THRESH) ci|=(1<<c);
+          const et=MC_ET[ci];
+          if(!et) continue;
+
+          // For each of 12 possible edges, compute interpolated vertex if cut
+          const eVerts=[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1];
+          for(let e=0;e<12;e++){
+            if(!(et&(1<<e))) continue;
+            const [c0,c1]=MC_EC[e];
+            const v0=cv[c0], v1=cv[c1];
+            // Determine edge direction (x=0, y=1, z=2) from corner offsets
+            const ddx=MC_CX[c1]-MC_CX[c0], ddy=MC_CY[c1]-MC_CY[c0];
+            const dir=ddx?0:ddy?1:2;
+            // Lower corner of this edge in grid space
+            const ecx=x+MC_CX[c0], ecy=y+MC_CY[c0], ecz=z+MC_CZ[c0];
+            const ek=ekey(ecx,ecy,ecz,dir);
+            let vid=vmap.get(ek);
+            if(vid===undefined){
+              vid=posArr.length/3;
+              vmap.set(ek,vid);
+              // Interpolate position along edge at the isosurface crossing
+              const t=Math.abs(v1-v0)<1e-7 ? 0.5 : (THRESH-v0)/(v1-v0);
+              const px0=(x+MC_CX[c0])*vs.x, py0=(y+MC_CY[c0])*vs.y, pz0=(z+MC_CZ[c0])*zStep;
+              const px1=(x+MC_CX[c1])*vs.x, py1=(y+MC_CY[c1])*vs.y, pz1=(z+MC_CZ[c1])*zStep;
+              posArr.push(px0+t*(px1-px0), py0+t*(py1-py0), pz0+t*(pz1-pz0));
+            }
+            eVerts[e]=vid;
+          }
+
+          // Emit triangles from the triangle table
+          const tt=MC_TT[ci];
+          for(let ti=0;ti<tt.length-1;ti+=3){
+            if(tt[ti]<0) break;
+            triArr.push(eVerts[tt[ti]], eVerts[tt[ti+1]], eVerts[tt[ti+2]]);
+          }
+        }
+      }
+      if(z%Math.max(1,(UZ/12)|0)===0) postP(36+Math.round((z/UZ)*18),'MC Surface '+z+'/'+UZ);
+    }
+
+    } else {
+    // ════════════════════════════════════════════════════════════
+    // PATH B — Main 3D mesh: ORIGINAL BOX-FACE EXTRACTION (unchanged)
+    // ════════════════════════════════════════════════════════════
+    const vol=new Uint8Array(NX*NY*UZ);
+    for(let i=0;i<vol.length;i++) vol[i]=blurred[i]>=THRESH?1:0;
+    const vmap2=new Map();
+    function gv(xi,yi,zi){
+      const k=xi+(NX+1)*(yi+(NY+1)*zi);
+      let id=vmap2.get(k);
+      if(id===undefined){
+        id=posArr.length/3;
+        posArr.push(xi*vs.x,yi*vs.y,zi*zStep);
+        vmap2.set(k,id);
+      }
+      return id;
+    }
+    for(let z=0;z<UZ;z++){
+      for(let y=0;y<NY;y++){
+        for(let x=0;x<NX;x++){
+          if(!vol[i3(x,y,z,NX,NY)]) continue;
+          if(x===0    ||!vol[i3(x-1,y,z,NX,NY)]){const a=gv(x,y,z),b=gv(x,y,z+1),c=gv(x,y+1,z+1),d=gv(x,y+1,z);triArr.push(a,b,c,a,c,d);}
+          if(x===NX-1 ||!vol[i3(x+1,y,z,NX,NY)]){const a=gv(x+1,y,z),b=gv(x+1,y+1,z),c=gv(x+1,y+1,z+1),d=gv(x+1,y,z+1);triArr.push(a,b,c,a,c,d);}
+          if(y===0    ||!vol[i3(x,y-1,z,NX,NY)]){const a=gv(x,y,z),b=gv(x+1,y,z),c=gv(x+1,y,z+1),d=gv(x,y,z+1);triArr.push(a,b,c,a,c,d);}
+          if(y===NY-1 ||!vol[i3(x,y+1,z,NX,NY)]){const a=gv(x,y+1,z),b=gv(x,y+1,z+1),c=gv(x+1,y+1,z+1),d=gv(x+1,y+1,z);triArr.push(a,b,c,a,c,d);}
+          if(z===0    ||!vol[i3(x,y,z-1,NX,NY)]){const a=gv(x,y,z),b=gv(x,y+1,z),c=gv(x+1,y+1,z),d=gv(x+1,y,z);triArr.push(a,b,c,a,c,d);}
+          if(z===UZ-1 ||!vol[i3(x,y,z+1,NX,NY)]){const a=gv(x,y,z+1),b=gv(x+1,y,z+1),c=gv(x+1,y+1,z+1),d=gv(x,y+1,z+1);triArr.push(a,b,c,a,c,d);}
+        }
+      }
+      if(z%Math.max(1,(UZ/12)|0)===0) postP(36+Math.round((z/UZ)*18),'Surface '+z+'/'+UZ);
+    }
+    } // end surface extraction branch
+
+    const nV=posArr.length/3,nT=triArr.length/3;
+    if(nT===0){postMessage({type:'mesh_error',message:'0 triangles — no painted voxels found.'});postP(0,'Idle');return;}
+
+    // ── STEP 5: Adjacency ─────────────────────────────────────────────────
+    postP(56,'Building adjacency…');
+    const pos=new Float32Array(posArr);
+    const tris=new Uint32Array(triArr);
+    const adjList=[];
+    for(let v=0;v<nV;v++) adjList.push([]);
+    for(let i=0;i<tris.length;i+=3){
+      const a=tris[i],b=tris[i+1],c=tris[i+2];
+      adjList[a].push(b,c);adjList[b].push(a,c);adjList[c].push(a,b);
+    }
+    for(let v=0;v<nV;v++) adjList[v]=[...new Set(adjList[v])];
+
+    // ── STEP 6: Taubin polish — adaptive rounds ────────────────────────────
+    // λ=0.55, μ=-0.58: volume-preserving smoothing that rounds all edges into
+    // the gentle organic curves of real anatomical structures.
+    const ROUNDS=smoothMode?(isLight?60:120):60,LAMBDA=0.55,MU=-0.58;
+    postP(58,'Taubin smoothing '+ROUNDS+' rounds…');
+    const tmp=new Float32Array(pos.length);
+    function laplacianStep(alpha){
+      for(let v=0;v<nV;v++){
+        const nb=adjList[v],cnt=nb.length;
+        if(!cnt){tmp[v*3]=pos[v*3];tmp[v*3+1]=pos[v*3+1];tmp[v*3+2]=pos[v*3+2];continue;}
+        let sx=0,sy=0,sz=0;
+        for(let j=0;j<cnt;j++){const n=nb[j];sx+=pos[n*3];sy+=pos[n*3+1];sz+=pos[n*3+2];}
+        const w=1/cnt;
+        tmp[v*3  ]=pos[v*3  ]+alpha*(sx*w-pos[v*3  ]);
+        tmp[v*3+1]=pos[v*3+1]+alpha*(sy*w-pos[v*3+1]);
+        tmp[v*3+2]=pos[v*3+2]+alpha*(sz*w-pos[v*3+2]);
+      }
+      pos.set(tmp);
+    }
+    for(let r=0;r<ROUNDS;r++){
+      laplacianStep(LAMBDA);
+      laplacianStep(MU);
+      if(r%20===0) postP(58+Math.round((r/ROUNDS)*22),'Taubin '+(r+1)+'/'+ROUNDS+'…');
+    }
+
+    // ── STEP 7: Per-vertex normals ─────────────────────────────────────────
+    postP(82,'Computing normals…');
+    const normals=new Float32Array(nV*3);
+    for(let i=0;i<tris.length;i+=3){
+      const ai=tris[i]*3,bi=tris[i+1]*3,ci=tris[i+2]*3;
+      const ax=pos[bi]-pos[ai],ay=pos[bi+1]-pos[ai+1],az=pos[bi+2]-pos[ai+2];
+      const bx=pos[ci]-pos[ai],by=pos[ci+1]-pos[ai+1],bz=pos[ci+2]-pos[ai+2];
+      const nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+      normals[ai]+=nx;normals[ai+1]+=ny;normals[ai+2]+=nz;
+      normals[bi]+=nx;normals[bi+1]+=ny;normals[bi+2]+=nz;
+      normals[ci]+=nx;normals[ci+1]+=ny;normals[ci+2]+=nz;
+    }
+    for(let v=0;v<nV;v++){
+      const i=v*3,x=normals[i],y=normals[i+1],z=normals[i+2];
+      const l=Math.sqrt(x*x+y*y+z*z)||1;
+      normals[i]/=l;normals[i+1]/=l;normals[i+2]/=l;
+    }
+
+    // ── STEP 8: Binary STL ─────────────────────────────────────────────────
+    postP(90,'Packaging STL…');
+    const stlBuf=new ArrayBuffer(80+4+nT*50);
+    const stlDv=new DataView(stlBuf);
+    new Uint8Array(stlBuf,0,80).set(new TextEncoder().encode('RRZ Smooth Bulk Mesh v5').slice(0,80));
+    stlDv.setUint32(80,nT,true);
+    let off=84;
+    for(let i=0;i<tris.length;i+=3){
+      const ai=tris[i]*3,bi=tris[i+1]*3,ci=tris[i+2]*3;
+      const fnx=(normals[ai]+normals[bi]+normals[ci])/3;
+      const fny=(normals[ai+1]+normals[bi+1]+normals[ci+1])/3;
+      const fnz=(normals[ai+2]+normals[bi+2]+normals[ci+2])/3;
+      stlDv.setFloat32(off,fnx,true);stlDv.setFloat32(off+4,fny,true);stlDv.setFloat32(off+8,fnz,true);off+=12;
+      stlDv.setFloat32(off,pos[ai],true);stlDv.setFloat32(off+4,pos[ai+1],true);stlDv.setFloat32(off+8,pos[ai+2],true);off+=12;
+      stlDv.setFloat32(off,pos[bi],true);stlDv.setFloat32(off+4,pos[bi+1],true);stlDv.setFloat32(off+8,pos[bi+2],true);off+=12;
+      stlDv.setFloat32(off,pos[ci],true);stlDv.setFloat32(off+4,pos[ci+1],true);stlDv.setFloat32(off+8,pos[ci+2],true);off+=12;
+      stlDv.setUint16(off,0,true);off+=2;
+    }
+    postP(98,'Done');
+    postMessage({type:'mesh_result',positions:pos,normals,indices:tris,triCount:nT,stlBuffer:stlBuf},
+      [pos.buffer,normals.buffer,tris.buffer,stlBuf]);
+    postP(0,'Idle');
+  }catch(err){postMessage({type:'mesh_error',message:err?.message||String(err)});}
+};
+`
+
+function makeWorkerBlob(src) {
+  return URL.createObjectURL(new Blob([src],{type:'application/javascript'}));
+}
+
+// ── State (exact mirror of original app.js) ──────────────────
+const state = {
+  loaded:false, vol:null,
+  dims:{x:0,y:0,z:0}, spacing:{x:1,y:1,z:1},
+  meta:{photometric:'MONOCHROME2'}, z:0, coronalY:0,
+  showOverlay:true, showScout:false,
+  fovMode:false,
+  // fov holds full 6D voxel crop box: axial gives vx/vy, coronal gives vz
+  // {vx0,vy0,vx1,vy1}=axial crop  {vz0,vz1}=coronal crop
+  fov:null,                    // null or {vx0,vy0,vx1,vy1,vz0,vz1}
+  _fovDrag:null,               // axial drag: {startX,startY,curX,curY}
+  _fovCoronalDrag:null,        // coronal drag: {startX,startY,curX,curY}
+  _axialFit:null,
+  tool:'brush', brushSize:18, maskAlpha:0.45, maskColor:'bone',
+  masks:new Map(), undo:[], worker:null, meshWorker:null, lastSTL:null,
+  busy:false, pendingMeshBuild:false, paintedMeshBuild:false, wl:{w:3000,l:800},
+  projects:[], projectCounter:0, activeProject:null, meshBuilt:false, boneVisible:true, boneOpacity:1.0,
+  meshOffset:{cx:0,cy:0,cz:0},
+  polyPoints:[], polyActive:false,
+  nerve:{active:false,byY:new Map(),tube:null,cline:null,group3d:null,visible:true,opacity:1.0},
+  // 3D lighting state
+  lights3:{key:null,fill:null,fill2:null,ambient:null,rim:null},
+  mat3:null,
+  // ── Volume & Report state ───────────────────────────────────
+  volumes:{bone:null, projects:new Map()}, // volumes in mm³, keyed by proj.id
+  snapshots:[]                              // [{dataURL, timestamp, label}]
+};
+
+const COLORS={bone:[240,210,160],green:[40,255,140],red:[255,70,100],cyan:[70,255,255],yellow:[255,220,80]};
+const PROJ_PALETTE=[
+  {hex:0x00ff55,rgb:[0,255,85],    css:'#00ff55'},
+  {hex:0xffee00,rgb:[255,238,0],   css:'#ffee00'},
+  {hex:0xff8c00,rgb:[255,140,0],   css:'#ff8c00'},
+  {hex:0x00ccff,rgb:[0,204,255],   css:'#00ccff'},
+  {hex:0xff2299,rgb:[255,34,153],  css:'#ff2299'},
+  {hex:0xcc44ff,rgb:[204,68,255],  css:'#cc44ff'},
+  {hex:0xff4444,rgb:[255,68,68],   css:'#ff4444'},
+  {hex:0x44ffcc,rgb:[68,255,204],  css:'#44ffcc'},
+];
+const $=id=>document.getElementById(id);
+
+let notifTimer;
+function notify(msg,ok=true){
+  const el=$('notif');el.textContent=msg;el.style.display='block';
+  el.style.borderColor=ok?'var(--accent)':'var(--red)';
+  el.style.color=ok?'var(--accent)':'var(--red)';
+  clearTimeout(notifTimer);notifTimer=setTimeout(()=>el.style.display='none',3000);
+}
+
+// ── Device capability detection ──────────────────────────────────────────────
+function isLightDevice(){
+  const cores=navigator.hardwareConcurrency||2;
+  const mobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const lowMem=(navigator.deviceMemory||4)<4;
+  return mobile||cores<=2||lowMem;
+}
+
+// ── Mesh build overlay helpers ───────────────────────────────────────────────
+let _meshTimeout=null;
+function showMeshOverlay(title,warn){
+  const ov=$('meshBuildOverlay');if(!ov)return;
+  $('mboTitle').textContent=title||'Building 3D Mesh…';
+  $('mboSub').textContent='Initializing…';
+  $('mboPb').style.width='0%';
+  $('mboWarn').textContent=warn||'';
+  ov.style.display='flex';
+  $('meshEmpty').style.display='none';
+  // Switch to 3D tab so user sees the overlay
+  const tab3d=document.querySelector('.tab[data-tab="3d"]');
+  if(tab3d&&!tab3d.classList.contains('active'))tab3d.click();
+  // Watchdog: if no result within 3 min, abort
+  clearTimeout(_meshTimeout);
+  _meshTimeout=setTimeout(()=>{
+    if($('meshBuildOverlay').style.display!=='none'){
+      hideMeshOverlay();
+      state.busy=false;state.pendingMeshBuild=false;state.paintedMeshBuild=false;
+      state.meshWorker=null; // force recreate next time
+      $('btnBuildMesh').disabled=false;$('btnMeshFromPainted').disabled=false;
+      notify('⚠ Mesh build timed out — try enabling FOV crop to reduce volume size.',false);
+    }
+  }, 180000);
+}
+function hideMeshOverlay(){
+  clearTimeout(_meshTimeout);
+  const ov=$('meshBuildOverlay');if(ov)ov.style.display='none';
+}
+function updateMeshOverlayProgress(pct,text){
+  const ov=$('meshBuildOverlay');if(!ov||ov.style.display==='none')return;
+  $('mboPb').style.width=Math.max(0,Math.min(100,pct))+'%';
+  if(text)$('mboSub').textContent=text;
+}
+function cancelMeshBuild(){
+  clearTimeout(_meshTimeout);
+  hideMeshOverlay();
+  if(state.meshWorker){try{state.meshWorker.terminate();}catch(e){}state.meshWorker=null;}
+  state.busy=false;state.pendingMeshBuild=false;state.paintedMeshBuild=false;
+  setProg(0,'Cancelled');setHUD('');
+  $('btnBuildMesh').disabled=false;$('btnMeshFromPainted').disabled=false;
+  const hint=$('paintedMeshHint');if(hint)hint.style.display='none';
+  notify('Mesh build cancelled.',false);
+}
+function setHUD(msg){$('hud').innerHTML=msg;$('hud').style.display=msg?'block':'none';}
+function setProg(p,msg){$('progBar').style.width=`${Math.max(0,Math.min(100,p))}%`;$('progText').textContent=msg||'';}
+function updateMem(){$('memInfo').textContent=state.masks.size?`Masks: ${state.masks.size}`:'';}
+
+// ════════════════════════════════════════════════════════════════════════════
+// VOLUME CALCULATION (Signed Volume / Divergence Theorem — exact for closed meshes)
+// Returns volume in mm³ from Float32Array positions + Uint32Array indices
+// ════════════════════════════════════════════════════════════════════════════
+function computeVolumeMM3(positions, indices){
+  // Each triangle contributes signed_volume = (v1 × v2) · v3 / 6
+  // The absolute value of the sum equals the enclosed volume.
+  let sv = 0;
+  const n = indices.length;
+  for(let i=0; i<n; i+=3){
+    const ai=indices[i]*3, bi=indices[i+1]*3, ci=indices[i+2]*3;
+    const ax=positions[ai],  ay=positions[ai+1], az=positions[ai+2];
+    const bx=positions[bi],  by=positions[bi+1], bz=positions[bi+2];
+    const cx=positions[ci],  cy=positions[ci+1], cz=positions[ci+2];
+    // Signed volume of tetrahedron from origin
+    sv += ax*(by*cz - bz*cy)
+        + ay*(bz*cx - bx*cz)
+        + az*(bx*cy - by*cx);
+  }
+  // positions are in mm (voxelSize already applied in worker), result in mm³
+  return Math.abs(sv)/6;
+}
+
+function mm3ToCC(mm3){ return mm3/1000; }
+function formatCC(cc){
+  if(cc>=100) return cc.toFixed(1)+' cm³';
+  if(cc>=10)  return cc.toFixed(2)+' cm³';
+  return cc.toFixed(3)+' cm³';
+}
+
+// ── Update the volume HUD overlay in the 3D panel ─────────────────────────
+function updateVolHUD(){
+  const hud=$('volHud'); if(!hud) return;
+  const entries=[];
+  if(state.volumes.bone!=null){
+    entries.push({name:'Bone/Teeth', colorCSS:'#e8d5a3', vol:state.volumes.bone});
+  }
+  for(const [id, vol] of state.volumes.projects){
+    const proj=state.projects.find(p=>p.id===id);
+    if(proj) entries.push({name:proj.name, colorCSS:proj.colorCSS, vol});
+  }
+  if(entries.length===0){hud.style.display='none';return;}
+  hud.innerHTML='';
+  hud.style.display='flex';
+  entries.forEach(e=>{
+    const cc=mm3ToCC(e.vol);
+    const row=document.createElement('div');
+    row.className='vol-hud-row';
+    row.innerHTML=`<div class="vol-hud-dot" style="background:${e.colorCSS};color:${e.colorCSS}"></div>`+
+      `<span class="vol-hud-name">${e.name}</span>`+
+      `<span class="vol-hud-val">${cc>=10?cc.toFixed(2):cc.toFixed(3)}</span>`+
+      `<span class="vol-hud-unit">cm³</span>`;
+    hud.appendChild(row);
+  });
+}
+
+// ── Snapshot ───────────────────────────────────────────────────────────────
+function takeSnapshot(){
+  if(!renderer3||!scene3||!camera3){notify('3D mesh not ready yet.',false);return;}
+  // Force a fresh render at high quality
+  renderer3.render(scene3,camera3);
+  const c=$('canvas3d');
+  let dataURL;
+  try{ dataURL=c.toDataURL('image/png'); }
+  catch(e){ notify('Snapshot failed (canvas security): '+e.message,false);return; }
+  const now=new Date();
+  const ts=now.toLocaleDateString()+' '+now.toLocaleTimeString();
+  const label='View '+(state.snapshots.length+1);
+  state.snapshots.push({dataURL,timestamp:ts,label});
+  updateSnapBadge();
+  notify('Snapshot saved! ('+state.snapshots.length+' total)');
+}
+
+function updateSnapBadge(){
+  const n=state.snapshots.length;
+  const badge=$('snapBadge');
+  if(!badge)return;
+  if(n===0){badge.style.display='none';}
+  else{badge.style.display='block';badge.textContent=n+' snap'+(n===1?'':'s');}
+  const info=$('snapCountInfo');
+  if(info)info.textContent=n===0?'No snapshots yet':(n+' snapshot'+(n===1?'':'s')+' captured');
+}
+
+function clearSnapshots(){
+  if(state.snapshots.length===0){notify('No snapshots to clear.',false);return;}
+  if(!confirm('Clear all '+state.snapshots.length+' snapshots?'))return;
+  state.snapshots=[];
+  updateSnapBadge();
+  renderReportSnapGrid();
+  notify('Snapshots cleared.');
+}
+
+// ── Report Modal ────────────────────────────────────────────────────────────
+function openReport(){
+  renderReportVolTable();
+  renderReportScanInfo();
+  renderReportSnapGrid();
+  $('reportModal').style.display='flex';
+}
+function closeReport(){$('reportModal').style.display='none';}
+
+function renderReportVolTable(){
+  const el=$('reportVolTable'); if(!el)return;
+  el.innerHTML='';
+  const entries=[];
+  if(state.volumes.bone!=null) entries.push({name:'Bone / Teeth Reconstruction',css:'#e8d5a3',vol:state.volumes.bone});
+  for(const[id,vol] of state.volumes.projects){
+    const p=state.projects.find(p=>p.id===id);
+    if(p) entries.push({name:p.name,css:p.colorCSS,vol});
+  }
+  if(entries.length===0){el.innerHTML='<span style="font-size:10px;color:var(--text2);grid-column:1/-1">No meshes built yet — click Build 3D Mesh to generate volumes.</span>';return;}
+  const maxVol=Math.max(...entries.map(e=>e.vol));
+  entries.forEach(e=>{
+    const cc=mm3ToCC(e.vol);
+    const pct=maxVol>0?Math.round(e.vol/maxVol*100):0;
+    el.insertAdjacentHTML('beforeend',
+      `<div class="report-vol-dot" style="background:${e.css};color:${e.css}"></div>`+
+      `<div class="report-vol-name" title="${e.name}">${e.name}</div>`+
+      `<div class="report-vol-bar-wrap"><div class="report-vol-bar" style="width:${pct}%;background:${e.css}"></div></div>`+
+      `<div class="report-vol-val">${formatCC(cc)}</div>`
+    );
+  });
+}
+
+function renderReportScanInfo(){
+  const el=$('reportScanInfo'); if(!el)return;
+  const d=state.dims, sp=state.spacing;
+  const now=new Date();
+  const pairs=[
+    ['Date',now.toLocaleDateString()],
+    ['Time',now.toLocaleTimeString()],
+    ['Dimensions',d.x&&d.y?`${d.x} × ${d.y} × ${d.z} px`:'—'],
+    ['Spacing',sp.x?`${sp.x.toFixed(3)} × ${sp.y.toFixed(3)} × ${sp.z.toFixed(3)} mm`:'—'],
+    ['Slices',d.z||'—'],
+    ['Meshes Built',(state.volumes.bone!=null?1:0)+state.volumes.projects.size],
+    ['Snapshots',state.snapshots.length],
+    ['System','Royal CBCT v5'],
+  ];
+  el.innerHTML=pairs.map(([k,v])=>`<span style="color:var(--text2)">${k}</span><span style="color:var(--text);font-family:'Space Mono',monospace;font-size:9px">${v}</span>`).join('');
+}
+
+function renderReportSnapGrid(){
+  const el=$('reportSnapGrid'); if(!el)return;
+  if(state.snapshots.length===0){
+    el.innerHTML='<div class="snap-empty">No snapshots yet — click 📷 Snapshot in the 3D view</div>';
+    return;
+  }
+  el.innerHTML='';
+  state.snapshots.forEach((s,i)=>{
+    const div=document.createElement('div');div.className='snap-item';
+    const img=document.createElement('img');img.src=s.dataURL;img.alt=s.label;
+    const ts=document.createElement('div');ts.className='snap-ts';ts.textContent=s.label+' · '+s.timestamp;
+    const del=document.createElement('button');del.className='snap-del';del.textContent='×';del.title='Remove';
+    del.onclick=()=>{state.snapshots.splice(i,1);updateSnapBadge();renderReportSnapGrid();};
+    div.appendChild(img);div.appendChild(ts);div.appendChild(del);
+    el.appendChild(div);
+  });
+}
+
+// ── PDF Export ─────────────────────────────────────────────────────────────
+async function exportReportPDF(){
+  try{ await window._libsReady; }catch(e){}
+  const jsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+  if(!jsPDF){notify('jsPDF library not loaded — check internet connection.',false);return;}
+
+  notify('Generating PDF…');
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const PW=210,PH=297,M=14;
+  let y=M;
+
+  // ── Header ──────────────────────────────────────────────────────────────
+  doc.setFillColor(8,13,26);
+  doc.rect(0,0,PW,28,'F');
+  doc.setTextColor(0,229,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(15);
+  doc.text('Royal CBCT Segmentation Report',M,12);
+  doc.setFontSize(8);
+  doc.setTextColor(106,133,170);
+  doc.text('Generated: '+new Date().toLocaleString(),M,19);
+  doc.setTextColor(0,229,255);
+  doc.text('Royal RRZ System · v5',PW-M,19,{align:'right'});
+  y=34;
+
+  // ── Scan info ───────────────────────────────────────────────────────────
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(124,58,237);
+  doc.text('SCAN INFORMATION',M,y);
+  y+=1;
+  doc.setDrawColor(124,58,237);doc.line(M,y,PW-M,y);y+=4;
+  const d=state.dims,sp=state.spacing;
+  const infoRows=[
+    ['Dimensions:', d.x?`${d.x} × ${d.y} × ${d.z} px`:'Not loaded'],
+    ['Pixel Spacing:', sp.x?`${sp.x.toFixed(3)} × ${sp.y.toFixed(3)} mm`:'—'],
+    ['Slice Thickness:', sp.z?`${sp.z.toFixed(3)} mm`:'—'],
+    ['Total Slices:', String(d.z||'—')],
+  ];
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  infoRows.forEach(([k,v])=>{
+    doc.setTextColor(106,133,170);doc.text(k,M,y);
+    doc.setTextColor(200,216,240);doc.text(v,M+42,y);
+    y+=5;
+  });
+  y+=3;
+
+  // ── Volume table ────────────────────────────────────────────────────────
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(124,58,237);
+  doc.text('VOLUME MEASUREMENTS',M,y);y+=1;
+  doc.line(M,y,PW-M,y);y+=4;
+
+  const entries=[];
+  if(state.volumes.bone!=null) entries.push({name:'Bone / Teeth Reconstruction',css:[232,213,163],vol:state.volumes.bone});
+  for(const[id,vol] of state.volumes.projects){
+    const p=state.projects.find(p=>p.id===id);
+    if(p){
+      const rgb=p.colorRGB||[100,200,255];
+      entries.push({name:p.name,css:rgb,vol});
+    }
+  }
+  if(entries.length===0){
+    doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(106,133,170);
+    doc.text('No mesh volumes computed.',M,y);y+=6;
+  } else {
+    const maxVol=Math.max(...entries.map(e=>e.vol));
+    const barW=90,barH=4,nameW=68;
+    // Header row
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(106,133,170);
+    doc.text('Structure',M+5,y);doc.text('Volume (mm³)',M+nameW+4,y);doc.text('Volume (cm³)',M+nameW+38,y);doc.text('Proportion',M+nameW+74,y);
+    y+=2;doc.setDrawColor(30,45,74);doc.line(M,y,PW-M,y);y+=3;
+    entries.forEach(e=>{
+      const cc=mm3ToCC(e.vol);
+      const pct=maxVol>0?e.vol/maxVol:0;
+      // dot
+      doc.setFillColor(e.css[0],e.css[1],e.css[2]);
+      doc.circle(M+2,y-1,1.8,'F');
+      // name
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,216,240);
+      const nm=e.name.length>28?e.name.slice(0,26)+'…':e.name;
+      doc.text(nm,M+5,y);
+      // mm³
+      doc.setTextColor(0,229,255);doc.setFont('helvetica','bold');doc.setFontSize(8);
+      doc.text(Math.round(e.vol).toLocaleString(),M+nameW+4,y);
+      // cm³
+      doc.text(formatCC(cc),M+nameW+38,y);
+      // bar
+      const bx=M+nameW+74;
+      doc.setFillColor(30,45,74);doc.rect(bx,y-3.5,barW*0.6,barH,'F');
+      doc.setFillColor(e.css[0],e.css[1],e.css[2]);
+      doc.rect(bx,y-3.5,barW*0.6*pct,barH,'F');
+      // pct label
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(106,133,170);
+      doc.text(Math.round(pct*100)+'%',bx+barW*0.6+2,y);
+      y+=6;
+    });
+  }
+  y+=3;
+
+  // ── Clinical Notes ──────────────────────────────────────────────────────
+  const notes=($('reportNotes')?.value||'').trim();
+  if(notes){
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(124,58,237);
+    doc.text('CLINICAL NOTES',M,y);y+=1;
+    doc.line(M,y,PW-M,y);y+=4;
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,216,240);
+    const lines=doc.splitTextToSize(notes,PW-M*2);
+    doc.text(lines,M,y);y+=lines.length*4.5+3;
+  }
+
+  // ── Snapshots (one per row, 2 per page from here) ───────────────────────
+  if(state.snapshots.length>0){
+    if(y>PH-70){doc.addPage();y=M;}
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(124,58,237);
+    doc.text('3D SNAPSHOTS',M,y);y+=1;
+    doc.line(M,y,PW-M,y);y+=4;
+
+    const imgW=(PW-M*2-6)/2, imgH=imgW*0.625; // 16:10 ratio
+    let col=0;
+    const rowY=()=>y;
+    for(let si=0;si<state.snapshots.length;si++){
+      const s=state.snapshots[si];
+      const ix=M+col*(imgW+6);
+      // Page break check
+      if(rowY()+imgH+12>PH-M){doc.addPage();y=M;col=0;}
+      try{
+        doc.addImage(s.dataURL,'PNG',ix,y,imgW,imgH);
+      }catch(e){
+        doc.setFillColor(14,22,40);doc.rect(ix,y,imgW,imgH,'F');
+        doc.setFontSize(7);doc.setTextColor(106,133,170);
+        doc.text('Image unavailable',ix+imgW/2,y+imgH/2,{align:'center'});
+      }
+      // Caption
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(106,133,170);
+      doc.text(s.label+' · '+s.timestamp,ix,y+imgH+3.5);
+      col++;
+      if(col>=2){col=0;y+=imgH+10;}
+    }
+    if(col>0) y+=imgH+10;
+  }
+
+  // ── Footer on all pages ─────────────────────────────────────────────────
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setFillColor(14,22,40);doc.rect(0,PH-8,PW,8,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(106,133,170);
+    doc.text('Royal CBCT Segmentation · Confidential Medical Data',M,PH-3);
+    doc.text('Page '+p+' / '+totalPages,PW-M,PH-3,{align:'right'});
+  }
+
+  const fname='CBCT_Report_'+new Date().toISOString().slice(0,10)+'.pdf';
+  doc.save(fname);
+  notify('PDF exported: '+fname);
+}
+
+async function quickPDF(){
+  // Snapshot current view first, then open report
+  takeSnapshot();
+  await new Promise(r=>setTimeout(r,80));
+  await exportReportPDF();
+}
+function enableAfterLoad(ok){
+  ['sliceRange','btnPrev','btnNext','btnExportMask','btnExportAll','winW','winL','invert',
+   'autoMode','autoPreset','thr','smooth','keepLargest','btnAuto','btnAutoAll',
+   'toolBrush','toolEraser','toolPolygon','brushSize','maskAlpha','maskColor',
+   'btnUndo','btnClearSlice','btnToggleOverlay','btnClearAll','btnAddNerve','ds','dsZ','btnBuildMesh','btnMeshFromPainted'
+  ].forEach(id=>{if($(id))$(id).disabled=!ok;});
+}
+function updateToolButtons(){
+  $('toolBrush').classList.toggle('primary',state.tool==='brush');
+  $('toolEraser').classList.toggle('primary',state.tool==='eraser');
+  $('toolPolygon').classList.toggle('primary',state.tool==='polygon');
+  if(state.tool!=='polygon') cancelPolygon();
+}
+
+// ── Canvas setup ─────────────────────────────────────────────
+function fitCanvasToWrap(){
+  const wrap=$('canvasWrap'),rect=wrap.getBoundingClientRect();
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const vc=$('viewCanvas'),mc=$('maskCanvas'),sa=$('scoutAxial'),fc=$('fovCanvas'),pc=$('polyCanvas');
+  const W=Math.floor(rect.width*dpr),H=Math.floor(rect.height*dpr);
+  vc.width=W;vc.height=H;mc.width=W;mc.height=H;
+  sa.width=W;sa.height=H;
+  fc.width=W;fc.height=H;fc.style.width=rect.width+'px';fc.style.height=rect.height+'px';
+  if(pc){pc.width=W;pc.height=H;pc.style.width=rect.width+'px';pc.style.height=rect.height+'px';}
+  // Coronal wrap
+  const cw=$('coronalWrap'),crect=cw.getBoundingClientRect();
+  const cW=Math.floor(crect.width*dpr),cH=Math.floor(crect.height*dpr);
+  const cv=$('coronalView'),co=$('coronalOver'),cfc=$('coronalFovCanvas');
+  cv.width=cW;cv.height=cH;co.width=cW;co.height=cH;
+  cfc.width=cW;cfc.height=cH;cfc.style.width=crect.width+'px';cfc.style.height=crect.height+'px';
+  render();renderCoronal();
+}
+window.addEventListener('resize',()=>{fitCanvasToWrap();resize3d();});
+
+// ── LUT (exact from original) ─────────────────────────────────
+function lut(v,w,l){const low=l-w/2;let t=(v-low)/w;return(Math.max(0,Math.min(1,t))*255)|0;}
+function getVoxelIndex(x,y,z){return z*state.dims.x*state.dims.y+y*state.dims.x+x;}
+
+// ── Render (exact from original) ──────────────────────────────
+function drawContain(ctx,src,w,h,smooth=false){
+  const iw=src.width,ih=src.height,s=Math.min(w/iw,h/ih);
+  const dw=iw*s,dh=ih*s,dx=(w-dw)/2,dy=(h-dh)/2;
+  ctx.imageSmoothingEnabled=smooth;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(src,dx,dy,dw,dh);
+  return{dx,dy,dw,dh,s};
+}
+
+function buildSliceCanvas(z){
+  const{x:sx,y:sy}=state.dims;
+  const c=document.createElement('canvas');c.width=sx;c.height=sy;
+  const ctx=c.getContext('2d'),img=ctx.createImageData(sx,sy),d=img.data;
+  const ww=state.wl.w,ll=state.wl.l;
+  const invSel=$('invert').value;
+  const invAuto=state.meta.photometric==='MONOCHROME1';
+  const doInv=invSel==='auto'?invAuto:invSel==='1';
+  for(let y=0;y<sy;y++)for(let x=0;x<sx;x++){
+    const v=state.vol[getVoxelIndex(x,y,z)];
+    let g=lut(v,ww,ll);if(doInv)g=255-g;
+    const off=(y*sx+x)*4;d[off]=g;d[off+1]=g;d[off+2]=g;d[off+3]=255;
+  }
+  ctx.putImageData(img,0,0);return c;
+}
+
+function render(){
+  const vc=$('viewCanvas'),mc=$('maskCanvas');
+  const vctx=vc.getContext('2d'),mctx=mc.getContext('2d');
+  const w=vc.width,h=vc.height;
+  vctx.clearRect(0,0,w,h);mctx.clearRect(0,0,w,h);
+  if(!state.loaded)return;
+  const sc=buildSliceCanvas(state.z);
+
+  // ── FOV crop: zoom into selected box region ───────────────
+  let fit;
+  if(state.fov){
+    const{vx0,vy0,vx1,vy1}=state.fov;
+    const srcW=vx1-vx0,srcH=vy1-vy0;
+    const aspW=srcW*state.spacing.x,aspH=srcH*state.spacing.y;
+    const s=Math.min(w/aspW,h/aspH);
+    const dw=aspW*s,dh=aspH*s,dx=(w-dw)/2,dy=(h-dh)/2;
+    vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality='high';
+    vctx.drawImage(sc,vx0,vy0,srcW,srcH,dx,dy,dw,dh);
+    fit={dx,dy,dw,dh,s,srcX:vx0,srcY:vy0,srcW,srcH,fov:true};
+  } else {
+    fit=drawContain(vctx,sc,w,h,false);fit.fov=false;
+  }
+  state._axialFit=fit;
+
+  $('sliceIdx').textContent=String(state.z+1);
+  $('sliceTotal').textContent=String(state.dims.z);
+  $('dimW').textContent=state.dims.x;$('dimH').textContent=state.dims.y;
+  $('sliceRange').value=String(state.z);
+  $('axialSliceNum').textContent='Z '+(state.z+1)+'/'+state.dims.z+(state.fov&&state.fov.vz0!=null?' ✂Z':'')+(state.fov&&state.fov.vx0!=null?' ✂XY':'');
+
+  if(state.showOverlay){
+    const drawMaskCanvas=(maskSrc)=>{
+      if(!maskSrc)return;
+      if(state.fov){
+        const{vx0,vy0,vx1,vy1}=state.fov;
+        mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality='high';
+        mctx.drawImage(maskSrc,vx0,vy0,vx1-vx0,vy1-vy0,fit.dx,fit.dy,fit.dw,fit.dh);
+      } else {
+        mctx.imageSmoothingEnabled=false;mctx.drawImage(maskSrc,fit.dx,fit.dy,fit.dw,fit.dh);
+      }
+    };
+    const mask=state.masks.get(state.z);
+    if(mask){
+      const tmp=document.createElement('canvas');tmp.width=mask.width;tmp.height=mask.height;
+      const tctx=tmp.getContext('2d');tctx.putImageData(mask,0,0);
+      const img=tctx.getImageData(0,0,tmp.width,tmp.height),d=img.data;
+      const[r,g,b]=COLORS[state.maskColor]||COLORS.bone;
+      for(let i=0;i<d.length;i+=4){const a=d[i+3];if(a){d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=Math.round(255*state.maskAlpha);}else d[i+3]=0;}
+      tctx.putImageData(img,0,0);drawMaskCanvas(tmp);
+    }
+    for(const proj of state.projects){
+      const pm=proj.masks.get(state.z);if(!pm)continue;
+      const tmp2=document.createElement('canvas');tmp2.width=pm.width;tmp2.height=pm.height;
+      const tctx2=tmp2.getContext('2d');tctx2.putImageData(pm,0,0);
+      const img2=tctx2.getImageData(0,0,tmp2.width,tmp2.height),d2=img2.data;
+      const[pr,pg,pb]=proj.colorRGB;
+      const alpha=state.activeProject===proj.id?0.72:0.48;
+      for(let i=0;i<d2.length;i+=4){if(d2[i+3]){d2[i]=pr;d2[i+1]=pg;d2[i+2]=pb;d2[i+3]=Math.round(255*alpha);}else d2[i+3]=0;}
+      tctx2.putImageData(img2,0,0);drawMaskCanvas(tmp2);
+      if(state.activeProject===proj.id){
+        mctx.save();mctx.shadowColor=proj.colorCSS;mctx.shadowBlur=8;
+        mctx.strokeStyle=proj.colorCSS;mctx.lineWidth=1.5;mctx.globalAlpha=0.4;
+        mctx.strokeRect(fit.dx+1,fit.dy+1,fit.dw-2,fit.dh-2);mctx.restore();
+      }
+    }
+  }
+  drawAxialScout(fit);
+  drawFOVOverlay();
+}
+
+// ── Coronal MPR — Z=0 at BOTTOM, Z=max at TOP (correct anatomical orientation) ──
+function buildCoronalCanvas(y){
+  const{x:sx,z:sz}=state.dims,sy=state.dims.y;
+  const c=document.createElement('canvas');c.width=sx;c.height=sz;
+  const ctx=c.getContext('2d'),img=ctx.createImageData(sx,sz),d=img.data;
+  const ww=state.wl.w,ll=state.wl.l;
+  const invSel=$('invert').value,invAuto=state.meta.photometric==='MONOCHROME1';
+  const doInv=invSel==='auto'?invAuto:invSel==='1';
+  for(let row=0;row<sz;row++){
+    // Flip: row 0 = top = highest Z (superior); row sz-1 = bottom = Z=0 (inferior)
+    const z=sz-1-row;
+    for(let x=0;x<sx;x++){
+      const vi=z*sx*sy+y*sx+x;
+      let g=lut(state.vol[vi],ww,ll);if(doInv)g=255-g;
+      const off=(row*sx+x)*4;d[off]=g;d[off+1]=g;d[off+2]=g;d[off+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);return c;
+}
+
+function renderCoronal(){
+  const cv=$('coronalView'),co=$('coronalOver');
+  if(!cv||!co)return;
+  const vctx=cv.getContext('2d'),octx=co.getContext('2d');
+  const W=cv.width,H=cv.height;
+  vctx.clearRect(0,0,W,H);octx.clearRect(0,0,W,H);
+  if(!state.loaded)return;
+  const sc=buildCoronalCanvas(state.coronalY);
+  const{x:sx,z:sz}=state.dims;
+  const aspX=state.spacing.x,aspZ=state.spacing.z;
+
+  let cfit;
+  if(state.fov&&state.fov.vz0!=null){
+    // Coronal Z-crop: in the flipped canvas row=sz-1-z, so vz0→row=sz-1-vz0, vz1→row=sz-1-(vz1-1)=sz-vz1
+    const{vz0,vz1}=state.fov;
+    const vx0=state.fov.vx0??0, vx1=state.fov.vx1??state.dims.x;
+    const srcX=vx0, srcW=vx1-vx0;
+    const srcY=sz-vz1, srcH=vz1-vz0;
+    const aspW=srcW*aspX, aspH=srcH*aspZ;
+    const s=Math.min(W/aspW,H/aspH);
+    const dw=aspW*s,dh=aspH*s,dx=(W-dw)/2,dy=(H-dh)/2;
+    vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality='high';
+    vctx.drawImage(sc,srcX,srcY,srcW,srcH,dx,dy,dw,dh);
+    cfit={dx,dy,dw,dh,s,sx,sz,flipped:true,fov:true,vz0,vz1,vx0,vx1};
+  } else if(state.fov&&state.fov.vx0!=null){
+    // X-only crop from axial FOV
+    const{vx0,vx1}=state.fov;
+    const aspW=(vx1-vx0)*aspX, aspH=sz*aspZ;
+    const s=Math.min(W/aspW,H/aspH);
+    const dw=aspW*s,dh=aspH*s,dx=(W-dw)/2,dy=(H-dh)/2;
+    vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality='high';
+    vctx.drawImage(sc,vx0,0,vx1-vx0,sz,dx,dy,dw,dh);
+    cfit={dx,dy,dw,dh,s,sx,sz,flipped:true,fov:true,vz0:0,vz1:sz,vx0,vx1};
+  } else {
+    const imgW=sx,imgH=sz*(aspZ/aspX);
+    const s=Math.min(W/imgW,H/imgH);
+    const dw=imgW*s,dh=imgH*s,dx=(W-dw)/2,dy=(H-dh)/2;
+    vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality='high';
+    vctx.drawImage(sc,dx,dy,dw,dh);
+    cfit={dx,dy,dw,dh,s,sx,sz,flipped:true,fov:false};
+  }
+  state._coronalFit=cfit;
+  $('coronalSliceNum').textContent='Y '+(state.coronalY+1)+'/'+state.dims.y+(cfit.fov?' ✂FOV':'');
+  drawCoronalScout(octx,W,H);
+  drawNerveCoronal(octx,W,H);
+  drawCoronalFOVOverlay();
+}
+
+// ── Scout line overlays ───────────────────────────────────────
+function drawAxialScout(fit){
+  const sa=$('scoutAxial'),sctx=sa.getContext('2d');
+  sctx.clearRect(0,0,sa.width,sa.height);
+  if(!state.loaded||!state.showScout)return;
+  sctx.save();
+  const{fov}=state;
+  // Yellow dashed = current coronal Y position
+  const vy0=fov?.vy0??0, vy1=fov?.vy1??state.dims.y;
+  const yRel=(state.coronalY-vy0)/Math.max(1,vy1-vy0);
+  const lineY=fit.dy+Math.max(0,Math.min(1,yRel))*fit.dh;
+  sctx.strokeStyle='#ffd966';sctx.lineWidth=1.5;sctx.globalAlpha=0.9;sctx.setLineDash([6,4]);
+  sctx.beginPath();sctx.moveTo(fit.dx,lineY);sctx.lineTo(fit.dx+fit.dw,lineY);sctx.stroke();
+  sctx.setLineDash([]);sctx.globalAlpha=1;sctx.fillStyle='#ffd966';
+  sctx.font='bold 10px Space Mono,monospace';sctx.fillText('Y '+(state.coronalY+1),fit.dx+4,lineY-4);
+  // Z-range badge (from coronal FOV)
+  if(fov?.vz0!=null){
+    sctx.fillStyle='rgba(0,100,200,0.75)';sctx.beginPath();
+    sctx.roundRect?.(fit.dx+fit.dw-86,fit.dy+4,82,16,3)||sctx.rect(fit.dx+fit.dw-86,fit.dy+4,82,16);
+    sctx.fill();
+    sctx.fillStyle='#88ddff';sctx.font='bold 9px Space Mono,monospace';
+    sctx.fillText('Z: '+fov.vz0+'–'+fov.vz1,fit.dx+fit.dw-82,fit.dy+14);
+  }
+  sctx.restore();
+}
+
+function drawCoronalScout(ctx,W,H){
+  ctx.clearRect(0,0,W,H);
+  if(!state.loaded||!state.showScout||!state._coronalFit)return;
+  const cfit=state._coronalFit;
+  const{dx,dy,dw,dh}=cfit;
+  const effVz0=cfit.vz0??0, effVz1=cfit.vz1??cfit.sz;
+  ctx.save();
+  // Cyan dashed = current axial Z
+  const zFrac=1-((state.z-effVz0)/Math.max(1,effVz1-effVz0));
+  const lineY=dy+Math.max(0,Math.min(1,zFrac))*dh;
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=1.5;ctx.globalAlpha=0.9;ctx.setLineDash([6,4]);
+  ctx.beginPath();ctx.moveTo(dx,lineY);ctx.lineTo(dx+dw,lineY);ctx.stroke();
+  ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#00e5ff';
+  ctx.font='bold 10px Space Mono,monospace';ctx.fillText('Z '+(state.z+1),dx+4,lineY-4);
+  // Y-range badge from axial FOV
+  if(state.fov?.vy0!=null){
+    ctx.fillStyle='rgba(120,100,0,0.75)';ctx.beginPath();
+    ctx.roundRect?.(dx+dw-86,dy+4,82,16,3)||ctx.rect(dx+dw-86,dy+4,82,16);
+    ctx.fill();
+    ctx.fillStyle='#ffd966';ctx.font='bold 9px Space Mono,monospace';
+    ctx.fillText('Y: '+state.fov.vy0+'–'+state.fov.vy1,dx+dw-82,dy+14);
+  }
+  ctx.restore();
+}
+
+// ── Axial FOV overlay ─────────────────────────────────────────
+function drawFOVOverlay(){
+  const fc=$('fovCanvas');if(!fc)return;
+  const ctx=fc.getContext('2d');
+  ctx.clearRect(0,0,fc.width,fc.height);
+  if(state._fovDrag&&state._axialFit){
+    const{startX,startY,curX,curY}=state._fovDrag;
+    const rx=Math.min(startX,curX),ry=Math.min(startY,curY);
+    const rw=Math.abs(curX-startX),rh=Math.abs(curY-startY);
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    const f=state._axialFit;ctx.fillRect(f.dx,f.dy,f.dw,f.dh);ctx.clearRect(rx,ry,rw,rh);
+    ctx.strokeStyle='#ffd966';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.strokeRect(rx,ry,rw,rh);ctx.setLineDash([]);
+    const hs=6;[[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx2,cy2])=>{
+      ctx.fillStyle='#ffd966';ctx.fillRect(cx2-hs/2,cy2-hs/2,hs,hs);});
+    ctx.fillStyle='#ffd966';ctx.font='bold 10px Space Mono,monospace';ctx.fillText('XY area',rx+4,ry-4);
+    ctx.restore();
+  }
+  if(state.fov?.vx0!=null&&state._axialFit&&!state._fovDrag){
+    const f=state._axialFit;
+    ctx.save();ctx.strokeStyle='#ffd966';ctx.lineWidth=1.5;ctx.globalAlpha=0.6;
+    ctx.setLineDash([4,3]);ctx.strokeRect(f.dx,f.dy,f.dw,f.dh);ctx.setLineDash([]);ctx.restore();
+  }
+}
+
+// ── Coronal FOV overlay ───────────────────────────────────────
+function drawCoronalFOVOverlay(){
+  const fc=$('coronalFovCanvas');if(!fc)return;
+  const ctx=fc.getContext('2d');
+  ctx.clearRect(0,0,fc.width,fc.height);
+  const cfit=state._coronalFit;if(!cfit)return;
+  if(state._fovCoronalDrag){
+    const{startX,startY,curX,curY}=state._fovCoronalDrag;
+    const rx=Math.min(startX,curX),ry=Math.min(startY,curY);
+    const rw=Math.abs(curX-startX),rh=Math.abs(curY-startY);
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.fillRect(cfit.dx,cfit.dy,cfit.dw,cfit.dh);ctx.clearRect(rx,ry,rw,rh);
+    ctx.strokeStyle='#44aaff';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.strokeRect(rx,ry,rw,rh);ctx.setLineDash([]);
+    [[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx2,cy2])=>{
+      ctx.fillStyle='#44aaff';ctx.fillRect(cx2-3,cy2-3,6,6);});
+    ctx.fillStyle='#44aaff';ctx.font='bold 10px Space Mono,monospace';ctx.fillText('Z depth range',rx+4,ry-4);
+    ctx.restore();
+  }
+  if(state.fov?.vz0!=null&&!state._fovCoronalDrag){
+    const{vz0,vz1}=state.fov;
+    const effVz0=cfit.vz0??0, effVz1=cfit.vz1??cfit.sz;
+    const yTop=cfit.dy+(1-((vz1-1-effVz0)/Math.max(1,effVz1-effVz0)))*cfit.dh;
+    const yBot=cfit.dy+(1-((vz0-effVz0)/Math.max(1,effVz1-effVz0)))*cfit.dh;
+    ctx.save();
+    ctx.strokeStyle='#44aaff';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.globalAlpha=0.8;
+    ctx.beginPath();ctx.moveTo(cfit.dx,yTop);ctx.lineTo(cfit.dx+cfit.dw,yTop);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cfit.dx,yBot);ctx.lineTo(cfit.dx+cfit.dw,yBot);ctx.stroke();
+    ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#44aaff';ctx.font='bold 9px Space Mono,monospace';
+    ctx.fillText('Z'+vz1,cfit.dx+4,yTop-3);ctx.fillText('Z'+vz0,cfit.dx+4,yBot+11);
+    // Shade outside Z range
+    ctx.fillStyle='rgba(0,0,0,0.28)';
+    ctx.fillRect(cfit.dx,cfit.dy,cfit.dw,yTop-cfit.dy);
+    ctx.fillRect(cfit.dx,yBot,cfit.dw,cfit.dy+cfit.dh-yBot);
+    ctx.restore();
+  }
+}
+
+// ── Convert canvas coord → voxel {ix,iy} with FOV awareness ──
+function canvasToVoxelAxial(ex,ey){
+  const mc=$('maskCanvas'),rect=mc.getBoundingClientRect();
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const cx=(ex-rect.left)*dpr,cy=(ey-rect.top)*dpr;
+  const fit=state._axialFit;if(!fit)return null;
+  if(cx<fit.dx||cx>fit.dx+fit.dw||cy<fit.dy||cy>fit.dy+fit.dh)return null;
+  const fx=(cx-fit.dx)/fit.dw,fy=(cy-fit.dy)/fit.dh;
+  const vx0=state.fov?.vx0??0, vy0=state.fov?.vy0??0;
+  const vx1=state.fov?.vx1??state.dims.x, vy1=state.fov?.vy1??state.dims.y;
+  return{ix:Math.max(0,Math.min(state.dims.x-1,Math.floor(vx0+fx*(vx1-vx0)))),
+         iy:Math.max(0,Math.min(state.dims.y-1,Math.floor(vy0+fy*(vy1-vy0))))};
+}
+
+
+// ── Convert canvas coord → voxel {ix,iz} on CORONAL view (with FOV + flip) ──
+function canvasToVoxelCoronal(ex,ey){
+  const co=$('coronalOver'),rect=co.getBoundingClientRect();
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const cx=(ex-rect.left)*dpr, cy=(ey-rect.top)*dpr;
+  const cfit=state._coronalFit; if(!cfit) return null;
+  if(cx<cfit.dx||cx>cfit.dx+cfit.dw||cy<cfit.dy||cy>cfit.dy+cfit.dh) return null;
+
+  // X maps directly to voxel X (optionally cropped by FOV vx0..vx1)
+  const fx=(cx-cfit.dx)/cfit.dw;
+  const vx0=cfit.vx0??(state.fov?.vx0??0);
+  const vx1=cfit.vx1??(state.fov?.vx1??state.dims.x);
+  const ix=Math.max(0,Math.min(state.dims.x-1,Math.round(vx0 + fx*(vx1-vx0))));
+
+  // Y is flipped: top=high Z, bottom=low Z (optionally cropped by FOV vz0..vz1)
+  const fy=(cy-cfit.dy)/cfit.dh;
+  const effVz0=cfit.vz0??(state.fov?.vz0??0);
+  const effVz1=cfit.vz1??(state.fov?.vz1??state.dims.z);
+  const iz=Math.max(0,Math.min(state.dims.z-1,Math.round(effVz1 - fy*(effVz1-effVz0))));
+  return {ix, iz};
+}
+
+function toggleNerveTool(){
+  if(!state.loaded){notify('Load a DICOM ZIP first.',false);return;}
+  state.nerve.active=!state.nerve.active;
+  // visual feedback
+  const b=$('btnAddNerve');
+  if(b){
+    b.classList.toggle('primary',state.nerve.active);
+    b.textContent=state.nerve.active?'🧠 Add Nerve (ON)':'🧠 Add Nerve';
+  }
+  if(state.nerve.active){
+    setHUD('Nerve tracing: add one point per CORONAL slice (use mouse wheel to move slices).<br><span style="font-size:10px;opacity:.75">Click = set/update this slice point · Alt+Click = delete slice point · Shift+Click = clear all</span>');
+    notify('Nerve tool ON — click points on coronal');
+  } else {
+    setHUD('');
+    notify('Nerve tool OFF');
+  }
+  renderCoronal();
+}
+
+// Draw nerve tracing on CORONAL overlay:
+// - ONLY a dot for the current coronal slice (Y)
+//   (No full polyline shown on a single slice — OnDemand-style per-slice point)
+function drawNerveCoronal(octx,W,H){
+  if(!state.loaded||!state.nerve||!state._coronalFit) return;
+  const cfit=state._coronalFit;
+
+  const vx0=cfit.vx0??0, vx1=cfit.vx1??cfit.sx;
+  const effVz0=cfit.vz0??0, effVz1=cfit.vz1??cfit.sz;
+
+  const map=state.nerve.byY;
+  if(!map || map.size===0) return;
+
+  const toCanvas = (ix,iz)=>{
+    const fx=(ix - vx0)/Math.max(1,(vx1-vx0));
+    const fz=1-((iz - effVz0)/Math.max(1,(effVz1-effVz0)));
+    const x=cfit.dx + Math.max(0,Math.min(1,fx))*cfit.dw;
+    const y=cfit.dy + Math.max(0,Math.min(1,fz))*cfit.dh;
+    return {x,y};
+  };
+
+  // Pixel radius for a 1mm diameter dot (0.5mm radius)
+  // Approximate mm/px from view scale (average X & Z)
+  const voxW = Math.max(1,(vx1-vx0));
+  const voxH = Math.max(1,(effVz1-effVz0));
+  const mmPerPxX = (voxW * (state.spacing?.x||1)) / Math.max(1,cfit.dw);
+  const mmPerPxZ = (voxH * (state.spacing?.z||1)) / Math.max(1,cfit.dh);
+  const mmPerPx  = (mmPerPxX + mmPerPxZ) * 0.5;
+  let rPx = Math.max(2, Math.min(18, Math.round((0.5 /*mm*/)/Math.max(1e-6,mmPerPx))));
+  // User request: make the dot 2× bigger on the slice overlay (visual aid only).
+  rPx = Math.max(3, Math.min(26, Math.round(rPx*2)));
+
+  octx.save();
+  octx.lineCap='round'; octx.lineJoin='round';
+
+  // Show nerve on EVERY coronal slice by interpolating between the nearest traced slice points.
+  // - If current slice has an explicit point: use it.
+  // - Else: linear interpolation between closest lower/upper Y points.
+  // This matches OnDemand-style tracing (one control point per slice, but visible as a running nerve).
+  let curPt=map.get(state.coronalY)||null;
+  if(!curPt){
+    const ys=[...map.keys()].sort((a,b)=>a-b);
+    const y=state.coronalY;
+    // outside traced range => don't draw
+    if(y>=ys[0] && y<=ys[ys.length-1]){
+      let y0=ys[0], y1=ys[ys.length-1];
+      for(let i=0;i<ys.length-1;i++){
+        if(ys[i]<=y && y<=ys[i+1]){ y0=ys[i]; y1=ys[i+1]; break; }
+      }
+      const p0=map.get(y0), p1=map.get(y1);
+      if(p0 && p1){
+        const t=(y1===y0)?0:((y-y0)/(y1-y0));
+        curPt={
+          ix: p0.ix + (p1.ix-p0.ix)*t,
+          iz: p0.iz + (p1.iz-p0.iz)*t
+        };
+      }
+    }
+  }
+  if(curPt){
+    const p=toCanvas(curPt.ix,curPt.iz);
+    octx.shadowColor='rgba(0,0,0,0.65)';
+    octx.shadowBlur=Math.max(2, rPx*0.9);
+    octx.fillStyle='#ff2b2b';
+    octx.beginPath();
+    octx.arc(p.x,p.y,rPx,0,Math.PI*2);
+    octx.fill();
+    octx.shadowBlur=0;
+  }
+
+  // Info badge
+  octx.globalAlpha=1;
+  octx.fillStyle='rgba(8,13,26,0.7)';
+  const bx=cfit.dx+6, by=cfit.dy+6, bw=130, bh=18;
+  octx.beginPath();
+  octx.roundRect?.(bx,by,bw,bh,4)||octx.rect(bx,by,bw,bh);
+  octx.fill();
+  octx.fillStyle='#ff6b6b';
+  octx.font='bold 9px Space Mono,monospace';
+  octx.fillText('Nerve pts: '+map.size, bx+8, by+12);
+
+  octx.restore();
+}
+
+// Build/refresh 3D nerve tube inside the Three.js scene.
+// Uses voxel indices (ix, y, iz) converted to mm via spacing, then centered using meshOffset if available.
+function updateNerve3D(){
+  if(typeof THREE==='undefined' || !scene3) return;
+  if(!state.nerve) return;
+
+  // Remove old group
+  if(state.nerve.group3d){ scene3.remove(state.nerve.group3d); state.nerve.group3d=null; }
+  state.nerve.tube=null;
+  state.nerve.cline=null;
+
+  const map=state.nerve.byY;
+  if(!map || map.size<2) return;
+
+  // IMPORTANT: mesh volume may be built from an active FOV crop.
+  // The mesh worker volume starts at (X0,Y0,Z0) in voxel space, so we must
+  // subtract these offsets to keep nerve in the same coordinate frame as the mesh.
+  const fv=state.fov||{};
+  const X0=(fv.vx0??0), Y0=(fv.vy0??0), Z0=(fv.vz0??0);
+  const X1=(fv.vx1??state.dims.x), Y1=(fv.vy1??state.dims.y), Z1=(fv.vz1??state.dims.z);
+  const nx=Math.max(1,(X1-X0)), ny=Math.max(1,(Y1-Y0)), nz=Math.max(1,(Z1-Z0));
+
+  const pts=[...map.entries()].sort((a,b)=>a[0]-b[0]).map(([y,p])=>{
+    const x=(p.ix - X0)*state.spacing.x;
+    const yy=(y    - Y0)*state.spacing.y;
+    const z=(p.iz - Z0)*state.spacing.z;
+    return new THREE.Vector3(x,yy,z);
+  });
+
+  // Centering offset to match volume mesh centering.
+  let ox=0,oy=0,oz=0;
+  if(state.meshOffset && (state.meshOffset.cx||state.meshOffset.cy||state.meshOffset.cz)){
+    ox=state.meshOffset.cx; oy=state.meshOffset.cy; oz=state.meshOffset.cz;
+  }else{
+    // Fall back: center of (cropped) volume in mm
+    ox=(nx*state.spacing.x)/2;
+    oy=(ny*state.spacing.y)/2;
+    oz=(nz*state.spacing.z)/2;
+  }
+  pts.forEach(v=>{ v.x-=ox; v.y-=oy; v.z-=oz; });
+
+  const curve=new THREE.CatmullRomCurve3(pts,false,'centripetal',0.25);
+  // Nerve thickness: 1mm diameter (0.5mm radius)
+  const radius=0.5;
+  const tubularSeg=Math.max(60, pts.length*30);
+  const radialSeg=10;
+
+  const geom=new THREE.TubeGeometry(curve,tubularSeg,radius,radialSeg,false);
+  const mat=new THREE.MeshStandardMaterial({
+    color:0xff2b2b,
+    roughness:0.35,
+    metalness:0.05,
+    emissive:0x220000,
+    emissiveIntensity:0.15
+  });
+  const tube=new THREE.Mesh(geom,mat);
+  tube.renderOrder=10;
+  state.nerve.tube=tube;
+
+  // Centerline (helps when zoomed out)
+  const lineGeom=new THREE.BufferGeometry().setFromPoints(curve.getPoints(Math.max(50,pts.length*25)));
+  const lineMat=new THREE.LineBasicMaterial({color:0xff6b6b,transparent:true,opacity:0.9});
+  const line=new THREE.Line(lineGeom,lineMat);
+  line.renderOrder=11;
+
+  // Group them as a standalone "project" row in Projects
+  const g=new THREE.Group();
+  g.name='Nerve Tracing';
+  g.add(tube);
+  g.add(line);
+  g.visible = (state.nerve.visible!==false);
+
+  // Apply opacity to both materials
+  const op = (state.nerve.opacity!==undefined?state.nerve.opacity:1.0);
+  g.children.forEach(c=>{
+    if(c.material){
+      c.material.transparent=(op<1);
+      c.material.opacity=op;
+      c.material.needsUpdate=true;
+    }
+  });
+
+  state.nerve.group3d=g;
+  scene3.add(g);
+
+  if(renderer3 && camera3) renderer3.render(scene3,camera3);
+}
+function commitFOV(){
+  if(!state._fovDrag||!state._axialFit)return;
+  const f=state._axialFit;
+  const{startX,startY,curX,curY}=state._fovDrag;
+  const cx0=Math.min(startX,curX),cy0=Math.min(startY,curY);
+  const cx1=Math.max(startX,curX),cy1=Math.max(startY,curY);
+  if(cx1-cx0<10||cy1-cy0<10){state._fovDrag=null;drawFOVOverlay();return;}
+  const fx0=(cx0-f.dx)/f.dw,fy0=(cy0-f.dy)/f.dh;
+  const fx1=(cx1-f.dx)/f.dw,fy1=(cy1-f.dy)/f.dh;
+  const{x:sx,y:sy}=state.dims;
+  const ovx0=state.fov?.vx0??0, ovy0=state.fov?.vy0??0;
+  const ovx1=state.fov?.vx1??sx, ovy1=state.fov?.vy1??sy;
+  const vx0=Math.max(0,Math.floor(ovx0+fx0*(ovx1-ovx0)));
+  const vy0=Math.max(0,Math.floor(ovy0+fy0*(ovy1-ovy0)));
+  const vx1=Math.min(sx,Math.ceil(ovx0+fx1*(ovx1-ovx0)));
+  const vy1=Math.min(sy,Math.ceil(ovy0+fy1*(ovy1-ovy0)));
+  state.fov={...(state.fov||{}),vx0,vy0,vx1,vy1};
+  state._fovDrag=null;
+  $('btnClearFOV').style.display='inline-block';
+  render();renderCoronal();
+}
+
+function commitCoronalFOV(){
+  if(!state._fovCoronalDrag||!state._coronalFit)return;
+  const cfit=state._coronalFit;
+  const{startX,startY,curX,curY}=state._fovCoronalDrag;
+  const cx0=Math.min(startX,curX),cy0=Math.min(startY,curY);
+  const cx1=Math.max(startX,curX),cy1=Math.max(startY,curY);
+  if(cx1-cx0<8||cy1-cy0<8){state._fovCoronalDrag=null;drawCoronalFOVOverlay();return;}
+  const fx0=(cx0-cfit.dx)/cfit.dw,fx1=(cx1-cfit.dx)/cfit.dw;
+  const fy0=(cy0-cfit.dy)/cfit.dh,fy1=(cy1-cfit.dy)/cfit.dh;
+  const{sz}=cfit;
+  const effVz0=cfit.vz0??0, effVz1=cfit.vz1??sz;
+  const effVx0=cfit.vx0??0, effVx1=cfit.vx1??cfit.sx;
+  // fy0=top=high Z, fy1=bottom=low Z (flipped)
+  const newVz1=Math.min(effVz1,Math.round(effVz1-(fy0*(effVz1-effVz0))));
+  const newVz0=Math.max(effVz0,Math.round(effVz1-(fy1*(effVz1-effVz0))));
+  const newVx0=Math.max(effVx0,Math.floor(effVx0+fx0*(effVx1-effVx0)));
+  const newVx1=Math.min(effVx1,Math.ceil(effVx0+fx1*(effVx1-effVx0)));
+  const{x:sx,y:sy}=state.dims;
+  state.fov={...(state.fov||{vx0:0,vy0:0,vx1:sx,vy1:sy}),
+    vz0:Math.max(0,newVz0),vz1:Math.min(sz,Math.max(newVz0+2,newVz1)),
+    vx0:newVx0,vx1:newVx1};
+  state._fovCoronalDrag=null;
+  state.z=Math.max(state.fov.vz0,Math.min(state.fov.vz1-1,state.z));
+  $('btnClearFOV').style.display='inline-block';
+  render();renderCoronal();
+}
+
+function clearFOV(){
+  state.fov=null;state._fovDrag=null;state._fovCoronalDrag=null;
+  $('btnClearFOV').style.display='none';
+  render();renderCoronal();
+}
+
+function stepCoronalY(delta){
+  if(!state.loaded)return;
+  const yMin=state.fov?.vy0??0;
+  const yMax=(state.fov?.vy1??state.dims.y)-1;
+  state.coronalY=Math.max(yMin,Math.min(yMax,state.coronalY+delta));
+  renderCoronal();render();
+}
+function getMaskForZ(z){return state.masks.get(z)||null;}
+function ensureMaskForZ(z){
+  let m=getMaskForZ(z);
+  if(!m){const c=document.createElement('canvas');c.width=state.dims.x;c.height=state.dims.y;m=c.getContext('2d').createImageData(c.width,c.height);state.masks.set(z,m);}
+  return m;
+}
+function ensureProjMaskForZ(proj,z){
+  let m=proj.masks.get(z);
+  if(!m){const c=document.createElement('canvas');c.width=state.dims.x;c.height=state.dims.y;m=c.getContext('2d').createImageData(c.width,c.height);proj.masks.set(z,m);}
+  return m;
+}
+function getActiveMaskForZ(z){
+  if(state.activeProject){const p=state.projects.find(p=>p.id===state.activeProject);if(p)return ensureProjMaskForZ(p,z);}
+  return ensureMaskForZ(z);
+}
+function pushUndo(){
+  let m;
+  if(state.activeProject){const p=state.projects.find(p=>p.id===state.activeProject);m=p?p.masks.get(state.z):null;}
+  else m=getMaskForZ(state.z);
+  if(!m)return;
+  state.undo.push(new ImageData(new Uint8ClampedArray(m.data),m.width,m.height));
+  if(state.undo.length>20)state.undo.shift();
+}
+function undo(){
+  if(state.tool==='polygon'&&state.polyPoints.length>0){
+    state.polyPoints.pop();drawPolyOverlay(null);return;
+  }
+  const last=state.undo.pop();if(!last)return;
+  if(state.activeProject){const p=state.projects.find(p=>p.id===state.activeProject);if(p)p.masks.set(state.z,last);}
+  else state.masks.set(state.z,last);
+  render();
+}
+function clearSliceMask(){
+  cancelPolygon();
+  if(state.activeProject){const p=state.projects.find(p=>p.id===state.activeProject);if(p)p.masks.delete(state.z);}
+  else state.masks.delete(state.z);
+  state.undo=[];render();updateMem();
+}
+function clearAllMasks(){cancelPolygon();state.masks.clear();state.undo=[];render();updateMem();}
+
+// ── Project Mode Picker ───────────────────────────────────────
+function showProjectModePicker(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='proj-mode-picker';
+    overlay.innerHTML=`
+      <div class="proj-mode-box">
+        <h3>Choose Drawing Mode</h3>
+        <div class="proj-mode-opts">
+          <div class="proj-mode-opt" id="_pmBrush">
+            <div class="ico">🖌</div>
+            <div class="lbl">Brush</div>
+            <div class="sub">Free-hand painting<br>stroke by stroke</div>
+          </div>
+          <div class="proj-mode-opt poly-opt" id="_pmPolygon">
+            <div class="ico">⬡</div>
+            <div class="lbl">Polygon</div>
+            <div class="sub">Click vertices, double-click<br>to fill each slice</div>
+          </div>
+        </div>
+        <div class="proj-mode-cancel" id="_pmCancel">Cancel</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cleanup=mode=>{overlay.remove();resolve(mode);};
+    overlay.querySelector('#_pmBrush').addEventListener('click',()=>cleanup('brush'));
+    overlay.querySelector('#_pmPolygon').addEventListener('click',()=>cleanup('polygon'));
+    overlay.querySelector('#_pmCancel').addEventListener('click',()=>cleanup(null));
+    overlay.addEventListener('click',e=>{if(e.target===overlay)cleanup(null);});
+  });
+}
+
+// ── Polygon Tool ──────────────────────────────────────────────
+function cancelPolygon(){
+  state.polyPoints=[];state.polyActive=false;
+  const pc=$('polyCanvas');
+  if(pc){const ctx=pc.getContext('2d');ctx.clearRect(0,0,pc.width,pc.height);}
+}
+
+function drawPolyOverlay(cursorPt){
+  const pc=$('polyCanvas');if(!pc)return;
+  const ctx=pc.getContext('2d');
+  ctx.clearRect(0,0,pc.width,pc.height);
+  const pts=state.polyPoints;
+  const fit=state._axialFit;if(!fit)return;
+  const[r,g,b]=COLORS[state.maskColor]||COLORS.bone;
+
+  // Map voxel → canvas
+  function v2c(vx,vy){
+    const vx0=state.fov?.vx0??0,vy0=state.fov?.vy0??0;
+    const vx1=state.fov?.vx1??state.dims.x,vy1=state.fov?.vy1??state.dims.y;
+    return[fit.dx+(vx-vx0)/(vx1-vx0)*fit.dw, fit.dy+(vy-vy0)/(vy1-vy0)*fit.dh];
+  }
+
+  // All points including live cursor
+  const all=[...pts];
+  if(cursorPt&&pts.length>0) all.push(cursorPt);
+
+  ctx.save();
+
+  // Semi-transparent fill preview
+  if(all.length>2){
+    ctx.beginPath();
+    const[sx,sy]=v2c(all[0].ix,all[0].iy);ctx.moveTo(sx,sy);
+    for(let i=1;i<all.length;i++){const[px,py]=v2c(all[i].ix,all[i].iy);ctx.lineTo(px,py);}
+    ctx.closePath();
+    ctx.fillStyle=`rgba(${r},${g},${b},0.20)`;ctx.fill();
+  }
+
+  // Dashed stroke (closed if ≥3 committed pts)
+  if(all.length>1){
+    ctx.beginPath();
+    const[sx0,sy0]=v2c(all[0].ix,all[0].iy);ctx.moveTo(sx0,sy0);
+    for(let i=1;i<all.length;i++){const[px,py]=v2c(all[i].ix,all[i].iy);ctx.lineTo(px,py);}
+    if(pts.length>2&&!cursorPt)ctx.closePath();
+    ctx.strokeStyle='rgba(0,229,255,0.85)';ctx.lineWidth=1.6;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
+    // Rubber-band dashed line back to start
+    if(cursorPt&&pts.length>0){
+      const[startX,startY]=v2c(all[0].ix,all[0].iy);
+      const[curX,curY]=v2c(cursorPt.ix,cursorPt.iy);
+      ctx.beginPath();ctx.moveTo(curX,curY);ctx.lineTo(startX,startY);
+      ctx.strokeStyle='rgba(0,229,255,0.25)';ctx.lineWidth=1.1;ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+
+  // Vertex dots
+  pts.forEach((p,i)=>{
+    const[cx,cy]=v2c(p.ix,p.iy);
+    ctx.beginPath();ctx.arc(cx,cy,i===0?6:4,0,Math.PI*2);
+    const col=i===0?'#ffd966':'#00e5ff';
+    ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=9;ctx.fill();ctx.shadowBlur=0;
+  });
+
+  // Instruction hint
+  if(pts.length===0&&cursorPt){
+    const[cx,cy]=v2c(cursorPt.ix,cursorPt.iy);
+    ctx.font='bold 11px DM Sans,sans-serif';ctx.fillStyle='rgba(0,229,255,0.8)';
+    ctx.fillText('Click to start polygon',cx+10,cy-8);
+  } else if(pts.length>0){
+    ctx.font='bold 11px DM Sans,sans-serif';ctx.fillStyle='rgba(0,229,255,0.9)';
+    ctx.shadowColor='#000';ctx.shadowBlur=4;
+    const msg=pts.length<3?`${pts.length} pt${pts.length>1?'s':''} — keep clicking`:`${pts.length} pts — dbl-click to fill`;
+    ctx.fillText(msg,fit.dx+8,fit.dy+20);ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+function fillPolygonToMask(pts){
+  if(pts.length<3)return;
+  const m=getActiveMaskForZ(state.z);
+  const w=m.width,h=m.height,data=m.data;
+  const off=document.createElement('canvas');off.width=w;off.height=h;
+  const oc=off.getContext('2d');
+  oc.fillStyle='#fff';
+  oc.beginPath();oc.moveTo(pts[0].ix+0.5,pts[0].iy+0.5);
+  for(let i=1;i<pts.length;i++)oc.lineTo(pts[i].ix+0.5,pts[i].iy+0.5);
+  oc.closePath();oc.fill();
+  const pix=oc.getImageData(0,0,w,h).data;
+  for(let i=0;i<w*h;i++){if(pix[i*4+3]>127)data[i*4+3]=255;}
+}
+
+// ── Painting ──────────────────────────────────────────────────
+function canvasToSlice(evt){
+  const v=canvasToVoxelAxial(evt.clientX,evt.clientY);
+  if(!v)return null;
+  const{ix,iy}=v;
+  if(ix<0||ix>=state.dims.x||iy<0||iy>=state.dims.y)return null;
+  return{ix,iy};
+}
+function paintAt(ix,iy,radius,value){
+  const m=getActiveMaskForZ(state.z),w=m.width,h=m.height,data=m.data,r2=radius*radius;
+  const x0=Math.max(0,ix-radius),x1=Math.min(w-1,ix+radius);
+  const y0=Math.max(0,iy-radius),y1=Math.min(h-1,iy+radius);
+  for(let y=y0;y<=y1;y++){const dy=y-iy;for(let x=x0;x<=x1;x++){const dx=x-ix;if(dx*dx+dy*dy<=r2)data[(y*w+x)*4+3]=value;}}
+}
+let drawing=false;
+let _lastClickTime=0,_lastClickPos=null;
+function onDown(e){
+  if(!state.loaded||state.fovMode)return;
+  if(state.tool==='polygon'){
+    const p=canvasToSlice(e);if(!p)return;
+    const now=Date.now();
+    const dx=_lastClickPos?Math.abs(p.ix-_lastClickPos.ix)+Math.abs(p.iy-_lastClickPos.iy):999;
+    const isDbl=(now-_lastClickTime<380&&dx<8);
+    _lastClickTime=now;_lastClickPos=p;
+    if(isDbl&&state.polyPoints.length>=3){
+      pushUndo();
+      fillPolygonToMask(state.polyPoints);
+      cancelPolygon();render();updateMem();
+      notify('Polygon filled ✅ — add more points or switch slice');
+      return;
+    }
+    if(isDbl){cancelPolygon();return;}
+    state.polyPoints.push(p);state.polyActive=true;
+    drawPolyOverlay(null);
+    return;
+  }
+  const p=canvasToSlice(e);if(!p)return;
+  drawing=true;pushUndo();
+  paintAt(p.ix,p.iy,Math.max(1,Math.round(state.brushSize)),state.tool==='eraser'?0:255);
+  render();updateMem();
+}
+function onMove(e){
+  if(state.tool==='polygon'){
+    if(!state.loaded)return;
+    const p=canvasToSlice(e);
+    drawPolyOverlay(p||null);
+    return;
+  }
+  if(!drawing||state.fovMode)return;
+  const p=canvasToSlice(e);if(!p)return;
+  paintAt(p.ix,p.iy,Math.max(1,Math.round(state.brushSize)),state.tool==='eraser'?0:255);render();
+}
+function onUp(){drawing=false;}
+
+// ── DICOM ZIP Loader (exact port of original doLoadZip) ───────
+async function doLoadZip(fileObj){
+  if(!fileObj)return;
+  // Wait for all libraries to finish loading (CDN or vendor/)
+  setProg(0,'Loading libraries…');setHUD('Loading libraries…');
+  try{ await window._libsReady; }catch(e){}
+  if(typeof JSZip==='undefined')  throw new Error('JSZip failed to load. Check your internet connection or add vendor/jszip.min.js.');
+  if(typeof daikon==='undefined') throw new Error('daikon failed to load. Check your internet connection or add vendor/daikon.min.js.');
+  setProg(0,'Unzipping…');setHUD('Unzipping…');
+  const zip=await JSZip.loadAsync(fileObj);
+  const imgs=[];
+  for(let k in zip.files){
+    if(!zip.files[k].dir&&!k.includes('__MAC')){
+      try{
+        const buf=await zip.files[k].async('arraybuffer');
+        const img=daikon.Series.parseImage(new DataView(buf));
+        // Only use images that have both pixel data AND position info
+        if(img&&img.hasPixelData&&img.hasPixelData()&&img.getImagePosition&&img.getImagePosition())imgs.push(img);
+      }catch(e){}
+    }
+  }
+  if(!imgs.length)throw new Error('No valid DICOM images found (need position data).');
+  setProg(10,'Ordering slices…');setHUD('Ordering slices…');
+  // Sort by Z image position — critical for correct ordering
+  imgs.sort((a,b)=>a.getImagePosition()[2]-b.getImagePosition()[2]);
+  const ref=imgs[0];
+  state.meta.photometric=(ref.getPhotometricInterpretation?ref.getPhotometricInterpretation():'MONOCHROME2')||'MONOCHROME2';
+  state.dims={x:ref.getCols(),y:ref.getRows(),z:imgs.length};
+  const sp=ref.getPixelSpacing?ref.getPixelSpacing():[1,1];
+  let zSp=(ref.getSliceThickness&&ref.getSliceThickness())||1;
+  if(imgs.length>1){const p0=imgs[0].getImagePosition(),p1=imgs[1].getImagePosition();if(p0&&p1)zSp=Math.abs(p1[2]-p0[2]);}
+  state.spacing={x:sp[1]||1,y:sp[0]||1,z:zSp||1};
+  setProg(20,'Building volume…');setHUD('Building 3D volume…');
+  const N=state.dims.x*state.dims.y*state.dims.z;
+  state.vol=new Float32Array(N);
+  for(let i=0;i<imgs.length;i++){
+    // getInterpretedData(false,false) → raw pixel values (HU-like), NOT normalized
+    const arr=imgs[i].getInterpretedData(false,false);
+    state.vol.set(arr,i*state.dims.x*state.dims.y);
+    if(i%40===0){setProg(20+Math.round((i/imgs.length)*70),`Building volume… ${i}/${imgs.length}`);await new Promise(r=>setTimeout(r,0));}
+  }
+  // Auto-detect window/level from data percentiles
+  autoDetectWL();
+  state.z=Math.floor(state.dims.z/2);
+  $('sliceRange').min='0';$('sliceRange').max=String(Math.max(0,state.dims.z-1));$('sliceRange').value=String(state.z);
+  $('winW').value=String(state.wl.w);$('winL').value=String(state.wl.l);
+  $('wwVal').textContent=state.wl.w;$('wlVal').textContent=state.wl.l;
+  state.masks.clear();state.undo=[];state.loaded=true;
+  state.coronalY=Math.floor(state.dims.y/2);
+  enableAfterLoad(true);updateMem();setProg(0,'Idle');setHUD('');
+  fitCanvasToWrap();render();renderCoronal();
+  $('btnScout').disabled=false;$('btnFOV').disabled=false;
+  notify(`Loaded ${imgs.length} slices (${state.dims.x}×${state.dims.y})`);
+}
+
+function autoDetectWL(){
+  const vol=state.vol,step=Math.max(1,Math.floor(vol.length/8000));
+  const sample=[];for(let i=0;i<vol.length;i+=step)sample.push(vol[i]);
+  sample.sort((a,b)=>a-b);
+  const lo=sample[Math.floor(sample.length*.02)];
+  const hi=sample[Math.floor(sample.length*.98)];
+  state.wl.w=Math.max(200,Math.round(hi-lo));
+  state.wl.l=Math.round((lo+hi)/2);
+}
+
+// ── Gray U8 for worker ────────────────────────────────────────
+function sliceToGrayU8(z){
+  const{x:sx,y:sy}=state.dims,ww=state.wl.w,ll=state.wl.l;
+  const invSel=$('invert').value,invAuto=state.meta.photometric==='MONOCHROME1';
+  const doInv=invSel==='auto'?invAuto:invSel==='1';
+  const g=new Uint8Array(sx*sy);let i=0;
+  for(let y=0;y<sy;y++)for(let x=0;x<sx;x++){let p=lut(state.vol[getVoxelIndex(x,y,z)],ww,ll);if(doInv)p=255-p;g[i++]=p;}
+  return g;
+}
+
+// ── Auto Seg ──────────────────────────────────────────────────
+function syncAutoDefaults(){
+  const mode=$('autoMode').value,preset=$('autoPreset').value;
+  let thr=140,smooth=2,keep=1;
+  if(mode==='bone'){thr=120;smooth=2;keep=0;}
+  if(preset==='fast')smooth=1;if(preset==='high')smooth=3;
+  $('thr').value=String(thr);$('thrVal').textContent=thr;
+  $('smooth').value=String(smooth);$('smVal').textContent=smooth;
+  $('keepLargest').value=String(keep);
+}
+
+function ensureWorker(){
+  if(state.worker)return state.worker;
+  state.worker=new Worker(makeWorkerBlob(WORKER_AUTO_SRC));
+  state.worker.onmessage=ev=>{
+    const msg=ev.data;
+    if(msg.type==='progress'){setProg(msg.pct,state.pendingMeshBuild?'Step 1/2 — Segmenting: '+msg.pct+'%':msg.text);return;}
+    if(msg.type==='result'){
+      const alpha=new Uint8ClampedArray(msg.alphaMask);
+      const img=new ImageData(msg.width,msg.height);
+      for(let i=0,j=0;i<img.data.length;i+=4,j++)img.data[i+3]=alpha[j];
+      state.masks.set(msg.zIndex|0,img);updateMem();
+      if((msg.zIndex|0)===state.z)render();
+      // Only show per-slice HUD when NOT doing an auto-then-build flow
+      if(!state.pendingMeshBuild){
+        const frac=msg.onCount&&msg.width?msg.onCount/(msg.width*msg.height):0;
+        if(!msg.onCount)setHUD('Auto done — mask empty. Try lower Threshold or adjust W/L.');
+        else setHUD(`Auto mask ✅ thr=${msg.usedThr}, pixels=${msg.onCount} (${(frac*100).toFixed(1)}%)`);
+      }
+    }
+    if(msg.type==='done'){
+      state.busy=false;
+      if(state.pendingMeshBuild){
+        state.pendingMeshBuild=false;
+        // Count painted slices for feedback
+        let ps=0;for(const[,m]of state.masks.entries()){const d=m.data;for(let i=3;i<d.length;i+=4){if(d[i]){ps++;break;}}}
+        notify('Segmented '+ps+' slices — building mesh…');
+        setHUD('Step 2/2: Building 3D mesh…');
+        _doActualMeshBuild();
+      } else {
+        setProg(0,'Idle');setHUD('Auto segmentation done ✅');notify('Auto seg complete!');
+      }
+    }
+    if(msg.type==='error'){state.busy=false;state.pendingMeshBuild=false;setProg(0,'Idle');setHUD('Auto failed: '+msg.message);$('btnBuildMesh').disabled=false;}
+  };
+  return state.worker;
+}
+
+async function runAuto(allSlices){
+  if(!state.loaded||state.busy)return;
+  state.busy=true;setHUD('Auto segmentation running…');
+  const w=ensureWorker(),mode=$('autoMode').value;
+  const thr=Number($('thr').value),smooth=Number($('smooth').value),keepL=Number($('keepLargest').value)===1;
+  const indices=allSlices?[...Array(state.dims.z).keys()]:[state.z];
+  w.postMessage({type:'start',total:indices.length});
+  for(let k=0;k<indices.length;k++){
+    const z=indices[k],gray=sliceToGrayU8(z);
+    w.postMessage({type:'job',jobIndex:k+1,total:indices.length,zIndex:z,mode,thr,smooth,keepLargest:keepL,width:state.dims.x,height:state.dims.y,gray:gray.buffer},[gray.buffer]);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  w.postMessage({type:'finish'});
+}
+
+// ── Export ────────────────────────────────────────────────────
+function downloadBlob(blob,filename){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+function exportMaskPNG(){
+  const mask=getMaskForZ(state.z);if(!mask)return;
+  const c=document.createElement('canvas');c.width=mask.width;c.height=mask.height;
+  const ctx=c.getContext('2d'),out=ctx.createImageData(mask.width,mask.height),d=out.data,m=mask.data;
+  for(let i=0;i<d.length;i+=4){const a=m[i+3];d[i]=a;d[i+1]=a;d[i+2]=a;d[i+3]=255;}
+  ctx.putImageData(out,0,0);c.toBlob(blob=>downloadBlob(blob,`z${String(state.z).padStart(4,'0')}_mask.png`),'image/png');
+}
+async function exportAllMasksZIP(){
+  try{ await window._libsReady; }catch(e){}
+  if(typeof JSZip==='undefined'){alert('JSZip not available');return;}
+  const zip=new JSZip();
+  for(const[z,mask]of state.masks.entries()){
+    const c=document.createElement('canvas');c.width=mask.width;c.height=mask.height;
+    const ctx=c.getContext('2d'),out=ctx.createImageData(mask.width,mask.height),d=out.data,m=mask.data;
+    for(let i=0;i<d.length;i+=4){const a=m[i+3];d[i]=a;d[i+1]=a;d[i+2]=a;d[i+3]=255;}
+    ctx.putImageData(out,0,0);
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    zip.file(`z${String(z).padStart(4,'0')}_mask.png`,blob);
+  }
+  setProg(5,'Building ZIP…');const out=await zip.generateAsync({type:'blob'});setProg(0,'Idle');downloadBlob(out,'cbct_masks.zip');
+}
+
+// ── 3D Mesh ───────────────────────────────────────────────────
+function buildDownsampledVolume(dsXY,dsZ){
+  const sx=state.dims.x,sy=state.dims.y,sz=state.dims.z;
+  // Apply FOV crop to limit the voxel space processed
+  const fv=state.fov;
+  const X0=fv?.vx0??0, X1=fv?.vx1??sx;
+  const Y0=fv?.vy0??0, Y1=fv?.vy1??sy;
+  const Z0=fv?.vz0??0, Z1=fv?.vz1??sz;
+  const crpX=X1-X0, crpY=Y1-Y0, crpZ=Z1-Z0;
+  const nx=Math.max(1,Math.floor(crpX/dsXY));
+  const ny=Math.max(1,Math.floor(crpY/dsXY));
+  const nz=Math.max(1,Math.floor(crpZ/dsZ));
+  const vol=new Uint8Array(nx*ny*nz);
+  for(let z=0;z<nz;z++){
+    const z0=Z0+z*dsZ, z1=Math.min(Z1,z0+dsZ);
+    for(let y=0;y<ny;y++){
+      const y0=Y0+y*dsXY, y1=Math.min(Y1,y0+dsXY);
+      for(let x=0;x<nx;x++){
+        const x0=X0+x*dsXY, x1=Math.min(X1,x0+dsXY);
+        let cnt=0, tot=0;
+        for(let zz=z0;zz<z1;zz++){
+          const mask=state.masks.get(zz);
+          // If a slice has no mask, it still contributes 0 density to this cell
+          if(!mask){ tot += (y1-y0)*(x1-x0); continue; }
+          const md=mask.data,mw=mask.width;
+          for(let yy=y0;yy<y1;yy++){
+            let row=(yy*mw+x0)*4;
+            for(let xx=x0;xx<x1;xx++){
+              tot++;
+              if(md[row+3]) cnt++;
+              row+=4;
+            }
+          }
+        }
+        const dens = (tot>0 && cnt>0) ? Math.min(255, Math.round(255*cnt/tot)) : 0;
+        vol[(z*ny+y)*nx+x]=dens;
+      }
+    }
+    if(z%Math.max(1,Math.floor(nz/10))===0)setProg(Math.round((z/nz)*55),`Voxelizing… ${z}/${nz}`);
+  }
+  const voxelSize={x:state.spacing.x*dsXY,y:state.spacing.y*dsXY,z:state.spacing.z*dsZ};
+  setProg(55,'Voxelization done');return{vol,nx,ny,nz,voxelSize};
+}
+
+function ensureMeshWorker(){
+  if(state.meshWorker)return state.meshWorker;
+  state.meshWorker=new Worker(makeWorkerBlob(WORKER_MESH_SRC));
+  state.meshWorker.onmessage=ev=>{
+    const m=ev.data;
+    if(m.type==='mesh_progress'){
+      setProg(m.pct,m.text);
+      updateMeshOverlayProgress(m.pct,m.text);
+      return;
+    }
+    if(m.type==='mesh_result'){
+      state.lastSTL=m.stlBuffer;$('btnDownloadSTL').disabled=false;setProg(0,'Idle');
+      state.busy=false;
+      hideMeshOverlay();
+      // Clean up painted-mesh-specific UI
+      if(state.paintedMeshBuild){
+        state.paintedMeshBuild=false;
+        const hint=$('paintedMeshHint');if(hint)hint.style.display='none';
+        $('btnMeshFromPainted').disabled=false;
+      }
+      try{ displayMeshResult(m.positions,m.normals,m.indices,m.triCount,true); }
+      catch(err){ notify('Display error: '+err.message,false); console.error('displayMeshResult:',err); $('btnBuildMesh').disabled=false; $('btnMeshFromPainted').disabled=false; }
+      return;
+    }
+    if(m.type==='mesh_error'){
+      state.busy=false;
+      hideMeshOverlay();
+      if(state.paintedMeshBuild){
+        state.paintedMeshBuild=false;
+        const hint=$('paintedMeshHint');if(hint)hint.style.display='none';
+      }
+      setProg(0,'Idle');setHUD('');notify('3D build failed: '+m.message,false);
+      $('btnBuildMesh').disabled=false;$('btnMeshFromPainted').disabled=false;
+      // Discard broken worker so next call gets a fresh one
+      try{state.meshWorker.terminate();}catch(e){}
+      state.meshWorker=null;
+    }
+  };
+  state.meshWorker.onerror=err=>{
+    state.busy=false;
+    hideMeshOverlay();
+    setProg(0,'Idle');setHUD('');
+    notify('Worker error: '+(err.message||'Unknown error'),false);
+    $('btnBuildMesh').disabled=false;$('btnMeshFromPainted').disabled=false;
+    try{state.meshWorker.terminate();}catch(e){}
+    state.meshWorker=null;
+  };
+  return state.meshWorker;
+}
+
+// ── Projects ──────────────────────────────────────────────────
+async function addProject(){
+  const mode=await showProjectModePicker();
+  if(!mode)return; // cancelled
+  const c=PROJ_PALETTE[state.projects.length%PROJ_PALETTE.length];
+  state.projectCounter++;
+  const proj={id:'proj_'+Date.now(),name:'Project '+state.projectCounter,
+    colorHex:c.hex,colorRGB:c.rgb,colorCSS:c.css,masks:new Map(),group3d:null,visible:true,opacity:1.0,
+    paintMode:mode};
+  state.projects.push(proj);
+  activateProject(proj.id);
+  renderProjectsList();
+  document.querySelector('.tab[data-tab="2d"]').click();
+  const modeLabel=mode==='polygon'?'polygon (click vertices, dbl-click to fill)':'brush';
+  notify('"'+proj.name+'" created — draw with '+modeLabel+' on slices');
+}
+
+function activateProject(id){
+  state.activeProject=id;
+  const proj=state.projects.find(p=>p.id===id);if(!proj)return;
+  state.tool=proj.paintMode||'brush';
+  updateToolButtons();
+  const b=$('activeProjBadge');
+  const modeIcon=state.tool==='polygon'?'⬡':'✏';
+  b.textContent=modeIcon+' '+proj.name;
+  b.style.color=proj.colorCSS;b.style.borderColor=proj.colorCSS;b.style.display='inline-block';
+  renderProjectsList();render();
+}
+
+function deactivateProject(){
+  state.activeProject=null;
+  const b=$('activeProjBadge');
+  if(state.meshBuilt){
+    b.textContent='🦷 Bone';b.style.color='#e8d5a3';b.style.borderColor='#e8d5a3';b.style.display='inline-block';
+  } else { b.style.display='none'; }
+  renderProjectsList();render();
+}
+
+function deleteProject(id){
+  const idx=state.projects.findIndex(p=>p.id===id);if(idx<0)return;
+  const proj=state.projects[idx];
+  if(proj.group3d&&scene3){scene3.remove(proj.group3d);proj.group3d=null;}
+  state.volumes.projects.delete(id);
+  state.projects.splice(idx,1);
+  if(state.activeProject===id)deactivateProject();
+  renderProjectsList();render();updateVolHUD();notify('Project deleted');
+}
+
+function renameProject(id,newName){
+  const proj=state.projects.find(p=>p.id===id);
+  if(!proj||!newName.trim())return;
+  proj.name=newName.trim();
+  if(state.activeProject===id){
+    const b=$('activeProjBadge');b.textContent='✏ '+proj.name;
+  }
+  renderProjectsList();
+}
+
+function makeVolItem(colorCSS,colorRGB,label,labelSub,isEditable,visible,opacity,onEye,onOpacity,headExtra){
+  const item=document.createElement('div');
+  item.className='vol-item';
+  item.style.background='rgba('+colorRGB.join(',')+',0.07)';
+  item.style.borderColor='rgba('+colorRGB.join(',')+',0.28)';
+
+  // ── Header row ──
+  const head=document.createElement('div');head.className='vol-item-head';
+
+  const dot=document.createElement('div');
+  dot.className='proj-dot';dot.style.background=colorCSS;dot.style.color=colorCSS;
+  head.appendChild(dot);
+
+  const nameEl=document.createElement('span');
+  nameEl.className='vol-name'+(isEditable?' editable':'');
+  const nameSpan=document.createTextNode(label);nameEl.appendChild(nameSpan);
+  if(labelSub){const s=document.createElement('small');s.textContent=labelSub;nameEl.appendChild(s);}
+  head.appendChild(nameEl);
+
+  const ops=document.createElement('div');ops.className='vol-ops';
+
+  // Eye
+  const eyeBtn=document.createElement('button');
+  eyeBtn.className='eye-btn btn'+(visible?'':' hidden-vol');
+  eyeBtn.textContent=visible?'👁':'🙈';eyeBtn.title='Show / Hide';
+  eyeBtn.addEventListener('click',()=>{
+    const nowVis=!onEye();
+    eyeBtn.textContent=nowVis?'👁':'🙈';
+    eyeBtn.classList.toggle('hidden-vol',!nowVis);
+  });
+  ops.appendChild(eyeBtn);
+
+  if(headExtra)headExtra(ops,nameEl);
+  head.appendChild(ops);
+  item.appendChild(head);
+
+  // ── Opacity row ──
+  const opRow=document.createElement('div');opRow.className='vol-opacity-row';
+  const opLbl=document.createElement('label');opLbl.textContent='Translucency';opRow.appendChild(opLbl);
+  const opSlider=document.createElement('input');
+  opSlider.type='range';opSlider.min=0;opSlider.max=100;opSlider.value=Math.round(opacity*100);
+  const opVal=document.createElement('span');opVal.className='vol-opacity-val';opVal.textContent=opSlider.value+'%';
+  opSlider.addEventListener('input',()=>{opVal.textContent=opSlider.value+'%';onOpacity(Number(opSlider.value)/100);});
+  opRow.appendChild(opSlider);opRow.appendChild(opVal);
+  item.appendChild(opRow);
+
+  return{item,nameEl,nameSpan};
+}
+
+function renderProjectsList(){
+  const card=$('cardProjects'),list=$('projList');
+  const total=state.projects.length;
+  $('projCount').textContent=total?total+' project'+(total===1?'':'s'):'';
+  // Always show card when mesh is built
+  if(!state.meshBuilt){card.style.display='none';return;}
+  card.style.display='flex';list.innerHTML='';
+
+  // ── Row 0: Volume Reconstruction (bone mesh) ──────────────────
+  const boneRGB=[232,213,163];const boneCSS='#e8d5a3';
+  const boneObj=makeVolItem(boneCSS,boneRGB,'Volume Reconstruction','',false,
+    state.boneVisible,state.boneOpacity,
+    ()=>{setBoneVisibility(!state.boneVisible);return state.boneVisible;},
+    v=>setBoneOpacity(v)
+  );
+  list.appendChild(boneObj.item);
+  // ── Row 1: Nerve Tracing (vector project) ──────────────────────
+  if(state.nerve && state.nerve.byY && state.nerve.byY.size>=2){
+    const nRGB=[255,43,43]; const nCSS='#ff2b2b';
+    const nerveObj=makeVolItem(nCSS,nRGB,'Nerve Tracing','',false,
+      state.nerve.visible!==false, state.nerve.opacity!==undefined?state.nerve.opacity:1.0,
+      ()=>{setNerveVisibility(!(state.nerve.visible!==false)); return state.nerve.visible!==false;},
+      v=>setNerveOpacity(v)
+    );
+    list.appendChild(nerveObj.item);
+  }
+
+
+  // ── Project rows ───────────────────────────────────────────────
+  for(const proj of state.projects){
+    const active=state.activeProject===proj.id;
+    const{item,nameEl}=makeVolItem(
+      proj.colorCSS,proj.colorRGB,proj.name,'',true,
+      proj.visible!==false,proj.opacity!==undefined?proj.opacity:1.0,
+      ()=>{setProjectVisibility(proj,!proj.visible);return proj.visible;},
+      v=>setProjectOpacity(proj,v),
+      (ops)=>{
+        // Paint toggle
+        const actBtn=document.createElement('button');
+        actBtn.className='btn proj-btn';
+        actBtn.textContent=active?(proj.paintMode==='polygon'?'⬡ Active':'✏ Active'):(proj.paintMode==='polygon'?'⬡ Paint':'Paint');
+        actBtn.title=active?'Deactivate':'Paint this region with '+(proj.paintMode||'brush');
+        if(active){actBtn.style.background=proj.colorCSS;actBtn.style.color='#000';actBtn.style.borderColor=proj.colorCSS;}
+        else{actBtn.style.borderColor=proj.colorCSS;actBtn.style.color=proj.colorCSS;}
+        actBtn.addEventListener('click',()=>{(state.activeProject===proj.id)?deactivateProject():activateProject(proj.id);});
+        ops.appendChild(actBtn);
+        // Build mesh
+        const buildBtn=document.createElement('button');
+        buildBtn.className='btn proj-btn';buildBtn.textContent='⬡';buildBtn.title='Build / Rebuild 3D mesh';
+        buildBtn.addEventListener('click',()=>buildProjectMesh(proj));
+        ops.appendChild(buildBtn);
+        // Delete
+        const delBtn=document.createElement('button');
+        delBtn.className='btn danger proj-btn';delBtn.textContent='×';delBtn.title='Delete project';
+        delBtn.addEventListener('click',()=>{if(confirm('Delete "'+proj.name+'"?'))deleteProject(proj.id);});
+        ops.appendChild(delBtn);
+      }
+    );
+    // Active border highlight
+    item.style.borderColor=active?proj.colorCSS:'rgba('+proj.colorRGB.join(',')+',0.28)';
+    // Double-click to rename
+    nameEl.addEventListener('dblclick',()=>{
+      const inp=document.createElement('input');
+      inp.type='text';inp.value=proj.name;
+      inp.style.cssText='flex:1;font-size:10px;background:var(--bg);border:1px solid '+proj.colorCSS+
+        ';color:var(--text);border-radius:3px;padding:1px 5px;min-width:0;width:100%;outline:none';
+      nameEl.replaceWith(inp);inp.focus();inp.select();
+      const commit=()=>{renameProject(proj.id,inp.value.trim()||proj.name);};
+      inp.addEventListener('blur',commit);
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=proj.name;inp.blur();}});
+    });
+    list.appendChild(item);
+  }
+}
+
+// ── Volume visibility helpers ─────────────────────────────────
+function setBoneVisibility(visible){
+  state.boneVisible=visible;
+  if(!meshGroup3)return;
+  meshGroup3.visible=visible;
+}
+function setBoneOpacity(v){
+  state.boneOpacity=v;
+  if(!meshGroup3)return;
+  meshGroup3.children.forEach(c=>{
+    if(c.material){
+      c.material.transparent=(v<1);
+      c.material.opacity=v;
+      c.material.needsUpdate=true;
+    }
+  });
+}
+
+function setNerveVisibility(visible){
+  state.nerve.visible=visible;
+  if(state.nerve.group3d) state.nerve.group3d.visible=visible;
+}
+function setNerveOpacity(v){
+  state.nerve.opacity=v;
+  if(!state.nerve.group3d) return;
+  state.nerve.group3d.children.forEach(c=>{
+    if(c.material){
+      c.material.transparent=(v<1);
+      c.material.opacity=v;
+      c.material.needsUpdate=true;
+    }
+  });
+}
+
+function setProjectVisibility(proj,visible){
+  proj.visible=visible;
+  if(proj.group3d)proj.group3d.visible=visible;
+}
+function setProjectOpacity(proj,v){
+  proj.opacity=v;
+  if(!proj.group3d)return;
+  proj.group3d.children.forEach(c=>{
+    if(c.material){
+      c.material.transparent=(v<1);
+      c.material.opacity=v;
+      c.material.needsUpdate=true;
+    }
+  });
+}
+
+// ── Build project 3D mesh ──────────────────────────────────────
+// ── Helper: get painted Z slices for a project
+function _projPaintedZs(p){
+  const zs=[];
+  for(const[z,m]of p.masks.entries()){
+    const d=m.data;for(let i=3;i<d.length;i+=4){if(d[i]){zs.push(z);break;}}
+  }
+  return zs;
+}
+// ── Helper: read alpha at world (x,y) from a mask ImageData
+function _maskAlpha(mask,wx,wy){
+  if(!mask)return 0;
+  const i=(wy*mask.width+wx)*4+3;
+  return(i>=0&&i<mask.data.length)?mask.data[i]:0;
+}
+// ── Morphological erosion of a binary mask (returns Float32Array, 1=inside, 0=outside)
+function _erodeMask(srcMask, wx0, wy0, nx, ny, r){
+  // r = erosion radius in pixels
+  const out = new Float32Array(nx*ny);
+  for(let y=0;y<ny;y++){
+    for(let x=0;x<nx;x++){
+      if(!_maskAlpha(srcMask,x+wx0,y+wy0)){out[y*nx+x]=0;continue;}
+      // Check if any neighbor within radius r is outside the mask
+      let eroded=false;
+      outer:for(let dy=-r;dy<=r&&!eroded;dy++){
+        for(let dx=-r;dx<=r&&!eroded;dx++){
+          if(dx*dx+dy*dy>r*r) continue;
+          if(!_maskAlpha(srcMask,x+wx0+dx,y+wy0+dy)) eroded=true;
+        }
+      }
+      out[y*nx+x]=eroded?0:1;
+    }
+  }
+  return out;
+}
+
+// ── Morphological dilation of a binary mask (returns Uint8Array, 1=inside/halo, 0=outside)
+function _dilateMask(srcMask, wx0, wy0, nx, ny, r){
+  // r = dilation radius in pixels
+  const out = new Uint8Array(nx*ny);
+  if(!srcMask || r<=0) return out;
+  const r2=r*r;
+  for(let y=0;y<ny;y++){
+    for(let x=0;x<nx;x++){
+      let hit=false;
+      outer:for(let dy=-r;dy<=r;dy++){
+        const yy=y+wy0+dy; if(yy<0||yy>=srcMask.height) continue;
+        for(let dx=-r;dx<=r;dx++){
+          if(dx*dx+dy*dy>r2) continue;
+          const xx=x+wx0+dx; if(xx<0||xx>=srcMask.width) continue;
+          if(_maskAlpha(srcMask,xx,yy)){hit=true;break outer;}
+        }
+      }
+      out[y*nx+x]=hit?1:0;
+    }
+  }
+  return out;
+}
+
+
+// ────────────────────────────────────────────────────────────────────────────
+// Liquid / Smooth bridging helpers (2D Morphology on mask pixels)
+//  - Monotonic Outer Envelope Bridge + 2D Morphological Closing
+//  - Designed to PREVENT "bottleneck/waist" shrink during Z gap fill
+// ────────────────────────────────────────────────────────────────────────────
+
+// Fast 4-neighborhood morphological op on a binary mask (0/1)
+function morphOp(data, w, h, type){
+  const out = new Uint8Array(data.length);
+  for(let y=1; y<h-1; y++){
+    const row = y*w;
+    for(let x=1; x<w-1; x++){
+      const i = row + x;
+      if(type==='dilate'){
+        out[i] = (data[i] || data[i-1] || data[i+1] || data[i-w] || data[i+w]) ? 1 : 0;
+      }else{ // erode
+        out[i] = (data[i] && data[i-1] && data[i+1] && data[i-w] && data[i+w]) ? 1 : 0;
+      }
+    }
+  }
+  return out;
+}
+function applyClosing(data, w, h){
+  const dil = morphOp(data, w, h, 'dilate');
+  return morphOp(dil, w, h, 'erode');
+}
+function dilateRepeated(data, w, h, times){
+  let r = new Uint8Array(data);
+  const t = Math.max(0, times|0);
+  for(let i=0;i<t;i++) r = morphOp(r, w, h, 'dilate');
+  return r;
+}
+function _maskToBin(mask){
+  // mask = ImageData (alpha channel holds mask)
+  const w = mask.width, h = mask.height;
+  const bin = new Uint8Array(w*h);
+  const d = mask.data;
+  for(let i=0, j=3; i<bin.length; i++, j+=4) bin[i] = d[j] ? 1 : 0;
+  return bin;
+}
+function _binToMaskImageData(bin, w, h){
+  const img = new ImageData(w, h);
+  const d = img.data;
+  for(let i=0, j=3; i<bin.length; i++, j+=4) d[j] = bin[i] ? 255 : 0;
+  return img;
+}
+
+// Fill missing Z slices in a Map<z, ImageData> using:
+//  1) Monotonic Outer Envelope Bridge (dilate endpoints toward each other)
+//  2) 2D Morphological Closing per intermediate slice
+// NOTE: This touches ONLY masks; no upload / unzip / DICOM loader logic.
+function fillGaps(maskMap, w, h){
+  if(!maskMap || maskMap.size<2) return 0;
+
+  // only consider slices that have any painted alpha
+  const slices = [];
+  for(const [z, m] of maskMap.entries()){
+    if(!m) continue;
+    const d=m.data;
+    let any=false;
+    for(let i=3;i<d.length;i+=4){ if(d[i]){ any=true; break; } }
+    if(any) slices.push(Number(z));
+  }
+  slices.sort((a,b)=>a-b);
+  if(slices.length<2) return 0;
+
+  let filled=0;
+  const len = w*h;
+
+  // cache binary versions of endpoints
+  const binCache = new Map();
+  const getBin = (z)=>{
+    if(binCache.has(z)) return binCache.get(z);
+    const m = maskMap.get(z);
+    if(!m || m.width!==w || m.height!==h) { binCache.set(z, new Uint8Array(len)); return binCache.get(z); }
+    const b=_maskToBin(m);
+    binCache.set(z,b);
+    return b;
+  };
+
+  for(let idx=0; idx<slices.length-1; idx++){
+    const i = slices[idx];
+    const k = slices[idx+1];
+    const gap = k - i;
+    if(gap<=1) continue;
+
+    const maskI = getBin(i);
+    const maskK = getBin(k);
+
+    // dilation strength scales with the gap size (prevents shrink)
+    const dilationSteps = Math.max(1, Math.floor(gap * 0.5));
+
+    for(let j=i+1; j<k; j++){
+      const t = (j - i) / gap;
+      const envI = dilateRepeated(maskI, w, h, Math.ceil(dilationSteps * t));
+      const envK = dilateRepeated(maskK, w, h, Math.ceil(dilationSteps * (1 - t)));
+
+      const inter = new Uint8Array(len);
+      for(let p=0;p<len;p++){
+        inter[p] = (maskI[p] || maskK[p] || (envI[p] && envK[p])) ? 1 : 0;
+      }
+
+      const closed = applyClosing(inter, w, h);
+      maskMap.set(j, _binToMaskImageData(closed, w, h));
+      filled++;
+    }
+  }
+  return filled;
+}
+
+
+async function buildProjectMesh(proj){
+  // Projects/Brushing "Smooth Path":
+  // When smoothMode=true (always for projects), we build a liquid/organic density volume:
+  //   1) Per-slice Halo generation (dilation ring around the mask)
+  //   2) Morphing interpolation across Z gaps (halo+core blended), then
+  //   3) Mesh worker runs Marching Cubes + Taubin polish (already gated by smoothMode)
+  let ps=0;
+  for(const[,m]of proj.masks.entries()){
+    const d=m.data;for(let i=3;i<d.length;i+=4){if(d[i]){ps++;break;}}
+  }
+  if(ps===0){notify('Paint some slices for "'+proj.name+'" first!',false);return;}
+
+  // ── Optional: liquid fill gaps inside this project masks (Outer Envelope + Closing)
+  // This improves slice-to-slice continuity when the project is painted sparsely.
+  const _filledProj = fillGaps(proj.masks, state.dims.x, state.dims.y);
+  if(_filledProj){ updateMem(); }
+  notify('Building mesh for "'+proj.name+'" ('+ps+' slices)\u2026');
+
+  const fv=state.fov;
+  const X0=fv?.vx0??0, X1=fv?.vx1??state.dims.x;
+  const Y0=fv?.vy0??0, Y1=fv?.vy1??state.dims.y;
+  const Z0=fv?.vz0??0, Z1=fv?.vz1??state.dims.z;
+  const nx=X1-X0, ny=Y1-Y0, nz=Z1-Z0;
+
+  // ── Gather painted Z indices (within the current Z crop) ─────────────────
+  const paintedZ=_projPaintedZs(proj).filter(z=>z>=Z0&&z<Z1).sort((a,b)=>a-b);
+  if(paintedZ.length===0){notify('No painted voxels found for "'+proj.name+'".',false);return;}
+  const zMin=paintedZ[0], zMax=paintedZ[paintedZ.length-1];
+
+  // ── Density volume (float) ──────────────────────────────────────────────
+  const fvol=new Float32Array(nx*ny*nz);
+
+  // Build cached "core" slices (binary) + "halo" slices (dilated) for each painted Z.
+  // Note: We build these in the cropped XY range only for performance.
+  const coreByZ=new Map();
+  const haloByZ=new Map();
+
+  const HALO_R=4;     // halo radius (px) around painted region
+  const HALO_W=0.36;  // halo density (before blur / marching cubes)
+  const CORE_W=1.00;  // core density
+
+  function buildCoreSlice(mask){
+    const out=new Uint8Array(nx*ny);
+    if(!mask) return out;
+    for(let y=0;y<ny;y++){
+      const wy=y+Y0, rowBase=y*nx;
+      for(let x=0;x<nx;x++){
+        out[rowBase+x]=_maskAlpha(mask,x+X0,wy)?1:0;
+      }
+    }
+    return out;
+  }
+
+  // Precompute core + halo for every painted Z slice
+  for(const z of paintedZ){
+    const mask=proj.masks.get(z); if(!mask) continue;
+    const core=buildCoreSlice(mask);
+    coreByZ.set(z,core);
+    // Halo = dilation(core mask) in source coordinates (uses _maskAlpha on ImageData)
+    // We dilate from the original ImageData so edges are consistent with the user paint.
+    const halo=_dilateMask(mask,X0,Y0,nx,ny,HALO_R);
+    haloByZ.set(z,halo);
+
+    // Write the original painted slice as full density (core)
+    const zi=(z-Z0);
+    const base=zi*nx*ny;
+    for(let i=0;i<core.length;i++){
+      if(core[i]) fvol[base+i]=CORE_W;
+    }
+  }
+
+  // ── Liquid Morphing Interpolation across Z gaps ─────────────────────────
+  // For every consecutive painted pair (zA,zB), fill intermediate slices:
+  //   density = lerp( core+halo(zA), core+halo(zB) )
+  // plus a small "union anchor" to prevent disconnect in very long gaps.
+  const UNION_ANCHOR=0.58; // ensures connectivity even across long gaps
+  for(let pi=0;pi<paintedZ.length-1;pi++){
+    const zA=paintedZ[pi], zB=paintedZ[pi+1];
+    const gap=zB-zA;
+    if(gap<=1) continue;
+    const coreA=coreByZ.get(zA)||new Uint8Array(nx*ny);
+    const coreB=coreByZ.get(zB)||new Uint8Array(nx*ny);
+    const haloA=haloByZ.get(zA)||new Uint8Array(nx*ny);
+    const haloB=haloByZ.get(zB)||new Uint8Array(nx*ny);
+
+    for(let z=zA+1; z<zB; z++){
+      const t=(z-zA)/gap, omt=1-t;
+      const zi=(z-Z0);
+      const base=zi*nx*ny;
+
+      for(let i=0;i<coreA.length;i++){
+        // Endpoint densities: core=1, halo=HALO_W, else 0
+        const dA = coreA[i] ? CORE_W : (haloA[i] ? HALO_W : 0);
+        const dB = coreB[i] ? CORE_W : (haloB[i] ? HALO_W : 0);
+        let v = dA*omt + dB*t;
+
+        // Anchor union: any pixel that exists in either endpoint remains above a mid-threshold.
+        if(coreA[i]||coreB[i]||haloA[i]||haloB[i]) v = Math.max(v, UNION_ANCHOR);
+
+        // Keep strongest density if something was already written
+        const cur=fvol[base+i];
+        if(v>cur) fvol[base+i]=v;
+      }
+    }
+  }
+
+  // ── End-cap melt (avoid flat caps) ──────────────────────────────────────
+  // We extend a few slices beyond first/last painted slice using a fading halo.
+  const TAPER=6;
+  function taperFromEnd(zEnd,dir){
+    const core=coreByZ.get(zEnd)||new Uint8Array(nx*ny);
+    const halo=haloByZ.get(zEnd)||new Uint8Array(nx*ny);
+    for(let k=1;k<=TAPER;k++){
+      const z=zEnd + dir*k;
+      if(z<Z0||z>=Z1) break;
+      const t=(TAPER-k+1)/(TAPER+1); // fades to 0
+      const zi=(z-Z0), base=zi*nx*ny;
+      for(let i=0;i<core.length;i++){
+        // Core fades quickly; halo fades more gently for "liquid" look
+        const dCore = core[i] ? (CORE_W * (t*0.55)) : 0;
+        const dHalo = halo[i] ? (HALO_W * (t*0.95)) : 0;
+        const v = Math.max(dCore,dHalo);
+        if(v>fvol[base+i]) fvol[base+i]=v;
+      }
+    }
+  }
+  taperFromEnd(zMin,-1);
+  taperFromEnd(zMax,+1);
+
+  // Convert float→Uint8 for the mesh worker
+  const vol=new Uint8Array(nx*ny*nz);
+  for(let i=0;i<fvol.length;i++) vol[i]=Math.max(0,Math.min(255,Math.round(fvol[i]*255)));
+
+  // Quick empty check
+  let any=false;
+  for(let i=0;i<vol.length;i++){ if(vol[i]){ any=true; break; } }
+  if(!any){notify('No painted voxels found for "'+proj.name+'".',false);return;}
+
+  // Build mesh in a dedicated worker (Projects always request smoothMode=true)
+  const light=isLightDevice();
+  showMeshOverlay('Building "'+proj.name+'" Mesh…',
+    light?'Mobile: optimised quality settings active.':'');
+  const w=new Worker(makeWorkerBlob(WORKER_MESH_SRC));
+  w.onmessage=ev=>{
+    const m=ev.data;
+    if(m.type==='mesh_progress'){updateMeshOverlayProgress(m.pct,m.text);return;}
+    if(m.type==='mesh_result'){w.terminate();hideMeshOverlay();displayProjectMesh(proj,m.positions,m.normals,m.indices);notify('"'+proj.name+'" mesh ready \u2014 '+m.triCount.toLocaleString()+' tris');}
+    if(m.type==='mesh_error'){w.terminate();hideMeshOverlay();notify('Project mesh error: '+m.message,false);}
+  };
+  w.onerror=err=>{w.terminate();hideMeshOverlay();notify('Project mesh error: '+(err.message||'Worker crash'),false);};
+  w.postMessage({type:'build_mesh',nx,ny,nz,
+    voxelSize:{x:state.spacing.x,y:state.spacing.y,z:state.spacing.z},
+    vol:vol.buffer,
+    smoothMode:true,lightMode:light},[vol.buffer]);
+}
+
+function displayProjectMesh(proj,positions,normals,indices){
+  if(!renderer3||!scene3)return;
+  if(proj.group3d){scene3.remove(proj.group3d);proj.group3d=null;}
+  if(!positions||positions.length===0)return;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+  geo.setIndex(new THREE.BufferAttribute(indices,1));
+  // Apply same centering as bone mesh
+  const{cx,cy,cz}=state.meshOffset;
+  const pa=geo.attributes.position.array;
+  for(let i=0;i<pa.length;i+=3){pa[i]-=cx;pa[i+1]-=cy;pa[i+2]-=cz;}
+  geo.attributes.position.needsUpdate=true;
+  geo.computeBoundingBox();geo.computeBoundingSphere();
+  const grp=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({
+    color:proj.colorHex,roughness:0.32,metalness:0.12,side:THREE.DoubleSide,
+    emissive:proj.colorHex,emissiveIntensity:0.10,
+    polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3
+  });
+  grp.add(new THREE.Mesh(geo,mat));
+  const wfGeo=new THREE.EdgesGeometry(geo,28);
+  grp.add(new THREE.LineSegments(wfGeo,new THREE.LineBasicMaterial({
+    color:proj.colorHex,transparent:true,opacity:0.06,
+    polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4
+  })));
+  proj.group3d=grp;scene3.add(grp);
+  // ── Compute and store project volume ─────────────────────────────────────
+  try{
+    const volMM3=computeVolumeMM3(positions,indices);
+    state.volumes.projects.set(proj.id,volMM3);
+    updateVolHUD();
+    const snapBtn=$('btnSnapshot');if(snapBtn)snapBtn.style.display='block';
+    $('cardReport').style.display='flex';
+  }catch(e){console.warn('Volume calc error:',e);}
+}
+
+// ── _doActualMeshBuild: voxelize masks → send to mesh worker ─────
+async function _doActualMeshBuild(label){
+  const dsXY=Number($('ds').value),dsZ=Number($('dsZ').value);
+  const progLabel=label||'Step 2/2: Voxelizing…';
+  const startPct=label?0:55; // painted flow starts at 0%, auto-seg flow at 55%
+  setProg(startPct,progLabel);
+  $('btnBuildMesh').disabled=true;$('btnDownloadSTL').disabled=true;state.lastSTL=null;
+
+  const light=isLightDevice();
+  const warnTxt=light?'Mobile/low-memory device detected — using optimised quality settings.':'';
+  showMeshOverlay('Building 3D Mesh…',warnTxt);
+
+  await new Promise(r=>setTimeout(r,10));
+  const{vol,nx,ny,nz,voxelSize}=buildDownsampledVolume(dsXY,dsZ);
+  if(!vol.some(v=>v)){
+    notify('No voxels found — no painted pixels in masks.',false);
+    setHUD('');setProg(0,'Idle');hideMeshOverlay();$('btnBuildMesh').disabled=false;
+    $('btnMeshFromPainted').disabled=false;
+    state.busy=false;
+    if(state.paintedMeshBuild){state.paintedMeshBuild=false;const h=$('paintedMeshHint');if(h)h.style.display='none';}
+    return;
+  }
+  ensureMeshWorker().postMessage({type:'build_mesh',nx,ny,nz,voxelSize,vol:vol.buffer,lightMode:light},[vol.buffer]);
+}
+
+// ── build3DMesh: auto-segment ALL slices (Bone+Teeth), then build mesh ─
+async function build3DMesh(){
+  if(!state.loaded){notify('Load a DICOM ZIP first.',false);return;}
+  if(state.busy){notify('Already processing — please wait.',false);return;}
+  state.busy=true;
+  $('btnBuildMesh').disabled=true;$('btnDownloadSTL').disabled=true;state.lastSTL=null;
+
+  // Wipe previous masks and re-segment fresh with combined Bone+Teeth mode
+  state.masks.clear();state.undo=[];updateMem();
+  state.pendingMeshBuild=true;
+
+  const thr=Number($('thr').value),smooth=Number($('smooth').value);
+  const fv=state.fov;
+  const Z0=fv?.vz0??0, Z1=fv?.vz1??state.dims.z;
+  const total=Z1-Z0;
+  const fovMsg=fv?` [FOV Z:${Z0}–${Z1}]`:'';
+  notify('Step 1/2: Auto-segmenting '+total+' slices (Bone + Teeth)'+fovMsg+'…');
+  setHUD('Step 1/2: Segmenting '+total+' slices'+fovMsg+'…');
+  setProg(0,'Segmenting…');
+
+  const w=ensureWorker();
+  w.postMessage({type:'start',total});
+  for(let k=0;k<total;k++){
+    const z=Z0+k,gray=sliceToGrayU8(z);
+    w.postMessage({
+      type:'job',jobIndex:k+1,total,zIndex:z,
+      mode:'bone_teeth',
+      thr,smooth,
+      keepLargest:false,
+      width:state.dims.x,height:state.dims.y,
+      gray:gray.buffer
+    },[gray.buffer]);
+    if(k%20===0)await new Promise(r=>setTimeout(r,0));
+  }
+  w.postMessage({type:'finish'});
+}
+
+function downloadSTL(){if(!state.lastSTL)return;downloadBlob(new Blob([state.lastSTL],{type:'model/stl'}),'segmentation.stl');}
+
+// ── Three.js 3D viewer — Arcball / Quaternion Camera ─────────
+// Provides full 360° unrestricted rotation (like Blender/OnDemand3D/Romexis)
+let renderer3,scene3,camera3,meshGroup3;
+let camDist=1,panX=0,panY=0;
+let camQuat=null; // THREE.Quaternion set after THREE loads
+let velDX=0,velDY=0; // inertia screen-space deltas
+let isDragging3=false,isPanning3=false,lastMX3=0,lastMY3=0;
+
+// Apply arcball orbit: dx/dy are screen-space pixel deltas
+function applyOrbit(dx,dy){
+  if(!camQuat||!THREE)return;
+  const sens=0.006;
+  // Horizontal drag → rotate around camera UP axis (true orbit, no left/right lock)
+  const camUp=new THREE.Vector3(0,1,0).applyQuaternion(camQuat);
+  const qYaw=new THREE.Quaternion().setFromAxisAngle(camUp,-dx*sens);
+  // Vertical drag → rotate around camera RIGHT axis (pitch, no gimbal lock)
+  const camRight=new THREE.Vector3(1,0,0).applyQuaternion(camQuat);
+  const qPitch=new THREE.Quaternion().setFromAxisAngle(camRight,-dy*sens);
+  camQuat.premultiply(qYaw);
+  camQuat.premultiply(qPitch);
+  camQuat.normalize();
+  updateCamera3();
+}
+
+async function init3d(){
+  try{ await window._libsReady; }catch(e){}
+  if(typeof THREE==='undefined'){ console.warn('Three.js not loaded — 3D view disabled'); return; }
+  camQuat=new THREE.Quaternion();
+  // Start with a nice initial viewing angle (like OnDemand3D default)
+  const initQuat=new THREE.Quaternion();
+  initQuat.setFromEuler(new THREE.Euler(0.3,-0.6,0,'XYZ'));
+  camQuat.copy(initQuat);
+
+  const c=$('canvas3d');
+  renderer3=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:false});
+  renderer3.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer3.setClearColor(0x020408);
+  renderer3.shadowMap.enabled=false;
+  scene3=new THREE.Scene();
+  camera3=new THREE.PerspectiveCamera(40,1,0.01,100000);
+
+  // Enhanced clinical lighting — enamel surfaces need strong directional + rim lights
+  const ambL=new THREE.AmbientLight(0x334455,0.7);scene3.add(ambL);
+  const hem=new THREE.HemisphereLight(0xaabbcc,0x221100,0.5);scene3.add(hem);
+  const d1=new THREE.DirectionalLight(0xffffff,2.2);d1.position.set(1,2,3);scene3.add(d1);
+  const d2=new THREE.DirectionalLight(0x88aaff,1.0);d2.position.set(-2,-1,-1);scene3.add(d2);
+  const d3=new THREE.DirectionalLight(0xfff5ee,0.7);d3.position.set(0,1,-2);scene3.add(d3);
+  // Rim light for enamel translucency illusion
+  const d4=new THREE.DirectionalLight(0xffffff,0.6);d4.position.set(0,-2,1);scene3.add(d4);
+  scene3.add(new THREE.PointLight(0x00e5ff,0.4,2000));
+  // Store refs for runtime control
+  state.lights3={ambient:ambL,key:d1,fill:d2,fill2:d3,rim:d4,hem};
+
+  const grid=new THREE.GridHelper(600,30,0x1e2d4a,0x1e2d4a);grid.position.y=-120;scene3.add(grid);
+  meshGroup3=new THREE.Group();scene3.add(meshGroup3);
+
+  // ── Mouse Controls ─────────────────────────────────────────
+  c.addEventListener('contextmenu',e=>e.preventDefault());
+  c.addEventListener('mousedown',e=>{
+    isDragging3=true;
+    isPanning3=(e.button===2||e.button===1||(e.button===0&&e.shiftKey));
+    lastMX3=e.clientX;lastMY3=e.clientY;
+    velDX=0;velDY=0;
+  });
+  window.addEventListener('mouseup',()=>{isDragging3=false;});
+  window.addEventListener('mousemove',e=>{
+    if(!isDragging3||!document.querySelector('.tab.active[data-tab="3d"]'))return;
+    const dx=e.clientX-lastMX3,dy=e.clientY-lastMY3;
+    lastMX3=e.clientX;lastMY3=e.clientY;
+    if(isPanning3){
+      // Pan in camera-plane
+      const camRight=new THREE.Vector3(1,0,0).applyQuaternion(camQuat);
+      const camUp=new THREE.Vector3(0,1,0).applyQuaternion(camQuat);
+      const s=camDist*0.9;
+      panX+=(-dx*camRight.x+dy*camUp.x)*s;
+      panY+=(-dx*camRight.y+dy*camUp.y)*s;
+      updateCamera3();
+    } else {
+      velDX=dx*0.55;velDY=dy*0.55;
+      applyOrbit(dx,dy);
+    }
+  });
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const factor=e.deltaY>0?1.10:0.90;
+    camDist=Math.max(0.005,Math.min(400,camDist*factor));
+    updateCamera3();
+  },{passive:false});
+  // Double-click: reset to default view
+  c.addEventListener('dblclick',()=>{
+    camDist=1;panX=0;panY=0;velDX=0;velDY=0;
+    const initQuat=new THREE.Quaternion();
+    initQuat.setFromEuler(new THREE.Euler(0.3,-0.6,0,'XYZ'));
+    camQuat.copy(initQuat);
+    updateCamera3();
+  });
+  // ── Touch: 1-finger=orbit, 2-finger=pinch+pan ──────────────
+  let lastTD3=0,lastTMX=0,lastTMY=0,lastTPX=0,lastTPY=0;
+  c.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    isDragging3=true;velDX=0;velDY=0;
+    lastTMX=e.touches[0].clientX;lastTMY=e.touches[0].clientY;
+    if(e.touches.length===2){
+      lastTD3=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      lastTPX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      lastTPY=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    }
+  },{passive:false});
+  c.addEventListener('touchend',()=>{isDragging3=false;lastTD3=0;});
+  c.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(lastTD3>0)camDist=Math.max(0.005,Math.min(400,camDist*(lastTD3/d)));
+      lastTD3=d;
+      // Two-finger pan
+      const cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      const pdx=cx-lastTPX,pdy=cy-lastTPY;
+      const camR=new THREE.Vector3(1,0,0).applyQuaternion(camQuat);
+      const camU=new THREE.Vector3(0,1,0).applyQuaternion(camQuat);
+      const s=camDist*0.9;
+      panX+=(-pdx*camR.x+pdy*camU.x)*s;panY+=(-pdx*camR.y+pdy*camU.y)*s;
+      lastTPX=cx;lastTPY=cy;
+      updateCamera3();return;
+    }
+    const dx=e.touches[0].clientX-lastTMX,dy=e.touches[0].clientY-lastTMY;
+    lastTMX=e.touches[0].clientX;lastTMY=e.touches[0].clientY;
+    applyOrbit(dx,dy);
+  },{passive:false});
+
+  resize3d();updateCamera3();animate3d();
+}
+
+function apply3DLighting(){
+  const L=state.lights3;if(!L.key)return;
+  const exposure=Number($('slExposure').value)/100;
+  const keyI=Number($('slKeyLight').value)/100;
+  const fillI=Number($('slFillLight').value)/100;
+  const ambI=Number($('slAmbient').value)/100;
+  const roughness=Number($('slRoughness').value)/100;
+  const contrast=Number($('slContrast').value)/100; // -0.6 … +0.6
+  $('exposureVal').textContent=exposure.toFixed(1)+'×';
+  $('keyLightVal').textContent=keyI.toFixed(1)+'×';
+  $('fillLightVal').textContent=fillI.toFixed(1)+'×';
+  $('ambientVal').textContent=ambI.toFixed(1)+'×';
+  $('roughnessVal').textContent=roughness.toFixed(2);
+  $('contrastVal').textContent=(contrast>=0?'+':'')+$('slContrast').value;
+  if(renderer3){renderer3.toneMappingExposure=exposure;}
+  if(L.key)L.key.intensity=keyI;
+  if(L.fill)L.fill.intensity=fillI*0.85;
+  if(L.fill2)L.fill2.intensity=fillI*0.6;
+  if(L.rim)L.rim.intensity=fillI*0.5;
+  if(L.ambient)L.ambient.intensity=ambI*0.8;
+  if(L.hem){L.hem.intensity=ambI*0.6;}
+  // Apply contrast shift to all mesh materials in scene
+  const applyMat=mat=>{
+    if(!mat)return;
+    mat.roughness=Math.max(0.01,Math.min(1,roughness));
+    // Map contrast -1..+1 to emissiveIntensity + color brightness
+    const base=0xf5eedf;
+    const bright=Math.max(0,Math.min(1,0.73+contrast*0.5));
+    mat.color.setRGB(bright,bright*0.97,bright*0.93);
+    mat.emissiveIntensity=Math.max(0,0.05+contrast*0.08);
+    mat.needsUpdate=true;
+  };
+  if(meshGroup3)meshGroup3.children.forEach(c=>{if(c.material)applyMat(c.material);});
+  // Also update project meshes
+  state.projects.forEach(p=>{
+    if(p.group3d)p.group3d.children.forEach(c=>{if(c.isMesh&&c.material)c.material.needsUpdate=true;});
+  });
+}
+
+function updateCamera3(){
+  if(!camera3||!camQuat)return;
+  const r=camDist*300;
+  // Camera position = pan_target + rotated [0,0,r]
+  const offset=new THREE.Vector3(0,0,r).applyQuaternion(camQuat);
+  camera3.position.set(panX+offset.x,panY+offset.y,offset.z);
+  camera3.lookAt(new THREE.Vector3(panX,panY,0));
+  // Keep camera up aligned with rotated Y axis (no rolling/tilting weirdness)
+  camera3.up.copy(new THREE.Vector3(0,1,0).applyQuaternion(camQuat));
+  camera3.updateMatrixWorld();
+}
+
+function resize3d(){
+  if(!renderer3)return;
+  const p=$('panel3d'),w=p.clientWidth,h=Math.max(1,p.clientHeight-32);
+  renderer3.setSize(w,h);camera3.aspect=w/h;camera3.updateProjectionMatrix();
+}
+
+function animate3d(){
+  requestAnimationFrame(animate3d);
+  if(!renderer3||!scene3||!camera3)return;
+  // Apply rotation inertia using arcball
+  if((Math.abs(velDX)>0.01||Math.abs(velDY)>0.01)&&!isDragging3){
+    applyOrbit(velDX,velDY);
+    velDX*=0.88;velDY*=0.88;
+    if(Math.abs(velDX)<0.01)velDX=0;
+    if(Math.abs(velDY)<0.01)velDY=0;
+  }
+  if(document.querySelector('.tab.active[data-tab="3d"]')){
+    renderer3.render(scene3,camera3);
+    drawAxisGizmo();
+  }
+}
+
+// ── Axis Gizmo (like Blender / OnDemand3D corner indicator) ──
+function drawAxisGizmo(){
+  if(!camQuat||!THREE)return;
+  const gc=$('axisGizmo');if(!gc)return;
+  const ctx=gc.getContext('2d');
+  const W=gc.width,H=gc.height,cx=W/2,cy=H/2,R=62,dot=9;
+  ctx.clearRect(0,0,W,H);
+
+  // Axes: +X(red), -X(darkred), +Y(green), -Y(darkgreen), +Z(blue), -Z(darkblue)
+  const axes=[
+    {v:new THREE.Vector3(1,0,0), label:'X',  pos:true,  col:'#ff4444', tcol:'#ff4444'},
+    {v:new THREE.Vector3(-1,0,0),label:'-X', pos:false, col:'#882222', tcol:'#cc3333'},
+    {v:new THREE.Vector3(0,1,0), label:'Y',  pos:true,  col:'#44dd44', tcol:'#44dd44'},
+    {v:new THREE.Vector3(0,-1,0),label:'-Y', pos:false, col:'#226622', tcol:'#339933'},
+    {v:new THREE.Vector3(0,0,1), label:'Z',  pos:true,  col:'#4488ff', tcol:'#4488ff'},
+    {v:new THREE.Vector3(0,0,-1),label:'-Z', pos:false, col:'#223366', tcol:'#3355aa'},
+  ];
+
+  // Transform each axis by inverse camera quaternion to get screen direction
+  const invQ=camQuat.clone().conjugate();
+  const projected=axes.map(a=>{
+    const dir=a.v.clone().applyQuaternion(invQ);
+    return{...a, sx:cx+dir.x*R, sy:cy-dir.y*R, depth:dir.z};
+  });
+
+  // Sort by depth: draw back first
+  projected.sort((a,b)=>a.depth-b.depth);
+
+  // Draw lines from center first (back-to-front), then dots+labels
+  // Draw negative (back) lines first
+  ctx.lineWidth=1.5;
+  projected.filter(a=>!a.pos).forEach(a=>{
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(a.sx,a.sy);
+    ctx.strokeStyle=a.col;ctx.globalAlpha=0.6;ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+  // Draw positive lines
+  projected.filter(a=>a.pos).forEach(a=>{
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(a.sx,a.sy);
+    ctx.strokeStyle=a.col;ctx.lineWidth=2.5;ctx.stroke();
+  });
+
+  // Draw dots + labels back-to-front
+  projected.forEach(a=>{
+    const r=a.pos?dot:dot*0.65;
+    // Glow for positive axes
+    if(a.pos){
+      ctx.shadowColor=a.col;ctx.shadowBlur=10;
+    } else {
+      ctx.shadowBlur=0;
+    }
+    ctx.beginPath();ctx.arc(a.sx,a.sy,r,0,Math.PI*2);
+    ctx.fillStyle=a.col;ctx.globalAlpha=a.pos?1:0.55;ctx.fill();
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+
+    // Label
+    ctx.font=a.pos?'bold 11px DM Sans,sans-serif':'10px DM Sans,sans-serif';
+    ctx.fillStyle=a.tcol;
+    ctx.globalAlpha=a.pos?1:0.65;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(a.label,a.sx,a.sy);
+    ctx.globalAlpha=1;
+  });
+
+  // Center dot
+  ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=8;ctx.fill();
+  ctx.shadowBlur=0;
+}
+
+// Build Three.js geometry from smooth indexed mesh and display
+function displayMeshResult(positions,normals,indices,triCount,isBoneMesh){
+  if(!renderer3||!scene3||!meshGroup3) throw new Error('Three.js not ready');
+  if(!triCount||triCount===0) throw new Error('Mesh has 0 triangles');
+
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+  geo.setIndex(new THREE.BufferAttribute(indices,1));
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+
+  // Center
+  const box=geo.boundingBox;
+  const cx=(box.max.x+box.min.x)/2,cy=(box.max.y+box.min.y)/2,cz=(box.max.z+box.min.z)/2;
+  state.meshOffset={cx,cy,cz};
+  const pa=geo.attributes.position.array;
+  for(let i=0;i<pa.length;i+=3){pa[i]-=cx;pa[i+1]-=cy;pa[i+2]-=cz;}
+  geo.attributes.position.needsUpdate=true;
+  geo.computeBoundingSphere();geo.computeBoundingBox();
+
+  // Tear down old bone mesh
+  while(meshGroup3.children.length)meshGroup3.remove(meshGroup3.children[0]);
+
+  const mat=new THREE.MeshStandardMaterial({
+    color:0xf5eedf,         // warm ivory-white like tooth enamel
+    roughness:0.18,         // low roughness → strong specular highlights
+    metalness:0.04,
+    side:THREE.DoubleSide,
+    emissive:0x0d0800,
+    emissiveIntensity:0.05,
+    envMapIntensity:0.8
+  });
+  meshGroup3.add(new THREE.Mesh(geo,mat));
+  const wfGeo=new THREE.EdgesGeometry(geo,28);
+  meshGroup3.add(new THREE.LineSegments(wfGeo,new THREE.LineBasicMaterial({color:0xc8a060,transparent:true,opacity:0.04})));
+
+  // Frame camera
+  const bsr=geo.boundingSphere.radius||1;
+  camDist=Math.max(0.05,bsr*4/300);
+  panX=0;panY=0;velDX=0;velDY=0;
+  if(camQuat){const q=new THREE.Quaternion();q.setFromEuler(new THREE.Euler(0.3,-0.6,0,'XYZ'));camQuat.copy(q);}
+  updateCamera3();
+
+  $('m3Verts').textContent=(positions.length/3).toLocaleString();
+  $('m3Tris').textContent=triCount.toLocaleString();
+  $('m3Slices').textContent=state.masks.size;
+  $('meshEmpty').style.display='none';
+
+  // ── Compute and store bone mesh volume (mm³) ─────────────────────────────
+  try{
+    const volMM3=computeVolumeMM3(positions,indices);
+    state.volumes.bone=volMM3;
+    const cc=mm3ToCC(volMM3);
+    notify('3D mesh ready — '+triCount.toLocaleString()+' triangles · '+formatCC(cc));
+  }catch(e){
+    notify('3D mesh ready — '+triCount.toLocaleString()+' triangles');
+  }
+  updateVolHUD();
+  // Show snapshot & report UI
+  const snapBtn=$('btnSnapshot');if(snapBtn)snapBtn.style.display='block';
+  const snapBadge=$('snapBadge');if(snapBadge&&state.snapshots.length>0)snapBadge.style.display='block';
+  $('cardReport').style.display='flex';
+
+  document.querySelector('.tab[data-tab="3d"]').click();
+  requestAnimationFrame(()=>{resize3d();updateCamera3();renderer3.render(scene3,camera3);});
+  setHUD('');
+  state.meshBuilt=true;
+  // If nerve tracing exists, re-center it to match the newly-centered mesh
+  try{updateNerve3D();}catch(e){}
+  try{renderProjectsList();}catch(e){}
+  $('btnAddProject').style.display='block';$('btnAddProject').disabled=false;
+  $('btnBuildMesh').disabled=false;
+  $('btnMeshFromPainted').disabled=false;
+  $('btnMeshControls').style.display='block';
+  renderProjectsList();
+  if(!state.activeProject){
+    const b=$('activeProjBadge');
+    b.textContent='🦷 Bone';b.style.color='#e8d5a3';b.style.borderColor='#e8d5a3';b.style.display='inline-block';
+  }
+  // Enable tone mapping for contrast/exposure control
+  if(renderer3){
+    renderer3.toneMapping=THREE.ACESFilmicToneMapping;
+    renderer3.toneMappingExposure=1.0;
+  }
+}
+
+// ── Slice nav ─────────────────────────────────────────────────
+function stepZ(delta){
+  if(!state.loaded)return;
+  if(state.polyPoints.length>0)cancelPolygon();
+  const zMin=state.fov?.vz0??0;
+  const zMax=(state.fov?.vz1??state.dims.z)-1;
+  state.z=Math.max(zMin,Math.min(zMax,state.z+delta));
+  state.undo=[];render();if(state.showScout)renderCoronal();
+}
+
+// ── Build 3D mesh from existing manually-painted masks ───────────────────────
+// Unlike the main Build button (which clears masks and auto-segments first),
+// this function uses whatever state.masks you have already painted with the
+// brush or polygon tool and sends them straight to the mesh pipeline.
+// ── buildPaintedOnlyVolume: full-resolution binary volume from brush/polygon masks only ──
+// • Uses spacing-native resolution (dsXY=1, dsZ=1) — no quality loss from downsampling
+// • Sets each voxel to 255 (full) or 0 (empty) — clean binary for the mesh worker
+// • Completely skips un-painted z-slices; the mesh worker's Z-gap bridge handles the rest
+function buildPaintedOnlyVolume(){
+  const sx=state.dims.x, sy=state.dims.y;
+  const fv=state.fov;
+  const X0=fv?.vx0??0,  X1=fv?.vx1??sx;
+  const Y0=fv?.vy0??0,  Y1=fv?.vy1??sy;
+  const Z0=fv?.vz0??0,  Z1=fv?.vz1??state.dims.z;
+  const nx=X1-X0, ny=Y1-Y0, nz=Z1-Z0;
+  const vol=new Uint8Array(nx*ny*nz);
+  for(let z=Z0;z<Z1;z++){
+    const mask=state.masks.get(z);
+    if(!mask) continue;               // leave voxels 0; worker bridges the gap
+    const md=mask.data, mw=mask.width;
+    for(let y=Y0;y<Y1;y++){
+      for(let x=X0;x<X1;x++){
+        if(md[(y*mw+x)*4+3])          // any alpha → painted pixel
+          vol[((z-Z0)*ny+(y-Y0))*nx+(x-X0)]=255;
+      }
+    }
+  }
+  const voxelSize={x:state.spacing.x, y:state.spacing.y, z:state.spacing.z};
+  return{vol,nx,ny,nz,voxelSize};
+}
+
+async function buildMeshFromPainted(){
+  if(!state.loaded){notify('Load a DICOM ZIP first.',false);return;}
+  if(state.busy){notify('Already processing — please wait.',false);return;}
+
+  // ── Only count slices that were painted by brush or polygon (state.masks) ──
+  let paintedZList=[];
+  for(const[z,m]of state.masks.entries()){
+    const d=m.data;
+    for(let i=3;i<d.length;i+=4){if(d[i]){paintedZList.push(z);break;}}
+  }
+  const ps=paintedZList.length;
+  if(ps===0){
+    notify('No painted slices found — use Brush or Polygon on some slices first.',false);
+    return;
+  }
+  // ── Liquid gap filling between painted slices (Outer Envelope + Closing) ──
+  const filled = fillGaps(state.masks, state.dims.x, state.dims.y);
+  if(filled){ notify('Liquid interpolation: filled '+filled+' gap slice'+(filled===1?'':'s')+' ✅'); updateMem(); render(); }
+
+
+  // Lock UI
+  state.busy=true;
+  state.paintedMeshBuild=true;
+  $('btnMeshFromPainted').disabled=true;
+  $('btnBuildMesh').disabled=true;
+  $('btnDownloadSTL').disabled=true;
+  state.lastSTL=null;
+
+  const light=isLightDevice();
+  const hint=$('paintedMeshHint');
+  if(hint){
+    hint.textContent=ps+' painted slice'+(ps===1?'':'s')+' — full-res smooth mesh building…';
+    hint.style.display='block';
+  }
+  showMeshOverlay(
+    'Building Smooth Mesh…',
+    light ? 'Mobile device: using optimised settings for speed.' : ''
+  );
+  setHUD(
+    'Building smooth mesh from '+ps+' painted slice'+(ps===1?'':'s')+'…'+
+    '<br><span style="font-size:10px;opacity:.7">Full-res · Union bridge · Gaussian σ=3.6 · Taubin ×220</span>'
+  );
+  notify('Meshing '+ps+' painted slice'+(ps===1?'':'s')+' at full resolution…');
+
+  await new Promise(r=>setTimeout(r,10));
+
+  // ── Build full-resolution binary volume — ONLY from brush/polygon masks ──
+  setProg(5,'Voxelizing '+ps+' painted slice'+(ps===1?'':'s')+'…');
+  const{vol,nx,ny,nz,voxelSize}=buildPaintedOnlyVolume();
+
+  if(!vol.some(v=>v)){
+    notify('No painted voxels found.',false);
+    setHUD('');setProg(0,'Idle');
+    $('btnBuildMesh').disabled=false;$('btnMeshFromPainted').disabled=false;
+    state.busy=false;state.paintedMeshBuild=false;
+    if(hint)hint.style.display='none';
+    return;
+  }
+
+  // Send to mesh worker with smoothMode=true for extra-smooth organic surface
+  ensureMeshWorker().postMessage(
+    {type:'build_mesh', nx, ny, nz, voxelSize, vol:vol.buffer, smoothMode:true, lightMode:light},
+    [vol.buffer]
+  );
+}
+
+// ── Bind UI ───────────────────────────────────────────────────
+function bindUI(){
+  enableAfterLoad(false);updateToolButtons();syncAutoDefaults();
+
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');$('panel'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='3d'){resize3d();updateCamera3();}
+  }));
+
+  $('zipInput').addEventListener('change',async e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    try{enableAfterLoad(false);await doLoadZip(f);}
+    catch(err){console.error(err);setProg(0,'Idle');setHUD('Failed: '+(err?.message||err));notify(err?.message||'Load failed',false);}
+  });
+
+  $('sliceRange').addEventListener('input',e=>{
+    if(state.polyPoints.length>0)cancelPolygon();
+    state.z=Number(e.target.value);state.undo=[];render();if(state.showScout)renderCoronal();
+  });
+  $('btnPrev').addEventListener('click',()=>stepZ(-1));
+  $('btnNext').addEventListener('click',()=>stepZ(+1));
+  $('canvasWrap').addEventListener('wheel',e=>{if(!state.loaded)return;e.preventDefault();stepZ(e.deltaY>0?1:-1);},{passive:false});
+
+  // ── Coronal pane interactions ─────────────────────────────
+  const cw=$('coronalWrap');
+  cw.addEventListener('wheel',e=>{if(!state.loaded)return;e.preventDefault();stepCoronalY(e.deltaY>0?1:-1);},{passive:false});
+  // Click coronal to seek axial Z + update coronalY
+  const co=$('coronalOver');
+  co.addEventListener('pointerdown',e=>{
+    // Nerve tracing tool (OnDemand-like): one point per CORONAL slice (Y), then tube across slices
+    if(state.nerve&&state.nerve.active){
+      if(e.shiftKey){
+        state.nerve.byY.clear();
+        updateNerve3D();
+        if(state.meshBuilt) try{renderProjectsList();}catch(e){}
+        notify('Nerve cleared');
+        renderCoronal();
+        return;
+      }
+      const p=canvasToVoxelCoronal(e.clientX,e.clientY);
+      if(!p) return;
+      const y=state.coronalY;
+
+      // Alt+Click = delete current slice point
+      if(e.altKey){
+        state.nerve.byY.delete(y);
+        updateNerve3D();
+        if(state.meshBuilt) try{renderProjectsList();}catch(e){}
+        notify('Slice point deleted');
+        renderCoronal();
+        return;
+      }
+
+      state.nerve.byY.set(y,{y,ix:p.ix,iz:p.iz});
+      updateNerve3D();
+      if(state.meshBuilt) try{renderProjectsList();}catch(e){}
+      notify('Nerve point set for slice Y '+(y+1));
+      renderCoronal();
+      return;
+    }
+
+    if(state.fovMode||!state.loaded||!state._coronalFit)return;
+    const rect=co.getBoundingClientRect();
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    const px=(e.clientX-rect.left)*dpr,py=(e.clientY-rect.top)*dpr;
+    const cfit=state._coronalFit;
+    const{dx,dy,dw,dh}=cfit;
+    if(px<dx||px>dx+dw||py<dy||py>dy+dh)return;
+    const xFrac=(px-dx)/dw, yFrac=(py-dy)/dh;
+    // X → coronalY; Y (flipped) → axial Z
+    const vx0=cfit.vx0??0, vx1=cfit.vx1??cfit.sx;
+    const effVz0=cfit.vz0??0, effVz1=cfit.vz1??cfit.sz;
+    const newX=Math.round(vx0+xFrac*(vx1-vx0));
+    const newZ=Math.round(effVz1-(yFrac*(effVz1-effVz0)));
+    const vy0=state.fov?.vy0??0, vy1=state.fov?.vy1??state.dims.y;
+    state.coronalY=Math.max(vy0,Math.min(vy1-1,newX));
+    state.z=Math.max(effVz0,Math.min(effVz1-1,newZ));
+    state.undo=[];render();renderCoronal();
+  });
+
+  // ── Scout Lines button ────────────────────────────────────
+  $('btnScout').addEventListener('click',()=>{
+    state.showScout=!state.showScout;
+    $('btnScout').classList.toggle('btn-scout-active',state.showScout);
+    $('btnScout').textContent=state.showScout?'📍 Scout ON':'📍 Scout Lines';
+    render();renderCoronal();
+  });
+
+  // ── Scout FOV button — activates drawing on BOTH panes ───────
+  $('btnFOV').addEventListener('click',()=>{
+    state.fovMode=!state.fovMode;
+    $('btnFOV').classList.toggle('btn-fov-active',state.fovMode);
+    $('btnFOV').textContent=state.fovMode?'📐 Draw on Axial+Coronal…':'📐 Scout FOV';
+    $('canvasWrap').classList.toggle('fov-mode',state.fovMode);
+    $('coronalWrap').classList.toggle('fov-mode',state.fovMode);
+    $('maskCanvas').style.pointerEvents=state.fovMode?'none':'all';
+    $('coronalOver').style.pointerEvents=state.fovMode?'none':'all';
+    if(!state.fovMode){state._fovDrag=null;state._fovCoronalDrag=null;drawFOVOverlay();drawCoronalFOVOverlay();}
+  });
+
+  $('btnClearFOV').addEventListener('click',()=>{
+    clearFOV();
+    if(state.fovMode){
+      state.fovMode=false;
+      $('btnFOV').classList.remove('btn-fov-active');
+      $('btnFOV').textContent='📐 Scout FOV';
+      $('canvasWrap').classList.remove('fov-mode');
+      $('coronalWrap').classList.remove('fov-mode');
+      $('maskCanvas').style.pointerEvents='all';
+      $('coronalOver').style.pointerEvents='all';
+    }
+  });
+
+  // ── Axial FOV drag ───────────────────────────────────────────
+  const cWrap=$('canvasWrap');
+  cWrap.addEventListener('pointerdown',e=>{
+    if(!state.fovMode||!state.loaded)return;
+    const mc=$('maskCanvas'),rect=mc.getBoundingClientRect();
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    const cx=(e.clientX-rect.left)*dpr,cy=(e.clientY-rect.top)*dpr;
+    const fit=state._axialFit;
+    if(!fit||cx<fit.dx||cx>fit.dx+fit.dw||cy<fit.dy||cy>fit.dy+fit.dh)return;
+    cWrap.setPointerCapture(e.pointerId);
+    state._fovDrag={startX:cx,startY:cy,curX:cx,curY:cy};
+    drawFOVOverlay();
+  });
+  cWrap.addEventListener('pointermove',e=>{
+    if(!state._fovDrag)return;
+    const mc=$('maskCanvas'),rect=mc.getBoundingClientRect();
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    state._fovDrag.curX=(e.clientX-rect.left)*dpr;
+    state._fovDrag.curY=(e.clientY-rect.top)*dpr;
+    drawFOVOverlay();
+  });
+  cWrap.addEventListener('pointerup',()=>{if(!state._fovDrag)return;commitFOV();});
+
+  // ── Coronal FOV drag ─────────────────────────────────────────
+  const crnWrap=$('coronalWrap');
+  crnWrap.addEventListener('pointerdown',e=>{
+    if(!state.fovMode||!state.loaded)return;
+    if(e.target===$('coronalOver')||!state._coronalFit)return; // fallthrough for seek
+    const co=$('coronalView'),rect=co.getBoundingClientRect();
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    const cx=(e.clientX-rect.left)*dpr,cy=(e.clientY-rect.top)*dpr;
+    const cfit=state._coronalFit;
+    if(!cfit||cx<cfit.dx||cx>cfit.dx+cfit.dw||cy<cfit.dy||cy>cfit.dy+cfit.dh)return;
+    crnWrap.setPointerCapture(e.pointerId);
+    state._fovCoronalDrag={startX:cx,startY:cy,curX:cx,curY:cy};
+    drawCoronalFOVOverlay();
+  });
+  crnWrap.addEventListener('pointermove',e=>{
+    if(!state._fovCoronalDrag)return;
+    const co=$('coronalView'),rect=co.getBoundingClientRect();
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    state._fovCoronalDrag.curX=(e.clientX-rect.left)*dpr;
+    state._fovCoronalDrag.curY=(e.clientY-rect.top)*dpr;
+    drawCoronalFOVOverlay();
+  });
+  crnWrap.addEventListener('pointerup',()=>{if(!state._fovCoronalDrag)return;commitCoronalFOV();});
+
+  $('winW').addEventListener('input',e=>{state.wl.w=Number(e.target.value);$('wwVal').textContent=e.target.value;render();renderCoronal();});
+  $('winL').addEventListener('input',e=>{state.wl.l=Number(e.target.value);$('wlVal').textContent=e.target.value;render();renderCoronal();});
+  $('invert').addEventListener('change',()=>{render();renderCoronal();});
+
+  $('toolBrush').addEventListener('click',()=>{state.tool='brush';updateToolButtons();});
+  $('toolEraser').addEventListener('click',()=>{state.tool='eraser';updateToolButtons();});
+  $('toolPolygon').addEventListener('click',()=>{state.tool='polygon';updateToolButtons();});
+  $('brushSize').addEventListener('input',e=>{state.brushSize=Number(e.target.value);$('bsVal').textContent=e.target.value;});
+  $('maskAlpha').addEventListener('input',e=>{state.maskAlpha=Number(e.target.value)/100;render();});
+  $('maskColor').addEventListener('change',e=>{state.maskColor=e.target.value;render();});
+
+  // ── 3D Lighting & Contrast sliders ──────────────────────────
+  const litSliders=['slExposure','slContrast','slKeyLight','slFillLight','slAmbient','slRoughness'];
+  litSliders.forEach(id=>{const el=$(id);if(el)el.addEventListener('input',apply3DLighting);});
+
+  // Toggle lighting panel
+  $('btnMeshControls').addEventListener('click',()=>{
+    const panel=$('meshControls');
+    const isHidden=panel.style.display==='none'||panel.style.display==='';
+    panel.style.display=isHidden?'flex':'none';
+    $('btnMeshControls').style.right=isHidden?'218px':'10px';
+    $('btnMeshControls').textContent=isHidden?'✕ Close':'🎛 Lighting';
+  });
+
+  $('btnMeshFromPainted').addEventListener('click', buildMeshFromPainted);
+  $('btnUndo').addEventListener('click',undo);
+  $('btnClearSlice').addEventListener('click',clearSliceMask);
+  $('btnClearAll').addEventListener('click',()=>{if(confirm('Clear ALL masks?'))clearAllMasks();});
+  $('btnToggleOverlay').addEventListener('click',()=>{state.showOverlay=!state.showOverlay;render();});
+
+  // ── Nerve tool (Coronal) ─────────────────────────────────
+  const nerveBtn=$('btnAddNerve');
+  if(nerveBtn) nerveBtn.addEventListener('click',toggleNerveTool);
+  $('btnExportMask').addEventListener('click',exportMaskPNG);
+  $('btnExportAll').addEventListener('click',exportAllMasksZIP);
+  $('btnBuildMesh').addEventListener('click',build3DMesh);
+  $('btnDownloadSTL').addEventListener('click',downloadSTL);
+  $('btnAddProject').addEventListener('click',addProject);
+  $('btnAuto').addEventListener('click',()=>runAuto(false));
+  $('btnAutoAll').addEventListener('click',()=>runAuto(true));
+  $('autoMode').addEventListener('change',syncAutoDefaults);
+  $('autoPreset').addEventListener('change',syncAutoDefaults);
+  $('thr').addEventListener('input',e=>$('thrVal').textContent=e.target.value);
+  $('smooth').addEventListener('input',e=>$('smVal').textContent=e.target.value);
+
+  // ── Snapshot & Report ────────────────────────────────────────────────────
+  $('btnSnapshot').addEventListener('click',takeSnapshot);
+  $('btnShowReport').addEventListener('click',openReport);
+  $('btnQuickPDF').addEventListener('click',quickPDF);
+
+  // Close report on backdrop click
+  $('reportModal').addEventListener('click',e=>{if(e.target===$('reportModal'))closeReport();});
+
+  $('btnHelp').addEventListener('click',()=>{alert('1. Upload ZIP of .dcm DICOM files\n2. Mouse wheel to browse slices\n3. Paint with brush or run Auto segmentation\n4. Click "Build 3D Mesh" to view in 3D\n\nKeys: B=brush  E=eraser  U=undo  [ ]=size  ←→=slice');});
+
+  window.addEventListener('keydown',e=>{
+    if(e.target&&['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;
+    if(e.key==='b'||e.key==='B'){state.tool='brush';updateToolButtons();}
+    if(e.key==='e'||e.key==='E'){state.tool='eraser';updateToolButtons();}
+    if(e.key==='p'||e.key==='P'){state.tool='polygon';updateToolButtons();}
+    if(e.key==='Escape'){if(state.tool==='polygon')cancelPolygon();}
+    if(e.key==='['){state.brushSize=Math.max(1,state.brushSize-2);$('brushSize').value=state.brushSize;$('bsVal').textContent=state.brushSize;}
+    if(e.key===']'){state.brushSize=Math.min(80,state.brushSize+2);$('brushSize').value=state.brushSize;$('bsVal').textContent=state.brushSize;}
+    if(e.key==='u'||e.key==='U')undo();
+    if(e.key==='ArrowLeft')stepZ(-1);if(e.key==='ArrowRight')stepZ(+1);
+    if(e.key==='ArrowUp'){e.preventDefault();stepCoronalY(-1);}
+    if(e.key==='ArrowDown'){e.preventDefault();stepCoronalY(+1);}
+  });
+
+  const mc=$('maskCanvas');
+  mc.addEventListener('pointerdown',onDown);
+  mc.addEventListener('pointermove',onMove);
+  window.addEventListener('pointerup',onUp);
+  mc.addEventListener('pointerleave',onUp);
+}
+
+async function init(){bindUI();fitCanvasToWrap();setHUD('Load a DICOM ZIP to start.');await init3d();}
+init();
+
+// ── Sidebar Toggle ────────────────────────────────────────────────────────
+(function(){
+  const sidebar=document.querySelector('.sidebar');
+  const btn=document.getElementById('sidebarToggle');
+  const overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<=700;
+
+  function open(){
+    sidebar.classList.remove('collapsed');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+    if(isMobile()){overlay.classList.add('visible');}
+  }
+  function close(){
+    sidebar.classList.add('collapsed');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+    overlay.classList.remove('visible');
+  }
+  function toggle(){sidebar.classList.contains('collapsed')?open():close();}
+
+  btn.addEventListener('click',toggle);
+  overlay.addEventListener('click',close);
+
+  // Start collapsed on mobile, open on desktop
+  if(isMobile()){close();}else{open();}
+
+  window.addEventListener('resize',()=>{
+    if(!isMobile()){overlay.classList.remove('visible');}
+  });
+})();
+
+// ── PWA: inline manifest + service worker ────────────────────────────────
+(function(){
+  // Manifest
+  const manifest={
+    name:'Royal CBCT Segmentation',
+    short_name:'Royal CBCT',
+    description:'DICOM CBCT segmentation tool — Auto + Manual + 3D Mesh',
+    start_url:'.',
+    display:'standalone',
+    orientation:'any',
+    background_color:'#080d1a',
+    theme_color:'#080d1a',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23080d1a%22/><text y=%22.9em%22 font-size=%2270%22 x=%2215%22>⬡</text></svg>',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}
+    ]
+  };
+  const mBlob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const mURL=URL.createObjectURL(mBlob);
+  const link=document.createElement('link');
+  link.rel='manifest';link.href=mURL;
+  document.head.appendChild(link);
+
+  // Service Worker (cache-first for offline support)
+  if('serviceWorker' in navigator){
+    const swCode=`
+const CACHE='royal-cbct-v1';
+const URLS_TO_CACHE=[location.pathname||'/'];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS_TO_CACHE)));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+    if(res&&res.status===200&&res.type==='basic'){
+      const clone=res.clone();
+      caches.open(CACHE).then(c=>c.put(e.request,clone));
+    }
+    return res;
+  })));
+});`;
+    const swBlob=new Blob([swCode],{type:'application/javascript'});
+    const swURL=URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL).catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>

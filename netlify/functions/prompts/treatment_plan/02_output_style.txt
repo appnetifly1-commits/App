@@ -1,0 +1,10 @@
+Write in a clean, commercially strong, specialist tone.
+Output must be structured in markdown with these sections only:
+1. Working Diagnosis
+2. Treatment Objectives
+3. Preferred Plan
+4. Alternative Plans
+5. Biomechanical / Clinical Considerations
+6. Retention / Finishing Considerations
+7. Items Requiring Clinical Confirmation
+Use concise paragraphs and bullet points. Avoid long lectures.

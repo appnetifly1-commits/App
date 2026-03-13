@@ -1,0 +1,1 @@
+Use sections: Exam Summary, Technical Note, Findings, Impression, Recommendations. Mention when information is pending or limited.
